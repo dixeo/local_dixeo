@@ -1,0 +1,59 @@
+{{!
+    @template local_dixeo/overview
+
+    Dixeo overview page - displays credit balance.
+
+    Context variables required for this template:
+    * error - boolean - Whether an error occurred
+    * errormessage - string - Error message to display
+    * balance - string - Formatted balance (e.g., "$1.50")
+    * credits - int - Raw credits count
+    * state - string - Account state (active, frozen, suspended)
+    * statelabel - string - Localized state label
+    * stateclass - string - Bootstrap class for state badge
+
+    Example context (json):
+    {
+        "error": false,
+        "balance": "$1.50",
+        "credits": 1500,
+        "state": "active",
+        "statelabel": "Active",
+        "stateclass": "success"
+    }
+}}
+<div class="container-fluid">
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6 col-lg-4">
+            {{#error}}
+            <div class="alert alert-danger" role="alert">
+                {{{errormessage}}}
+            </div>
+            {{/error}}
+            {{^error}}
+            {{#isfrozen}}
+            <div class="alert alert-warning" role="alert">
+                {{#str}}account_frozen_warning, local_dixeo{{/str}}
+            </div>
+            {{/isfrozen}}
+            {{#issuspended}}
+            <div class="alert alert-danger" role="alert">
+                {{#str}}account_suspended_warning, local_dixeo{{/str}}
+            </div>
+            {{/issuspended}}
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">
+                        {{#str}}credit_balance, local_dixeo{{/str}}
+                    </h5>
+                    <p class="display-4 mb-2">
+                        <strong>{{credits}}</strong>
+                        <small class="text-muted">{{#str}}credits, local_dixeo{{/str}}</small>
+                    </p>
+                    <span class="badge badge-{{stateclass}}">{{statelabel}}</span>
+                </div>
+            </div>
+            {{/error}}
+        </div>
+    </div>
+</div>

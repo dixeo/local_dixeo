@@ -1,0 +1,252 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_dixeo/credit_report
+
+    Credit report page template with weekly usage view.
+
+    Context variables required for this template:
+    * configured - bool - Whether the API is configured.
+    * error - string|null - Error message if any.
+    * balance - object - Credit balance information.
+    * usage - object - Weekly usage statistics.
+    * chart_data - string - JSON chart data with today highlighting.
+    * transactions - array - Transaction list.
+    * pagination - object - Pagination data.
+
+    Example context (json):
+    {
+        "configured": true,
+        "balance": {
+            "formatted": "9,976 credits",
+            "state": "active",
+            "state_class": "success"
+        },
+        "usage": {
+            "week_total_formatted": "24 credits",
+            "week_range": "Dec 16 - Dec 22"
+        }
+    }
+}}
+{{#error}}
+    <div class="alert alert-danger" role="alert">
+        {{{error}}}
+    </div>
+    {{^configured}}
+        <a href="{{{settings_url}}}" class="btn btn-primary">
+            {{#str}}configure_api, local_dixeo{{/str}}
+        </a>
+    {{/configured}}
+{{/error}}
+
+{{^error}}
+    {{! Balance Card }}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">{{#str}}current_balance, local_dixeo{{/str}}</h4>
+        </div>
+        <div class="card-body">
+            <div class="d-flex align-items-center" style="gap: 1rem;">
+                <span class="h2 mb-0">{{{balance.formatted}}}</span>
+                <span class="badge bg-{{balance.state_class}}">
+                    {{{balance.state_description}}}
+                </span>
+            </div>
+            {{#balance.is_frozen}}
+                <div class="alert alert-warning mt-3 mb-0">
+                    {{#str}}account_frozen_warning, local_dixeo{{/str}}
+                </div>
+            {{/balance.is_frozen}}
+            {{#balance.is_suspended}}
+                <div class="alert alert-danger mt-3 mb-0">
+                    {{#str}}account_suspended_warning, local_dixeo{{/str}}
+                </div>
+            {{/balance.is_suspended}}
+        </div>
+    </div>
+
+    {{! Weekly Usage Statistics Card }}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">{{#str}}usage_statistics, local_dixeo{{/str}}</h4>
+            <span class="text-muted small">{{{usage.week_range}}}</span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="text-muted">{{#str}}week_total, local_dixeo{{/str}}</div>
+                    <div class="h5">{{{usage.week_total_formatted}}}</div>
+                </div>
+            </div>
+
+            {{#has_chart_data}}
+                <div class="chart-container" style="position: relative; height: 250px;">
+                    <canvas id="usageChart"></canvas>
+                </div>
+            {{/has_chart_data}}
+        </div>
+    </div>
+
+    {{! Transactions Table }}
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">{{#str}}recent_transactions, local_dixeo{{/str}}</h4>
+        </div>
+        <div class="card-body">
+            {{#has_transactions}}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{#str}}date, local_dixeo{{/str}}</th>
+                                <th>{{#str}}type, local_dixeo{{/str}}</th>
+                                <th>{{#str}}description, local_dixeo{{/str}}</th>
+                                <th class="text-end">{{#str}}amount, local_dixeo{{/str}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#transactions}}
+                                <tr>
+                                    <td>
+                                        <span class="text-nowrap">{{{created_at_formatted}}}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{type_class}}">{{{type_label}}}</span>
+                                    </td>
+                                    <td>{{{description}}}</td>
+                                    <td class="text-end">
+                                        <span class="text-{{type_class}}">
+                                            {{amount_sign}}{{{amount_formatted}}}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {{/transactions}}
+                        </tbody>
+                    </table>
+                </div>
+
+                {{#has_pagination}}
+                    <nav aria-label="{{#str}}pagination, local_dixeo{{/str}}">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item {{^pagination.has_prev}}disabled{{/pagination.has_prev}}">
+                                <a class="page-link" href="{{{report_url}}}?offset={{pagination.prev_offset}}">
+                                    {{#str}}previous{{/str}}
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    {{#str}}page_x_of_y, local_dixeo, {"current": "{{pagination.current_page}}", "total": "{{pagination.total_pages}}"}{{/str}}
+                                </span>
+                            </li>
+                            <li class="page-item {{^pagination.has_next}}disabled{{/pagination.has_next}}">
+                                <a class="page-link" href="{{{report_url}}}?offset={{pagination.next_offset}}">
+                                    {{#str}}next{{/str}}
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                {{/has_pagination}}
+            {{/has_transactions}}
+            {{^has_transactions}}
+                <div class="alert alert-info mb-0">
+                    {{#str}}no_transactions, local_dixeo{{/str}}
+                </div>
+            {{/has_transactions}}
+        </div>
+    </div>
+{{/error}}
+
+{{#has_chart_data}}
+{{#js}}
+require(['core/chartjs'], function(Chart) {
+    var ctx = document.getElementById('usageChart').getContext('2d');
+    var chartData = {{{chart_data}}};
+
+    // Create background colors array with highlight for today
+    var backgroundColors = chartData.values.map(function(value, index) {
+        if (chartData.today_index === index) {
+            return 'rgba(37, 99, 235, 0.8)'; // Bright blue for today
+        }
+        return 'rgba(148, 163, 184, 0.5)'; // Slate gray for other days
+    });
+
+    var borderColors = chartData.values.map(function(value, index) {
+        if (chartData.today_index === index) {
+            return 'rgba(37, 99, 235, 1)'; // Bright blue border for today
+        }
+        return 'rgba(148, 163, 184, 0.8)'; // Slate gray border for other days
+    });
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: chartData.label,
+                data: chartData.values,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 2,
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.toLocaleString() + ' credits';
+                        },
+                        title: function(context) {
+                            var fullLabel = chartData.full_labels[context[0].dataIndex];
+                            if (chartData.today_index === context[0].dataIndex) {
+                                return fullLabel + ' (Today)';
+                            }
+                            return fullLabel;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+{{/js}}
+{{/has_chart_data}}
