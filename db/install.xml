@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/dixeo/db" VERSION="20250115" COMMENT="XMLDB file for Moodle local/dixeo">
+  <TABLES>
+    <TABLE NAME="local_dixeo_course_ai" COMMENT="Stores AI file sync configuration and status per course">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to course.id"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether AI file sync is enabled for this course"/>
+        <FIELD NAME="sync_status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false" COMMENT="Sync status: none, syncing, synchronized, error, paused"/>
+        <FIELD NAME="files_total" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of files to sync"/>
+        <FIELD NAME="files_completed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Number of files successfully synced"/>
+        <FIELD NAME="progress_percent" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="Sync progress percentage 0-100"/>
+        <FIELD NAME="error_message" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error message if status is error"/>
+        <FIELD NAME="error_count" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of consecutive errors for retry backoff"/>
+        <FIELD NAME="last_error_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp of last error"/>
+        <FIELD NAME="last_sync_started" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync started"/>
+        <FIELD NAME="last_sync_completed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync completed successfully"/>
+        <FIELD NAME="enabled_by" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who enabled sync"/>
+        <FIELD NAME="enabled_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was enabled"/>
+        <FIELD NAME="disabled_by" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who disabled sync"/>
+        <FIELD NAME="disabled_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was disabled"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was created"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was last modified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_courseid" TYPE="foreign-unique" FIELDS="courseid" REFTABLE="course" REFFIELDS="id" COMMENT="Foreign key to course table"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_sync_status" UNIQUE="false" FIELDS="sync_status" COMMENT="Index for filtering by sync status"/>
+        <INDEX NAME="idx_enabled" UNIQUE="false" FIELDS="enabled" COMMENT="Index for filtering enabled courses"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -51,10 +51,11 @@ class cancel_job extends external_api {
             $service = service_factory::get_job_service();
             $result = $service->cancel_job($params['job_id']);
 
+            $status = $result['status'] ?? 'cancelled';
             return response_factory::cancellation_result(
                 $params['job_id'],
                 true,
-                $result['message'] ?? 'Job cancelled successfully'
+                'Job ' . $status . ' successfully'
             );
 
         } catch (api_exception $e) {

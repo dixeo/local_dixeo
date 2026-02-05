@@ -16,6 +16,8 @@ namespace local_dixeo\dsl;
 use local_dixeo\dsl\actions\create_module_action;
 use local_dixeo\dsl\actions\create_entries_action;
 use local_dixeo\dsl\actions\create_questions_action;
+use local_dixeo\dsl\actions\create_slides_action;
+use local_dixeo\dsl\actions\create_questions_simplequiz_action;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -45,6 +47,12 @@ class interpreter {
     /** @var create_questions_action Action handler for create_questions. */
     protected create_questions_action $createquestionsaction;
 
+    /** @var create_slides_action Action handler for add_slides. */
+    protected create_slides_action $createslidesaction;
+
+    /** @var create_questions_simplequiz_action Action handler for simplequiz questions. */
+    protected create_questions_simplequiz_action $createquestionssimplequizaction;
+
     /**
      * Constructor.
      *
@@ -53,15 +61,21 @@ class interpreter {
      * @param create_module_action|null $createmoduleaction Custom module action handler.
      * @param create_entries_action|null $createentriesaction Custom entries action handler.
      * @param create_questions_action|null $createquestionsaction Custom questions action handler.
+     * @param create_slides_action|null $createslidesaction Custom slides action handler.
+     * @param create_questions_simplequiz_action|null $createquestionssimplequizaction Custom simplequiz questions action.
      */
     public function __construct(
         ?create_module_action $createmoduleaction = null,
         ?create_entries_action $createentriesaction = null,
-        ?create_questions_action $createquestionsaction = null
+        ?create_questions_action $createquestionsaction = null,
+        ?create_slides_action $createslidesaction = null,
+        ?create_questions_simplequiz_action $createquestionssimplequizaction = null
     ) {
         $this->createmoduleaction = $createmoduleaction ?? new create_module_action();
         $this->createentriesaction = $createentriesaction ?? new create_entries_action();
         $this->createquestionsaction = $createquestionsaction ?? new create_questions_action();
+        $this->createslidesaction = $createslidesaction ?? new create_slides_action();
+        $this->createquestionssimplequizaction = $createquestionssimplequizaction ?? new create_questions_simplequiz_action();
     }
 
     /**
@@ -147,9 +161,32 @@ class interpreter {
         return match ($actiontype) {
             'create_module' => $this->createmoduleaction->execute($action, $resolver),
             'create_entries' => $this->createentriesaction->execute($action, $resolver),
-            'create_questions' => $this->createquestionsaction->execute($action, $resolver),
+            'create_questions' => $this->dispatch_create_questions($action, $resolver, $context),
+            'add_slides' => $this->createslidesaction->execute($action, $resolver),
             default => throw dsl_exception::unknown_action($actiontype),
         };
+    }
+
+    /**
+     * Dispatch create_questions to the appropriate handler based on module type.
+     *
+     * SimpleQuiz stores questions as JSON in a single field, while standard quiz
+     * uses Moodle's question bank. This method routes to the correct handler.
+     *
+     * @param array $action The action specification.
+     * @param value_resolver $resolver The value resolver.
+     * @param array $context The runtime context.
+     * @return mixed The action result.
+     */
+    protected function dispatch_create_questions(array $action, value_resolver $resolver, array $context): mixed {
+        $modulename = $context['modulename'] ?? '';
+
+        if ($modulename === 'simplequiz') {
+            return $this->createquestionssimplequizaction->execute($action, $resolver);
+        }
+
+        // Default to standard quiz question handling.
+        return $this->createquestionsaction->execute($action, $resolver);
     }
 
     /**

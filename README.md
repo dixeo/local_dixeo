@@ -43,10 +43,10 @@ $result = $service->generate_module('page', 'Create content about...', $context)
 
 if ($result->is_completed()) {
     $content = $result->get_content();
-    $creditsused = $result->credits_used;
+    $creditsused = $result->creditsused;
 } else {
     // Handle pending job
-    $jobid = $result->job_id;
+    $jobid = $result->jobid;
 }
 
 // Credit operations

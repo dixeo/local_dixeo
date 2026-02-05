@@ -55,7 +55,7 @@ class job_service {
     public function submit_job(string $endpoint, array $payload): operation_result {
         $response = $this->client->post($endpoint, $payload);
 
-        return operation_result::pending($response['job_id'], 'pending', 0);
+        return operation_result::pending($response['id'], 'pending', 0);
     }
 
     /**
@@ -71,7 +71,7 @@ class job_service {
      */
     public function submit_and_wait(string $endpoint, array $payload, string $jobtype): operation_result {
         $response = $this->client->post($endpoint, $payload);
-        $jobid = $response['job_id'];
+        $jobid = $response['id'];
         $config = polling_config::for_job_type($jobtype);
 
         return $this->poller->poll($jobid, $config);

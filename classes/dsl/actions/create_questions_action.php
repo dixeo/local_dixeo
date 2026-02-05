@@ -3,8 +3,8 @@
  * DSL action for creating quiz questions.
  *
  * Creates quiz questions using Moodle's question bank API and links them
- * to the quiz via quiz slots. Supports multiple choice questions with
- * extensibility for other question types.
+ * to the quiz via quiz slots. Supports multiple question types: truefalse,
+ * singlechoice, multichoice, match, ordering, and gapselect.
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -37,7 +37,11 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
  *   "fields": {
  *     "questiontext": {"source": "$.question"},
  *     "answers": {"source": "$.answers"},
- *     "correct_answer": {"source": "$.rightanswer"}
+ *     "correct_answer": {"source": "$.rightanswer"},
+ *     "pairs": {"source": "$.pairs"},
+ *     "items": {"source": "$.items"},
+ *     "gaps": {"source": "$.gaps"},
+ *     "wrong_feedback": {"source": "$.wrong_feedback"}
  *   }
  * }
  *
@@ -45,6 +49,9 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
  * - truefalse: True/False questions (rightanswer: 0=True, 1=False)
  * - singlechoice: Single correct answer (rightanswer: integer index)
  * - multichoice: Multiple correct answers (rightanswer: array of indices)
+ * - match: Matching pairs (pairs: array of {item, match} objects)
+ * - ordering: Order items correctly (items: array of strings in correct order)
+ * - gapselect: Fill in blanks (questiontext with {{placeholders}}, gaps: array of {answer, distractors})
  */
 class create_questions_action {
 
@@ -106,6 +113,9 @@ class create_questions_action {
         // Preload all supported question type libraries.
         $this->load_question_type('multichoice');
         $this->load_question_type('truefalse');
+        $this->load_question_type('match');
+        $this->load_question_type('ordering');
+        $this->load_question_type('gapselect');
 
         // Get quiz record for adding questions.
         $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
@@ -253,6 +263,9 @@ class create_questions_action {
             'truefalse' => $this->create_truefalse_question($categoryid, $fields, $context),
             'singlechoice' => $this->create_multichoice_question($categoryid, $fields, $context, true),
             'multichoice' => $this->create_multichoice_question($categoryid, $fields, $context, false),
+            'match' => $this->create_match_question($categoryid, $fields, $context),
+            'ordering' => $this->create_ordering_question($categoryid, $fields, $context),
+            'gapselect' => $this->create_gapselect_question($categoryid, $fields, $context),
             default => throw new dsl_exception(
                 "Unsupported question type '$qtype'",
                 'create_questions',
@@ -636,6 +649,407 @@ class create_questions_action {
             'text' => $trueiscorrect ? $wrongfeedback : $correctfeedbacktext,
             'format' => FORMAT_HTML,
         ];
+
+        return $form;
+    }
+
+    /**
+     * Create a matching question.
+     *
+     * @param int $categoryid The question category ID.
+     * @param array $fields The resolved fields (questiontext, pairs, wrong_feedback).
+     * @param array $context The runtime context.
+     * @return int The created question ID.
+     * @throws dsl_exception If creation fails.
+     */
+    protected function create_match_question(
+        int $categoryid,
+        array $fields,
+        array $context
+    ): int {
+        global $USER;
+
+        $questiontext = $fields['questiontext'] ?? '';
+        $pairs = $fields['pairs'] ?? [];
+        $wrongfeedback = $fields['wrong_feedback'] ?? '';
+
+        if (!is_array($pairs) || count($pairs) < 2) {
+            throw new dsl_exception(
+                'Match question requires at least 2 pairs',
+                'create_questions',
+                ['pairs_count' => is_array($pairs) ? count($pairs) : 0]
+            );
+        }
+
+        // Build the question form data structure.
+        $formdata = $this->build_match_form_data(
+            $categoryid,
+            $questiontext,
+            $pairs,
+            $wrongfeedback,
+            $context
+        );
+
+        // Get the question type handler.
+        $qtypeobj = \question_bank::get_qtype('match');
+
+        // Create a blank question to save into.
+        $question = new \stdClass();
+        $question->category = $categoryid;
+        $question->qtype = 'match';
+        $question->createdby = $context['userid'] ?? $USER->id;
+        $question->modifiedby = $context['userid'] ?? $USER->id;
+
+        // Use the qtype's save_question method.
+        $savedquestion = $qtypeobj->save_question($question, $formdata);
+
+        if (!$savedquestion || !isset($savedquestion->id)) {
+            throw new dsl_exception(
+                'Failed to save match question',
+                'create_questions',
+                ['questiontext' => substr($questiontext, 0, 100)]
+            );
+        }
+
+        return $savedquestion->id;
+    }
+
+    /**
+     * Build the form data structure for a match question.
+     *
+     * @param int $categoryid The question category ID.
+     * @param string $questiontext The question text (instructions).
+     * @param array $pairs Array of pairs with 'item' and 'match' keys.
+     * @param string $wrongfeedback Feedback shown when answer is wrong.
+     * @param array $context The runtime context.
+     * @return \stdClass The form data object.
+     */
+    protected function build_match_form_data(
+        int $categoryid,
+        string $questiontext,
+        array $pairs,
+        string $wrongfeedback,
+        array $context
+    ): \stdClass {
+        $form = new \stdClass();
+
+        // Basic question properties.
+        $form->category = $categoryid . ',' . $context['contextid'];
+        $form->name = $this->generate_question_name($questiontext);
+        $form->questiontext = [
+            'text' => $questiontext,
+            'format' => FORMAT_HTML,
+        ];
+        $form->generalfeedback = [
+            'text' => '',
+            'format' => FORMAT_HTML,
+        ];
+        $form->defaultmark = self::DEFAULT_MARK;
+        $form->penalty = self::DEFAULT_PENALTY;
+        $form->status = question_version_status::QUESTION_STATUS_READY;
+
+        // Match-specific options.
+        $form->shuffleanswers = 1;
+
+        // Combined feedback.
+        $correctfeedbacktext = get_string('feedback_correct', 'local_dixeo');
+        $form->correctfeedback = ['text' => $correctfeedbacktext, 'format' => FORMAT_HTML];
+        $form->partiallycorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->incorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->shownumcorrect = 0;
+
+        // Build subquestions and subanswers arrays.
+        $form->subquestions = [];
+        $form->subanswers = [];
+
+        foreach ($pairs as $index => $pair) {
+            $item = is_array($pair) ? ($pair['item'] ?? '') : '';
+            $match = is_array($pair) ? ($pair['match'] ?? '') : '';
+
+            $form->subquestions[$index] = [
+                'text' => $item,
+                'format' => FORMAT_HTML,
+            ];
+            $form->subanswers[$index] = $match;
+        }
+
+        return $form;
+    }
+
+    /**
+     * Create an ordering question.
+     *
+     * @param int $categoryid The question category ID.
+     * @param array $fields The resolved fields (questiontext, items, wrong_feedback).
+     * @param array $context The runtime context.
+     * @return int The created question ID.
+     * @throws dsl_exception If creation fails.
+     */
+    protected function create_ordering_question(
+        int $categoryid,
+        array $fields,
+        array $context
+    ): int {
+        global $USER;
+
+        $questiontext = $fields['questiontext'] ?? '';
+        $items = $fields['items'] ?? [];
+        $wrongfeedback = $fields['wrong_feedback'] ?? '';
+
+        if (!is_array($items) || count($items) < 2) {
+            throw new dsl_exception(
+                'Ordering question requires at least 2 items',
+                'create_questions',
+                ['items_count' => is_array($items) ? count($items) : 0]
+            );
+        }
+
+        // Build the question form data structure.
+        $formdata = $this->build_ordering_form_data(
+            $categoryid,
+            $questiontext,
+            $items,
+            $wrongfeedback,
+            $context
+        );
+
+        // Get the question type handler.
+        $qtypeobj = \question_bank::get_qtype('ordering');
+
+        // Create a blank question to save into.
+        $question = new \stdClass();
+        $question->category = $categoryid;
+        $question->qtype = 'ordering';
+        $question->createdby = $context['userid'] ?? $USER->id;
+        $question->modifiedby = $context['userid'] ?? $USER->id;
+
+        // Use the qtype's save_question method.
+        $savedquestion = $qtypeobj->save_question($question, $formdata);
+
+        if (!$savedquestion || !isset($savedquestion->id)) {
+            throw new dsl_exception(
+                'Failed to save ordering question',
+                'create_questions',
+                ['questiontext' => substr($questiontext, 0, 100)]
+            );
+        }
+
+        return $savedquestion->id;
+    }
+
+    /**
+     * Build the form data structure for an ordering question.
+     *
+     * @param int $categoryid The question category ID.
+     * @param string $questiontext The question text (instructions).
+     * @param array $items Array of items in correct order.
+     * @param string $wrongfeedback Feedback shown when answer is wrong.
+     * @param array $context The runtime context.
+     * @return \stdClass The form data object.
+     */
+    protected function build_ordering_form_data(
+        int $categoryid,
+        string $questiontext,
+        array $items,
+        string $wrongfeedback,
+        array $context
+    ): \stdClass {
+        $form = new \stdClass();
+
+        // Basic question properties.
+        $form->category = $categoryid . ',' . $context['contextid'];
+        $form->name = $this->generate_question_name($questiontext);
+        $form->questiontext = [
+            'text' => $questiontext,
+            'format' => FORMAT_HTML,
+        ];
+        $form->generalfeedback = [
+            'text' => '',
+            'format' => FORMAT_HTML,
+        ];
+        $form->defaultmark = self::DEFAULT_MARK;
+        $form->penalty = self::DEFAULT_PENALTY;
+        $form->status = question_version_status::QUESTION_STATUS_READY;
+
+        // Ordering-specific options.
+        $form->layouttype = 0;          // VERTICAL.
+        $form->selecttype = 0;          // SELECT_ALL.
+        $form->selectcount = count($items);
+        $form->gradingtype = 0;         // RELATIVE_NEXT_EXCLUDE_LAST.
+        $form->showgrading = 1;
+        $form->numberingstyle = 'none';
+
+        // Combined feedback.
+        $correctfeedbacktext = get_string('feedback_correct', 'local_dixeo');
+        $form->correctfeedback = ['text' => $correctfeedbacktext, 'format' => FORMAT_HTML];
+        $form->partiallycorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->incorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->shownumcorrect = 0;
+
+        // Build answer array - items in correct order.
+        $form->answer = [];
+        foreach ($items as $index => $item) {
+            $form->answer[$index] = [
+                'text' => is_string($item) ? $item : (string) $item,
+                'format' => FORMAT_HTML,
+            ];
+        }
+
+        return $form;
+    }
+
+    /**
+     * Create a gapselect (select missing words) question.
+     *
+     * @param int $categoryid The question category ID.
+     * @param array $fields The resolved fields (questiontext, gaps, wrong_feedback).
+     * @param array $context The runtime context.
+     * @return int The created question ID.
+     * @throws dsl_exception If creation fails.
+     */
+    protected function create_gapselect_question(
+        int $categoryid,
+        array $fields,
+        array $context
+    ): int {
+        global $USER;
+
+        $questiontext = $fields['questiontext'] ?? '';
+        $gaps = $fields['gaps'] ?? [];
+        $wrongfeedback = $fields['wrong_feedback'] ?? '';
+
+        if (!is_array($gaps) || count($gaps) < 1) {
+            throw new dsl_exception(
+                'Gapselect question requires at least 1 gap',
+                'create_questions',
+                ['gaps_count' => is_array($gaps) ? count($gaps) : 0]
+            );
+        }
+
+        // Build the question form data structure.
+        $formdata = $this->build_gapselect_form_data(
+            $categoryid,
+            $questiontext,
+            $gaps,
+            $wrongfeedback,
+            $context
+        );
+
+        // Get the question type handler.
+        $qtypeobj = \question_bank::get_qtype('gapselect');
+
+        // Create a blank question to save into.
+        $question = new \stdClass();
+        $question->category = $categoryid;
+        $question->qtype = 'gapselect';
+        $question->createdby = $context['userid'] ?? $USER->id;
+        $question->modifiedby = $context['userid'] ?? $USER->id;
+
+        // Use the qtype's save_question method.
+        $savedquestion = $qtypeobj->save_question($question, $formdata);
+
+        if (!$savedquestion || !isset($savedquestion->id)) {
+            throw new dsl_exception(
+                'Failed to save gapselect question',
+                'create_questions',
+                ['questiontext' => substr($questiontext, 0, 100)]
+            );
+        }
+
+        return $savedquestion->id;
+    }
+
+    /**
+     * Build the form data structure for a gapselect question.
+     *
+     * Converts {{placeholder}} format to [[n]] format and builds choices array.
+     * Each gap gets its own choice group to ensure correct matching.
+     *
+     * @param int $categoryid The question category ID.
+     * @param string $questiontext The question text with {{placeholders}}.
+     * @param array $gaps Array of gaps with 'answer' and 'distractors' keys.
+     * @param string $wrongfeedback Feedback shown when answer is wrong.
+     * @param array $context The runtime context.
+     * @return \stdClass The form data object.
+     */
+    protected function build_gapselect_form_data(
+        int $categoryid,
+        string $questiontext,
+        array $gaps,
+        string $wrongfeedback,
+        array $context
+    ): \stdClass {
+        $form = new \stdClass();
+
+        // Process question text and build choices.
+        $processedtext = $questiontext;
+        $choices = [];
+        $choiceindex = 0;
+
+        foreach ($gaps as $gapindex => $gap) {
+            $answer = is_array($gap) ? ($gap['answer'] ?? '') : '';
+            $distractors = is_array($gap) ? ($gap['distractors'] ?? []) : [];
+
+            // Ensure distractors is an array.
+            if (is_string($distractors)) {
+                $distractors = array_map('trim', explode(',', $distractors));
+            }
+
+            // Build all options for this gap (answer + distractors).
+            $alloptions = array_merge([$answer], $distractors);
+            shuffle($alloptions);
+
+            // Each gap gets its own choice group (1-indexed).
+            $choicegroup = $gapindex + 1;
+
+            // Find the position of the correct answer in shuffled options.
+            $correctposition = null;
+            foreach ($alloptions as $optindex => $option) {
+                $choices[$choiceindex] = [
+                    'answer' => $option,
+                    'choicegroup' => $choicegroup,
+                ];
+
+                if ($option === $answer) {
+                    $correctposition = $choiceindex + 1; // 1-indexed for [[n]].
+                }
+
+                $choiceindex++;
+            }
+
+            // Replace {{answer}} placeholder with [[n]] where n is the correct choice position.
+            if ($correctposition !== null) {
+                $processedtext = str_replace('{{' . $answer . '}}', '[[' . $correctposition . ']]', $processedtext);
+            }
+        }
+
+        // Basic question properties.
+        $form->category = $categoryid . ',' . $context['contextid'];
+        $form->name = $this->generate_question_name($questiontext);
+        $form->questiontext = [
+            'text' => $processedtext,
+            'format' => FORMAT_HTML,
+        ];
+        $form->generalfeedback = [
+            'text' => '',
+            'format' => FORMAT_HTML,
+        ];
+        $form->defaultmark = self::DEFAULT_MARK;
+        $form->penalty = self::DEFAULT_PENALTY;
+        $form->status = question_version_status::QUESTION_STATUS_READY;
+
+        // Gapselect-specific options.
+        $form->shuffleanswers = 1;
+
+        // Combined feedback.
+        $correctfeedbacktext = get_string('feedback_correct', 'local_dixeo');
+        $form->correctfeedback = ['text' => $correctfeedbacktext, 'format' => FORMAT_HTML];
+        $form->partiallycorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->incorrectfeedback = ['text' => $wrongfeedback, 'format' => FORMAT_HTML];
+        $form->shownumcorrect = 0;
+
+        // Set choices array.
+        $form->choices = $choices;
 
         return $form;
     }

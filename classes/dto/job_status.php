@@ -78,6 +78,9 @@ class job_status {
     /**
      * Create a job_status from API response array.
      *
+     * The API returns timestamps in ISO-8601 format (e.g., "2025-01-29T10:00:00+00:00").
+     * This method converts them to Unix timestamps for internal use.
+     *
      * @param array $data The API response data.
      * @return self The job status DTO.
      */
@@ -85,20 +88,43 @@ class job_status {
         $error = $data['error'] ?? null;
 
         return new self(
-            jobid: $data['job_id'],
+            jobid: $data['id'],
             type: $data['type'],
             status: $data['status'],
             progress: $data['progress'] ?? 0,
-            createdat: $data['created_at'],
-            updatedat: $data['updated_at'] ?? null,
-            completedat: $data['completed_at'] ?? null,
+            createdat: self::parse_timestamp($data['createdAt']),
+            updatedat: self::parse_timestamp($data['updatedAt'] ?? null),
+            completedat: self::parse_timestamp($data['completedAt'] ?? null),
             result: $data['result'] ?? null,
-            creditsused: $data['credits_used'] ?? null,
+            creditsused: $data['creditsUsed'] ?? null,
             errorcode: $error['type'] ?? null,
             errormessage: $error['detail'] ?? null,
-            processingtimeseconds: $data['processing_time_seconds'] ?? null,
+            processingtimeseconds: $data['processingTimeSeconds'] ?? null,
             namespace: $data['namespace'] ?? null
         );
+    }
+
+    /**
+     * Parse an ISO-8601 timestamp string to Unix timestamp.
+     *
+     * Handles both ISO-8601 strings and already-numeric timestamps for backwards compatibility.
+     *
+     * @param string|int|null $timestamp The timestamp value from API.
+     * @return int|null Unix timestamp or null if input is null/invalid.
+     */
+    private static function parse_timestamp(string|int|null $timestamp): ?int {
+        if ($timestamp === null) {
+            return null;
+        }
+
+        // If already an integer, return as-is (backwards compatibility).
+        if (is_int($timestamp)) {
+            return $timestamp;
+        }
+
+        // Parse ISO-8601 string to Unix timestamp.
+        $parsed = strtotime($timestamp);
+        return $parsed !== false ? $parsed : null;
     }
 
     /**

@@ -33,6 +33,7 @@ class generate_module extends external_api {
             'module_type' => new external_value(PARAM_ALPHANUMEXT, 'Module type (page, label, quiz, glossary)'),
             'instructions' => new external_value(PARAM_RAW, 'Instructions for the AI'),
             'context' => new external_value(PARAM_RAW, 'Course context in markdown format'),
+            'course_id' => new external_value(PARAM_INT, 'Course ID for RAG file search (optional)', VALUE_OPTIONAL),
         ]);
     }
 
@@ -44,13 +45,15 @@ class generate_module extends external_api {
      * @param string $moduletype The module type.
      * @param string $instructions Instructions for the AI.
      * @param string $context Course context markdown.
+     * @param int|null $courseid Optional course ID for RAG file search.
      * @return array The pending operation result with job_id.
      */
-    public static function execute(string $moduletype, string $instructions, string $context): array {
+    public static function execute(string $moduletype, string $instructions, string $context, ?int $courseid = null): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'module_type' => $moduletype,
             'instructions' => $instructions,
             'context' => $context,
+            'course_id' => $courseid,
         ]);
 
         self::validate_system_capability();
@@ -60,7 +63,8 @@ class generate_module extends external_api {
             $result = $service->submit_generate_job(
                 $params['module_type'],
                 $params['instructions'],
-                $params['context']
+                $params['context'],
+                $params['course_id'] ?? null
             );
 
             return $result->to_array();

@@ -26,8 +26,8 @@ class module_generation_service {
     /** @var string API endpoint for module generation. */
     private const GENERATE_ENDPOINT = '/v1/modules/generate';
 
-    /** @var string API endpoint for module regeneration (editing). */
-    private const REGENERATE_ENDPOINT = '/v1/modules/regenerate';
+    /** @var string API endpoint for module editing. */
+    private const EDIT_ENDPOINT = '/v1/modules/edit';
 
     /** @var string Job type for generation operations. */
     private const JOB_TYPE_GENERATE = 'generate_module';
@@ -81,7 +81,7 @@ class module_generation_service {
         $mode = $this->get_context_mode($moduletype);
         $context = context_builder_factory::buildCourseContext($courseid, $sectionnumber, $mode);
 
-        return $this->submit_generate_job($moduletype, $instructions, $context);
+        return $this->submit_generate_job($moduletype, $instructions, $context, $courseid);
     }
 
     /**
@@ -93,11 +93,12 @@ class module_generation_service {
      * @param string $moduletype The module type (page, label, quiz, glossary).
      * @param string $instructions Instructions for the AI.
      * @param string $context Course/section context in markdown format.
+     * @param int|null $courseid Optional course ID for RAG file search.
      * @return operation_result Pending operation result with job_id.
      * @throws api_exception If the API request fails.
      */
-    public function submit_generate_job(string $moduletype, string $instructions, string $context): operation_result {
-        $payload = $this->build_payload($moduletype, $instructions, $context);
+    public function submit_generate_job(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+        $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
         return $this->jobService->submit_job(self::GENERATE_ENDPOINT, $payload);
     }
@@ -110,11 +111,12 @@ class module_generation_service {
      * @param string $moduletype The module type (page, label, quiz, glossary).
      * @param string $instructions Instructions for the AI.
      * @param string $context Course/section context in markdown format.
+     * @param int|null $courseid Optional course ID for RAG file search.
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function generate_module(string $moduletype, string $instructions, string $context): operation_result {
-        $payload = $this->build_payload($moduletype, $instructions, $context);
+    public function generate_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+        $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
         return $this->jobService->submit_and_wait(
             self::GENERATE_ENDPOINT,
@@ -131,14 +133,15 @@ class module_generation_service {
      * @param string $moduletype The module type (page, label).
      * @param string $instructions Instructions for the AI.
      * @param string $context Course/section context including current content.
+     * @param int|null $courseid Optional course ID for RAG file search.
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function regenerate_module(string $moduletype, string $instructions, string $context): operation_result {
-        $payload = $this->build_payload($moduletype, $instructions, $context);
+    public function regenerate_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+        $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
         return $this->jobService->submit_and_wait(
-            self::REGENERATE_ENDPOINT,
+            self::EDIT_ENDPOINT,
             $payload,
             self::JOB_TYPE_EDIT
         );
@@ -158,9 +161,10 @@ class module_generation_service {
         try {
             $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
             $moduletype = $cm->modname;
+            $courseid = (int) $cm->course;
             $context = context_builder_factory::buildModuleEditContext($cmid);
 
-            return $this->regenerate_module($moduletype, $instructions, $context);
+            return $this->regenerate_module($moduletype, $instructions, $context, $courseid);
 
         } catch (api_exception $e) {
             return operation_result::failed($e->getMessage(), 'api_error');
@@ -213,10 +217,11 @@ class module_generation_service {
      * @param string $moduletype The module type.
      * @param string $instructions The AI instructions.
      * @param string $context The context markdown.
+     * @param int|null $courseid Optional course ID for RAG file search.
      * @return array The request payload.
      * @throws \invalid_parameter_exception If required parameters are empty.
      */
-    private function build_payload(string $moduletype, string $instructions, string $context): array {
+    private function build_payload(string $moduletype, string $instructions, string $context, ?int $courseid = null): array {
         if (empty(trim($moduletype))) {
             throw new \invalid_parameter_exception('Module type is required');
         }
@@ -225,10 +230,14 @@ class module_generation_service {
         }
 
         $payload = [
-            'module_type' => $moduletype,
+            'moduleType' => $moduletype,
             'instructions' => $instructions,
             'context' => $context,
         ];
+
+        if ($courseid !== null) {
+            $payload['courseId'] = (string) $courseid;
+        }
 
         if ($this->namespace !== null) {
             $payload['namespace'] = $this->namespace;

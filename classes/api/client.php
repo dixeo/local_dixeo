@@ -138,6 +138,11 @@ class client {
                 $url .= '?' . http_build_query($data);
             }
             $response = $curl->get($url);
+        } else if ($method === 'DELETE') {
+            if (!empty($data)) {
+                $url .= '?' . http_build_query($data);
+            }
+            $response = $curl->delete($url);
         } else {
             $response = $curl->post($url, json_encode($data));
         }
@@ -169,6 +174,9 @@ class client {
         $httpcode = $info['http_code'] ?? 0;
         $data = json_decode($response, true);
 
+        // Debug logging.
+        debugging('Dixeo API Response - HTTP Code: ' . $httpcode . ', Response: ' . substr($response, 0, 1000), DEBUG_DEVELOPER);
+
         // Handle JSON parse errors.
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new api_exception(
@@ -179,32 +187,14 @@ class client {
             );
         }
 
-        // Handle successful responses.
+        // Handle successful responses — unwrap the API envelope { success, data, metadata }.
         if ($httpcode >= 200 && $httpcode < 300) {
-            // API wraps successful responses in a 'data' key.
-            if (isset($data['success']) && $data['success'] === true) {
-                return $data['data'] ?? $data;
-            }
-            return $data;
+            return $data['data'] ?? $data;
         }
 
-        // Handle rate limiting with Retry-After header.
-        if ($httpcode === 429) {
-            $retryafter = null;
-            // Moodle's curl doesn't expose headers directly, check response body.
-            if (isset($data['retry_after'])) {
-                $retryafter = (int) $data['retry_after'];
-            }
-            throw new rate_limit_exception(
-                $data['detail'] ?? 'Rate limit exceeded',
-                $retryafter,
-                $data
-            );
-        }
-
-        // Handle error responses.
-        $errordata = $data['error'] ?? $data;
-        throw api_exception::from_response($errordata, $httpcode);
+        // Handle error responses — API returns RFC 7807 directly (no envelope wrapper).
+        debugging('Dixeo API Error - Code: ' . $httpcode . ', Error data: ' . json_encode($data), DEBUG_DEVELOPER);
+        throw api_exception::from_response($data, $httpcode);
     }
 
     /**
@@ -236,5 +226,157 @@ class client {
      */
     public function get_base_url(): string {
         return $this->baseurl;
+    }
+
+    /**
+     * Send a DELETE request to the API.
+     *
+     * @param string $endpoint The API endpoint.
+     * @param array $queryparams Optional query parameters.
+     * @return array The decoded response data.
+     * @throws api_exception If the request fails.
+     */
+    public function delete(string $endpoint, array $queryparams = []): array {
+        return $this->request('DELETE', $endpoint, $queryparams);
+    }
+
+    /**
+     * Upload files to the Dixeo VectorStore.
+     *
+     * @param string $courseid The course ID (used for identification).
+     * @param array $files Array of stored_file objects to upload.
+     * @param string|null $namespace Optional namespace override.
+     * @return array The API response data.
+     * @throws api_exception If the upload fails.
+     */
+    public function upload_files(string $courseid, array $files, ?string $namespace = null): array {
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
+
+        $this->validate_configuration();
+
+        if (empty($files)) {
+            return ['uploaded' => 0, 'files' => []];
+        }
+
+        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+
+        $curl = new \curl();
+        $url = rtrim($this->baseurl, '/') . '/v1/files';
+
+        $curl->setopt([
+            'CURLOPT_TIMEOUT' => 300, // 5 minutes for file uploads.
+            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_FOLLOWLOCATION' => true,
+            'CURLOPT_MAXREDIRS' => 3,
+        ]);
+
+        // Headers for multipart upload - Content-Type set automatically by curl.
+        $curl->setHeader([
+            'X-API-Key: ' . $this->apikey,
+            'Accept: application/json',
+            'User-Agent: local_dixeo/1.0 (Moodle Plugin)',
+        ]);
+
+        // Build multipart form data.
+        $postdata = [
+            'courseId' => $courseid,
+            'namespace' => $namespace,
+        ];
+
+        // Add files to the request.
+        $tempfiles = [];
+        foreach ($files as $index => $file) {
+            if (!($file instanceof \stored_file)) {
+                continue;
+            }
+
+            // Create temp file for upload since curl needs a file path.
+            $temppath = $CFG->tempdir . '/dixeo_upload_' . uniqid() . '_' . $file->get_filename();
+            $file->copy_content_to($temppath);
+            $tempfiles[] = $temppath;
+
+            $postdata["files[$index]"] = new \CURLFile(
+                $temppath,
+                $file->get_mimetype(),
+                $file->get_filename()
+            );
+        }
+
+        try {
+            $response = $curl->post($url, $postdata);
+
+            $errno = $curl->get_errno();
+            if ($errno) {
+                throw new api_exception(
+                    'connection_error',
+                    'Failed to upload files to Dixeo API: ' . $curl->error,
+                    0,
+                    ['curl_errno' => $errno]
+                );
+            }
+
+            return $this->parse_response($response, $curl->get_info());
+
+        } finally {
+            // Clean up temp files.
+            foreach ($tempfiles as $temppath) {
+                if (file_exists($temppath)) {
+                    @unlink($temppath);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the file sync status for a course.
+     *
+     * @param string $courseid The course ID.
+     * @param string|null $namespace Optional namespace override.
+     * @return array Status data with keys: status, file_count, synced_count, progress.
+     * @throws api_exception If the request fails.
+     */
+    public function get_files_status(string $courseid, ?string $namespace = null): array {
+        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+
+        return $this->get('/v1/files/status', [
+            'courseId' => $courseid,
+            'namespace' => $namespace,
+        ]);
+    }
+
+    /**
+     * List files for a course in the VectorStore.
+     *
+     * @param string $courseid The course ID.
+     * @param string|null $namespace Optional namespace override.
+     * @return array List of files.
+     * @throws api_exception If the request fails.
+     */
+    public function list_files(string $courseid, ?string $namespace = null): array {
+        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+
+        return $this->get('/v1/files', [
+            'courseId' => $courseid,
+            'namespace' => $namespace,
+        ]);
+    }
+
+    /**
+     * Delete all files for a course from the VectorStore.
+     *
+     * @param string $courseid The course ID.
+     * @param string|null $namespace Optional namespace override.
+     * @return array Response data.
+     * @throws api_exception If the request fails.
+     */
+    public function delete_files(string $courseid, ?string $namespace = null): array {
+        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+
+        return $this->delete('/v1/files', [
+            'courseId' => $courseid,
+            'namespace' => $namespace,
+        ]);
     }
 }

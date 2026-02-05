@@ -55,4 +55,31 @@ $functions = [
         'ajax' => true,
         'capabilities' => 'local/dixeo:generate',
     ],
+
+    // Get file sync status for a course.
+    'local_dixeo_get_file_sync_status' => [
+        'classname' => 'local_dixeo\external\get_file_sync_status',
+        'description' => 'Get the file sync status for a course',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/dixeo:generate',
+    ],
+
+    // Enable or disable file sync for a course.
+    'local_dixeo_set_file_sync_enabled' => [
+        'classname' => 'local_dixeo\external\set_file_sync_enabled',
+        'description' => 'Enable or disable AI file sync for a course',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/dixeo:generate',
+    ],
+
+    // Trigger immediate file sync for a course.
+    'local_dixeo_trigger_file_sync' => [
+        'classname' => 'local_dixeo\external\trigger_file_sync',
+        'description' => 'Trigger immediate file sync for a course (no debounce)',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/dixeo:generate',
+    ],
 ];

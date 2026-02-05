@@ -19,6 +19,7 @@ use core_external\external_value;
 use local_dixeo\external\traits\capability_check;
 use local_dixeo\dsl\interpreter;
 use local_dixeo\api\exception\api_exception;
+use local_dixeo\service\file_sync_service;
 
 /**
  * External function to create a module from a completed job.
@@ -93,12 +94,15 @@ class create_module_from_job extends external_api {
             $context = interpreter::build_context(
                 $params['courseid'],
                 $params['sectionnumber'],
-                $result['module_type'] ?? 'page',
+                $result['moduleType'] ?? 'page',
                 $params['beforemod']
             );
 
             $interpreter = new interpreter();
             $cmid = $interpreter->execute($result['creation'], $result['data'] ?? [], $context);
+
+            // Enable file sync on successful AI module creation.
+            self::enable_file_sync_if_needed($params['courseid']);
 
             return response_factory::module_creation_result(true, $cmid);
 
@@ -131,5 +135,32 @@ class create_module_from_job extends external_api {
             'error_message' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
             'error_code' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
+    }
+
+    /**
+     * Enable file sync for a course if not already enabled.
+     *
+     * Called after successful AI module creation to ensure the course
+     * files are synced to the VectorStore.
+     *
+     * @param int $courseid The course ID.
+     * @return void
+     */
+    private static function enable_file_sync_if_needed(int $courseid): void {
+        global $USER;
+
+        try {
+            $service = new file_sync_service();
+
+            // Enable sync if not already enabled - this is idempotent.
+            $service->enable_sync($courseid, $USER->id);
+
+            // Queue a sync to pick up any new files.
+            $service->queue_sync($courseid);
+
+        } catch (\Throwable $e) {
+            // Don't fail the module creation if sync setup fails.
+            debugging('Failed to enable file sync after module creation: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
     }
 }

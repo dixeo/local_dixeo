@@ -1,0 +1,120 @@
+{{!
+    @template local_dixeo/sync_indicator
+
+    Compact file sync status indicator - positioned next to course title.
+    Theme-agnostic design compatible with all Moodle themes.
+
+    Context variables required:
+    * courseid - The course ID
+    * status - Current sync status (none, syncing, synchronized, error, paused)
+    * enabled - Whether sync is enabled
+    * status_class - CSS class for status (none, syncing, synchronized, error, paused, disabled)
+    * tooltip - Tooltip text for the button
+    * status_message - Status message for the dropdown
+    * show_progress - Whether to show progress bar
+    * progress_percent - Progress percentage (0-100)
+    * files_total - Total number of files
+    * files_completed - Number of synced files
+    * last_sync - Formatted last sync date (optional)
+    * error_message - Error message if status is error (optional)
+
+    Example context (json):
+    {
+        "courseid": 2,
+        "status": "synchronized",
+        "enabled": true,
+        "status_class": "synchronized",
+        "tooltip": "Files synchronized",
+        "status_message": "15 files synced",
+        "show_progress": false,
+        "progress_percent": 100,
+        "files_total": 15,
+        "files_completed": 15,
+        "last_sync": "15 Jan 2025, 10:30"
+    }
+}}
+<div id="dixeo-sync-indicator"
+     class="dixeo-sync-indicator dropdown"
+     data-courseid="{{courseid}}"
+     data-status="{{status}}"
+     data-enabled="{{enabled}}">
+
+    {{! Branded button - Dixeo + status dot }}
+    <button type="button"
+            class="dixeo-sync-btn dixeo-sync-btn--{{status_class}}"
+            title="{{#str}}filesync_title, local_dixeo{{/str}}: {{tooltip}}"
+            aria-label="{{#str}}filesync_title, local_dixeo{{/str}}: {{tooltip}}"
+            aria-haspopup="true"
+            aria-expanded="false"
+            data-toggle="dropdown"
+            id="dixeo-sync-dropdown-toggle">
+        <span class="dixeo-sync-btn__brand">Dixeo</span>
+        <span class="dixeo-sync-btn__dot" aria-hidden="true"></span>
+        {{#files_total}}
+        <span class="dixeo-sync-btn__count" data-region="sync-badge-count">{{files_total}}</span>
+        {{/files_total}}
+        {{^files_total}}
+        <span class="dixeo-sync-btn__count d-none" data-region="sync-badge-count">0</span>
+        {{/files_total}}
+    </button>
+
+    {{! Dropdown panel - opens downward }}
+    <div class="dixeo-sync-dropdown dropdown-menu dropdown-menu-right" aria-labelledby="dixeo-sync-dropdown-toggle">
+
+        {{! Header }}
+        <div class="dixeo-sync-dropdown__header">
+            <i class="fa fa-cloud dixeo-sync-dropdown__header-icon" aria-hidden="true"></i>
+            {{#str}}filesync_title, local_dixeo{{/str}}
+        </div>
+
+        {{! Status section }}
+        <div class="dixeo-sync-dropdown__status">
+            <p class="dixeo-sync-dropdown__status-text" data-region="status-message">
+                {{status_message}}
+            </p>
+            <p class="dixeo-sync-dropdown__status-meta{{^last_sync}} d-none{{/last_sync}}" data-region="last-sync">
+                {{#last_sync}}{{#str}}last_sync, local_dixeo{{/str}}: {{last_sync}}{{/last_sync}}
+            </p>
+            {{#show_progress}}
+            <div class="dixeo-sync-dropdown__progress">
+                <div class="dixeo-sync-dropdown__progress-bar"
+                     role="progressbar"
+                     style="width: {{progress_percent}}%;"
+                     aria-valuenow="{{progress_percent}}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     data-region="progress-bar">
+                </div>
+            </div>
+            <p class="dixeo-sync-dropdown__status-meta" data-region="progress-text">
+                {{files_completed}} / {{files_total}} {{#str}}files, local_dixeo{{/str}}
+            </p>
+            {{/show_progress}}
+        </div>
+
+        {{! Error message - always present in DOM for JS toggling }}
+        <div class="dixeo-sync-dropdown__error{{^error_message}} d-none{{/error_message}}" data-region="error-message">
+            {{error_message}}
+        </div>
+
+        {{! Actions - visibility controlled by CSS via data-enabled attribute }}
+        <div class="dixeo-sync-dropdown__actions">
+            <a class="dixeo-sync-dropdown__action" href="#" data-action="resync">
+                <i class="fa fa-refresh dixeo-sync-dropdown__action-icon" aria-hidden="true"></i>
+                {{#str}}filesync_resync, local_dixeo{{/str}}
+            </a>
+            <a class="dixeo-sync-dropdown__action" href="#" data-action="pause">
+                <i class="fa fa-pause dixeo-sync-dropdown__action-icon" aria-hidden="true"></i>
+                {{#str}}filesync_pause, local_dixeo{{/str}}
+            </a>
+            <a class="dixeo-sync-dropdown__action dixeo-sync-dropdown__action--danger" href="#" data-action="disable">
+                <i class="fa fa-trash dixeo-sync-dropdown__action-icon" aria-hidden="true"></i>
+                {{#str}}filesync_disable_remove, local_dixeo{{/str}}
+            </a>
+            <a class="dixeo-sync-dropdown__action" href="#" data-action="enable">
+                <i class="fa fa-play dixeo-sync-dropdown__action-icon" aria-hidden="true"></i>
+                {{#str}}filesync_enable, local_dixeo{{/str}}
+            </a>
+        </div>
+    </div>
+</div>

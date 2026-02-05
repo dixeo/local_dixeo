@@ -139,9 +139,17 @@ class admin_setting_credit_balance extends \admin_setting {
             return $html;
 
         } catch (\Exception $e) {
+            // Moodle_exception already formats it.
+            $message = $e->getMessage();
+
+            // For moodle_exception, use the debug message which has the actual error.
+            if ($e instanceof \moodle_exception && !empty($e->debuginfo)) {
+                $message = $e->debuginfo;
+            }
+
             return \html_writer::tag(
                 'div',
-                get_string('api_error', 'local_dixeo', $e->getMessage()),
+                get_string('api_error', 'local_dixeo', $message),
                 ['class' => 'alert alert-danger']
             );
         }

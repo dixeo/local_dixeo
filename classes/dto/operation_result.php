@@ -173,6 +173,7 @@ class operation_result {
      * Get the generated content from the result.
      *
      * For module generation, this extracts the 'content' field from the result.
+     * The API returns: { moduleType: string, data: { content: string, ... } }
      *
      * @return string|null The generated content, or null if not available.
      */
@@ -180,11 +181,14 @@ class operation_result {
         if (!$this->completed || $this->result === null) {
             return null;
         }
+        // Content is nested under 'data' in the API response.
         return $this->result['data']['content'] ?? null;
     }
 
     /**
      * Get the module name from the result.
+     *
+     * The API returns: { moduleType: string, data: { name: string, ... } }
      *
      * @return string|null The generated module name, or null if not available.
      */
@@ -192,6 +196,7 @@ class operation_result {
         if (!$this->completed || $this->result === null) {
             return null;
         }
+        // Name is nested under 'data' in the API response.
         return $this->result['data']['name'] ?? null;
     }
 

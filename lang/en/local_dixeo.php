@@ -137,3 +137,24 @@ $string['feedback_correct'] = 'Correct!';
 
 // Tasks.
 $string['task_cleanup_jobs'] = 'Clean up old job records';
+$string['task_process_file_sync'] = 'Process Dixeo file synchronization';
+
+// File sync.
+$string['filesync_title'] = 'Dixeo File Sync';
+$string['filesync_label'] = 'Sync';
+$string['filesync_status_none'] = 'No files synced';
+$string['filesync_status_syncing'] = 'Syncing files...';
+$string['filesync_status_synchronized'] = 'Files synchronized';
+$string['filesync_status_error'] = 'Sync error';
+$string['filesync_status_outdated'] = 'Content changed, sync needed';
+$string['filesync_status_paused'] = 'Sync paused';
+$string['filesync_status_disabled'] = 'Sync disabled';
+$string['filesync_enable'] = 'Enable sync';
+$string['filesync_pause'] = 'Pause sync';
+$string['filesync_disable_remove'] = 'Turn off & clear sync data';
+$string['filesync_resync'] = 'Sync now';
+$string['filesync_files_count'] = '{$a} files synced';
+$string['filesync_progress'] = '{$a}% complete';
+$string['last_sync'] = 'Last sync';
+$string['filesync_error_retry'] = 'Will retry automatically';
+$string['files'] = 'files';

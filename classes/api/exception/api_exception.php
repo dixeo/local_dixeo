@@ -44,7 +44,7 @@ class api_exception extends \moodle_exception {
         $this->httpstatus = $httpstatus;
         $this->details = $details;
 
-        parent::__construct('api_error', 'local_dixeo', '', null, $message);
+        parent::__construct('api_error', 'local_dixeo', '', $message, null);
     }
 
     /**
@@ -89,8 +89,9 @@ class api_exception extends \moodle_exception {
      * Create exception from API error response.
      *
      * Factory method to create the appropriate exception subclass based on error type.
+     * The API returns RFC 7807 format with extensions merged at root level.
      *
-     * @param array $errordata The error data from the API response.
+     * @param array $errordata The error data from the API response (RFC 7807 format).
      * @param int $httpstatus The HTTP status code.
      * @return api_exception The appropriate exception instance.
      */
@@ -99,25 +100,40 @@ class api_exception extends \moodle_exception {
         $message = $errordata['detail'] ?? $errordata['title'] ?? 'Unknown API error';
         $details = $errordata;
 
+        // API merges extensions at root level (not in 'extensions' sub-object).
+        // Map error types from API exception class names to our exception classes.
         return match ($type) {
-            'authentication_failed' => new authentication_exception($message, $details),
-            'payment_required' => new payment_required_exception(
+            // Authentication errors - API uses 'authentication_error' from ApiKeyAuthenticator.
+            'authentication', 'authentication_error' => new authentication_exception($message, $details),
+
+            // Payment/credit errors - API uses 'insufficient_credits' or 'payment_required'.
+            'payment_required', 'insufficient_credits' => new payment_required_exception(
                 $message,
-                $details['current_balance'] ?? null,
+                $errordata['currentBalance'] ?? $errordata['current_balance'] ?? null,
                 $details
             ),
-            'rate_limit_exceeded' => new rate_limit_exception(
+
+            // Rate limiting - API uses 'too_many_requests_http' from TooManyRequestsHttpException.
+            'too_many_requests', 'too_many_requests_http' => new rate_limit_exception(
                 $message,
-                $details['retry_after'] ?? null,
+                $errordata['retryAfter'] ?? $errordata['retry_after'] ?? null,
                 $details
             ),
+
+            // Validation errors - violations at root level.
             'validation_error' => new validation_exception(
                 $message,
-                $details['violations'] ?? [],
+                $errordata['violations'] ?? [],
                 $details
             ),
+
+            // Job not found.
             'job_not_found' => new job_not_found_exception($message, $details),
-            'open_ai_exception' => new openai_exception($message, $details),
+
+            // OpenAI errors - API converts 'OpenAIException' to 'open_a_i'.
+            'open_ai', 'open_a_i' => new openai_exception($message, $details),
+
+            // Default fallback for unknown error types.
             default => new self($type, $message, $httpstatus, $details),
         };
     }

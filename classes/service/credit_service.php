@@ -52,12 +52,15 @@ class credit_service {
      * @throws api_exception If an API error occurs.
      */
     public function get_balance(): credit_balance {
-        $response = $this->client->get('/v1/credits/balance');
+        $response = $this->client->get('/v1/credit-balance');
         return credit_balance::from_array($response);
     }
 
     /**
      * Get transaction history with optional filters.
+     *
+     * The API returns a flat array of transactions (API Platform format).
+     * This method wraps it with pagination metadata for backward compatibility.
      *
      * @param string|null $type Filter by transaction type (deduction, purchase, refund).
      * @param int $limit Maximum number of results.
@@ -77,13 +80,17 @@ class credit_service {
 
         $response = $this->client->get('/v1/credits/transactions', $params);
 
+        // API returns a flat array of transactions (API Platform format).
+        $transactions = is_array($response) ? array_values($response) : [];
+        $count = count($transactions);
+
         return [
-            'transactions' => $response['transactions'] ?? [],
-            'pagination' => $response['pagination'] ?? [
-                'total' => 0,
+            'transactions' => $transactions,
+            'pagination' => [
+                'total' => $count,
                 'limit' => $limit,
                 'offset' => $offset,
-                'has_more' => false,
+                'hasMore' => $count >= $limit,
             ],
         ];
     }
@@ -91,10 +98,13 @@ class credit_service {
     /**
      * Get usage statistics aggregated by period.
      *
+     * The API returns an array of { period: string, creditsUsed: int } objects.
+     * This method normalizes the response to our internal format.
+     *
      * @param string $period Aggregation period (day, week, month).
      * @param string|null $startdate Start date in Y-m-d format.
      * @param string|null $enddate End date in Y-m-d format.
-     * @return array The usage statistics.
+     * @return array The usage statistics with keys: period, start_date, end_date, stats.
      * @throws api_exception If an API error occurs.
      */
     public function get_usage_stats(string $period = 'day', ?string $startdate = null, ?string $enddate = null): array {
@@ -103,20 +113,32 @@ class credit_service {
         ];
 
         if ($startdate !== null) {
-            $params['start_date'] = $startdate;
+            $params['startDate'] = $startdate;
         }
 
         if ($enddate !== null) {
-            $params['end_date'] = $enddate;
+            $params['endDate'] = $enddate;
         }
 
-        $response = $this->client->get('/v1/credits/usage/stats', $params);
+        $response = $this->client->get('/v1/usage-stats', $params);
+
+        // API returns array of { period: string, creditsUsed: int }.
+        // Normalize to our internal format with 'total' key for consistency.
+        $stats = [];
+        if (is_array($response)) {
+            foreach ($response as $item) {
+                $stats[] = [
+                    'period' => $item['period'] ?? '',
+                    'total' => $item['creditsUsed'] ?? 0,
+                ];
+            }
+        }
 
         return [
-            'period' => $response['period'] ?? $period,
-            'start_date' => $response['start_date'] ?? null,
-            'end_date' => $response['end_date'] ?? null,
-            'stats' => $response['stats'] ?? [],
+            'period' => $period,
+            'start_date' => $startdate,
+            'end_date' => $enddate,
+            'stats' => $stats,
         ];
     }
 
@@ -158,7 +180,7 @@ class credit_service {
         $datapoints = count($stats['stats']);
 
         foreach ($stats['stats'] as $stat) {
-            $totalused += $stat['total_credits'] ?? 0;
+            $totalused += $stat['total'] ?? 0;
         }
 
         $average = $datapoints > 0 ? $totalused / $datapoints : 0;

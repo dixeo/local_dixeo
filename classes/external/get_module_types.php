@@ -45,7 +45,16 @@ class get_module_types extends external_api {
             $client = service_factory::get_client();
             $types = $client->get('/v1/modules/types');
 
-            return response_factory::success(['types' => $types['types'] ?? []]);
+            // Check which modules are installed in Moodle.
+            $pluginmanager = \core_plugin_manager::instance();
+            $installedmods = $pluginmanager->get_plugins_of_type('mod');
+
+            foreach ($types as &$type) {
+                $modname = $type['type'];
+                $type['installed'] = isset($installedmods[$modname]);
+            }
+
+            return response_factory::success(['types' => $types]);
 
         } catch (api_exception $e) {
             return response_factory::from_api_exception($e, ['types' => []]);
@@ -67,6 +76,7 @@ class get_module_types extends external_api {
                     'description' => new external_value(PARAM_RAW, 'Module type description'),
                     'category' => new external_value(PARAM_ALPHANUMEXT, 'Category for grouping'),
                     'component' => new external_value(PARAM_ALPHANUMEXT, 'Moodle component identifier'),
+                    'installed' => new external_value(PARAM_BOOL, 'Whether the module plugin is installed'),
                 ]),
                 'List of available module types'
             ),

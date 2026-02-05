@@ -208,7 +208,7 @@ class credit_report_page implements renderable, templatable {
         $statsByDate = [];
         foreach ($stats as $stat) {
             $date = $stat['date'] ?? '';
-            $statsByDate[$date] = $stat['total_credits'] ?? 0;
+            $statsByDate[$date] = $stat['totalCredits'] ?? 0;
         }
 
         // Short day names for chart labels.
@@ -287,11 +287,14 @@ class credit_report_page implements renderable, templatable {
             'amount_formatted' => credit_service::format_credits(abs($amount)),
             'amount_sign' => $amount >= 0 ? '+' : '-',
             'description' => $tx['description'] ?? '',
-            'created_at' => $tx['created_at'] ?? 0,
-            'created_at_formatted' => userdate($tx['created_at'] ?? 0, get_string('strftimedatetime', 'langconfig')),
-            'balance_after' => $tx['balance_after'] ?? null,
-            'balance_after_formatted' => isset($tx['balance_after'])
-                ? credit_service::format_credits($tx['balance_after'])
+            'created_at' => isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
+            'created_at_formatted' => userdate(
+                isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
+                get_string('strftimedatetime', 'langconfig')
+            ),
+            'balance_after' => $tx['balanceAfter'] ?? null,
+            'balance_after_formatted' => isset($tx['balanceAfter'])
+                ? credit_service::format_credits($tx['balanceAfter'])
                 : null,
         ];
     }
@@ -306,7 +309,7 @@ class credit_report_page implements renderable, templatable {
         $total = $apipagination['total'] ?? 0;
         $limit = $apipagination['limit'] ?? $this->limit;
         $offset = $apipagination['offset'] ?? $this->offset;
-        $hasmore = $apipagination['has_more'] ?? false;
+        $hasmore = $apipagination['hasMore'] ?? false;
 
         $totalpages = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $currentpage = $limit > 0 ? (int) floor($offset / $limit) + 1 : 1;
