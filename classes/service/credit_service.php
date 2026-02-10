@@ -123,13 +123,12 @@ class credit_service {
         $response = $this->client->get('/v1/usage-stats', $params);
 
         // API returns array of { period: string, creditsUsed: int }.
-        // Normalize to our internal format with 'total' key for consistency.
         $stats = [];
         if (is_array($response)) {
             foreach ($response as $item) {
                 $stats[] = [
                     'period' => $item['period'] ?? '',
-                    'total' => $item['creditsUsed'] ?? 0,
+                    'creditsUsed' => $item['creditsUsed'] ?? 0,
                 ];
             }
         }
@@ -180,7 +179,7 @@ class credit_service {
         $datapoints = count($stats['stats']);
 
         foreach ($stats['stats'] as $stat) {
-            $totalused += $stat['total'] ?? 0;
+            $totalused += $stat['creditsUsed'] ?? 0;
         }
 
         $average = $datapoints > 0 ? $totalused / $datapoints : 0;

@@ -207,8 +207,8 @@ class credit_report_page implements renderable, templatable {
         // Map API stats by date for quick lookup.
         $statsByDate = [];
         foreach ($stats as $stat) {
-            $date = $stat['date'] ?? '';
-            $statsByDate[$date] = $stat['totalCredits'] ?? 0;
+            $date = $stat['period'] ?? '';
+            $statsByDate[$date] = $stat['creditsUsed'] ?? 0;
         }
 
         // Short day names for chart labels.
