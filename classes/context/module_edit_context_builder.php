@@ -103,7 +103,7 @@ class module_edit_context_builder extends abstract_context_builder {
             $this->course = $DB->get_record('course', ['id' => $this->cm->course], '*', MUST_EXIST);
             $this->modinfo = get_fast_modinfo($this->course);
             $this->cminfo = $this->modinfo->get_cm($this->cmid);
-            $this->section = $this->modinfo->get_section_info($this->cm->section);
+            $this->section = $this->modinfo->get_section_info($this->cminfo->sectionnum);
         }
     }
 
@@ -152,7 +152,7 @@ class module_edit_context_builder extends abstract_context_builder {
         $lines[] = "- **Type:** {$this->cminfo->modname}";
         $lines[] = "- **Name:** {$this->cminfo->name}";
 
-        $position = $this->get_module_position($this->cmid, $this->modinfo, $this->cm->section);
+        $position = $this->get_module_position($this->cmid, $this->modinfo, $this->cminfo->sectionnum);
         $lines[] = "- **Position:** {$position}";
         $lines[] = '';
 
@@ -178,7 +178,7 @@ class module_edit_context_builder extends abstract_context_builder {
      */
     private function buildAdjacentModulesDetailed(): array {
         $lines = [];
-        $sectionModules = $this->get_cms_in_section($this->modinfo, $this->cm->section);
+        $sectionModules = $this->get_cms_in_section($this->modinfo, $this->cminfo->sectionnum);
         $adjacent = $this->find_adjacent_modules($sectionModules, $this->cmid);
 
         if ($adjacent['prev'] !== null) {
