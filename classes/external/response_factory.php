@@ -99,8 +99,6 @@ class response_factory {
         return [
             'completed' => false,
             'job_id' => '',
-            'result' => null,
-            'credits_used' => null,
             'status' => 'failed',
             'progress' => 0,
             'error_message' => $exception->getMessage(),

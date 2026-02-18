@@ -16,6 +16,7 @@ namespace local_dixeo\external;
 use local_dixeo\api\client;
 use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
+use local_dixeo\service\tutor_service;
 
 /**
  * Factory class for creating service instances.
@@ -30,6 +31,9 @@ class service_factory {
 
     /** @var module_generation_service|null Mock module generation service for unit testing. */
     private static ?module_generation_service $testmodulegenerationservice = null;
+
+    /** @var tutor_service|null Mock tutor service instance for unit testing. */
+    private static ?tutor_service $testtutorservice = null;
 
     /** @var client|null Mock client instance for unit testing. */
     private static ?client $testclient = null;
@@ -62,6 +66,21 @@ class service_factory {
         }
 
         return new module_generation_service();
+    }
+
+    /**
+     * Get a tutor_service instance.
+     *
+     * Returns a fresh instance unless a test instance has been set.
+     *
+     * @return tutor_service The service instance.
+     */
+    public static function get_tutor_service(): tutor_service {
+        if (self::$testtutorservice !== null) {
+            return self::$testtutorservice;
+        }
+
+        return new tutor_service();
     }
 
     /**
@@ -103,6 +122,17 @@ class service_factory {
     }
 
     /**
+     * Set a test tutor service instance.
+     *
+     * Use this in unit tests to inject mock services.
+     *
+     * @param tutor_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_tutor_service(?tutor_service $service): void {
+        self::$testtutorservice = $service;
+    }
+
+    /**
      * Set a test client instance.
      *
      * Use this in unit tests to inject mock clients.
@@ -121,6 +151,7 @@ class service_factory {
     public static function reset(): void {
         self::$testjobservice = null;
         self::$testmodulegenerationservice = null;
+        self::$testtutorservice = null;
         self::$testclient = null;
     }
 }

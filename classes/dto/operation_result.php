@@ -206,15 +206,27 @@ class operation_result {
      * @return array The operation result as an array.
      */
     public function to_array(): array {
-        return [
+        $data = [
             'completed' => $this->completed,
             'job_id' => $this->jobid,
-            'result' => $this->result,
-            'credits_used' => $this->creditsused,
             'status' => $this->status,
             'progress' => $this->progress,
-            'error_message' => $this->errormessage,
-            'error_code' => $this->errorcode,
         ];
+
+        // Only include optional fields when set (Moodle rejects null for VALUE_OPTIONAL structures).
+        if ($this->result !== null) {
+            $data['result'] = $this->result;
+        }
+        if ($this->creditsused !== null) {
+            $data['credits_used'] = $this->creditsused;
+        }
+        if ($this->errormessage !== null) {
+            $data['error_message'] = $this->errormessage;
+        }
+        if ($this->errorcode !== null) {
+            $data['error_code'] = $this->errorcode;
+        }
+
+        return $data;
     }
 }

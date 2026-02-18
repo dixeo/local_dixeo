@@ -96,6 +96,7 @@ class polling_config {
                 self::COURSE_GEN_POLL_INTERVAL_MS,
                 self::COURSE_GEN_TIMEOUT_MS
             ),
+            'tutor' => new self(2000, 2000, 90000),
             // Default to generate_module timing for unknown types.
             default => new self(
                 self::GENERATE_INITIAL_DELAY_MS,
