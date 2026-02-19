@@ -59,10 +59,10 @@ class course_ai_repository {
         $record = new \stdClass();
         $record->courseid = $courseid;
         $record->enabled = 1;
-        $record->sync_status = 'none';
-        $record->error_count = 0;
-        $record->enabled_by = $userid;
-        $record->enabled_at = $now;
+        $record->syncstatus = 'none';
+        $record->errorcount = 0;
+        $record->enabledby = $userid;
+        $record->enabledat = $now;
         $record->timecreated = $now;
         $record->timemodified = $now;
 
@@ -93,7 +93,7 @@ class course_ai_repository {
      *
      * @param int $courseid The course ID.
      * @param string $status The new status (none, syncing, synchronized, error, paused).
-     * @param array|null $progress Optional progress data with keys: files_total, files_completed, progress_percent.
+     * @param array|null $progress Optional progress data with keys: filestotal, filescompleted, progresspercent.
      * @return void
      */
     public function update_sync_status(int $courseid, string $status, ?array $progress = null): void {
@@ -106,32 +106,32 @@ class course_ai_repository {
 
         $update = new \stdClass();
         $update->id = $record->id;
-        $update->sync_status = $status;
+        $update->syncstatus = $status;
         $update->timemodified = time();
 
         if ($progress !== null) {
-            if (isset($progress['files_total'])) {
-                $update->files_total = $progress['files_total'];
+            if (isset($progress['filestotal'])) {
+                $update->filestotal = $progress['filestotal'];
             }
-            if (isset($progress['files_completed'])) {
-                $update->files_completed = $progress['files_completed'];
+            if (isset($progress['filescompleted'])) {
+                $update->filescompleted = $progress['filescompleted'];
             }
-            if (isset($progress['progress_percent'])) {
-                $update->progress_percent = $progress['progress_percent'];
+            if (isset($progress['progresspercent'])) {
+                $update->progresspercent = $progress['progresspercent'];
             }
         }
 
         // Track sync timing based on status transitions.
-        if ($status === 'syncing' && $record->sync_status !== 'syncing') {
-            $update->last_sync_started = time();
+        if ($status === 'syncing' && $record->syncstatus !== 'syncing') {
+            $update->lastsyncstarted = time();
         }
 
         if ($status === 'synchronized') {
-            $update->last_sync_completed = time();
+            $update->lastsynccompleted = time();
             // Clear error state on successful sync.
-            $update->error_count = 0;
-            $update->error_message = null;
-            $update->last_error_at = null;
+            $update->errorcount = 0;
+            $update->errormessage = null;
+            $update->lasterrorat = null;
         }
 
         $DB->update_record(self::TABLE, $update);
@@ -156,18 +156,18 @@ class course_ai_repository {
         $update->timemodified = time();
 
         if ($enabled) {
-            $update->enabled_by = $userid;
-            $update->enabled_at = time();
+            $update->enabledby = $userid;
+            $update->enabledat = time();
             // Reset error state when re-enabling.
-            $update->error_count = 0;
-            $update->error_message = null;
-            $update->last_error_at = null;
+            $update->errorcount = 0;
+            $update->errormessage = null;
+            $update->lasterrorat = null;
         } else {
-            $update->disabled_by = $userid;
-            $update->disabled_at = time();
+            $update->disabledby = $userid;
+            $update->disabledat = time();
             // Set status to paused when disabled but keeping files.
-            if ($record->sync_status !== 'none') {
-                $update->sync_status = 'paused';
+            if ($record->syncstatus !== 'none') {
+                $update->syncstatus = 'paused';
             }
         }
 
@@ -193,10 +193,10 @@ class course_ai_repository {
 
         $update = new \stdClass();
         $update->id = $record->id;
-        $update->sync_status = 'error';
-        $update->error_message = $message;
-        $update->error_count = $record->error_count + 1;
-        $update->last_error_at = time();
+        $update->syncstatus = 'error';
+        $update->errormessage = $message;
+        $update->errorcount = $record->errorcount + 1;
+        $update->lasterrorat = time();
         $update->timemodified = time();
 
         $DB->update_record(self::TABLE, $update);
@@ -218,14 +218,14 @@ class course_ai_repository {
 
         $update = new \stdClass();
         $update->id = $record->id;
-        $update->error_count = 0;
-        $update->error_message = null;
-        $update->last_error_at = null;
+        $update->errorcount = 0;
+        $update->errormessage = null;
+        $update->lasterrorat = null;
         $update->timemodified = time();
 
         // Revert to a sensible status.
-        if ($record->sync_status === 'error') {
-            $update->sync_status = $record->last_sync_completed ? 'synchronized' : 'none';
+        if ($record->syncstatus === 'error') {
+            $update->syncstatus = $record->lastsynccompleted ? 'synchronized' : 'none';
         }
 
         $DB->update_record(self::TABLE, $update);
@@ -245,7 +245,7 @@ class course_ai_repository {
             return 0;
         }
 
-        return match ($record->error_count) {
+        return match ($record->errorcount) {
             1 => self::RETRY_DELAY_FIRST,
             2 => self::RETRY_DELAY_SECOND,
             3 => self::RETRY_DELAY_THIRD,
@@ -267,11 +267,11 @@ class course_ai_repository {
             return false;
         }
 
-        if ($record->error_count >= self::MAX_RETRY_COUNT) {
+        if ($record->errorcount >= self::MAX_RETRY_COUNT) {
             return false;
         }
 
-        if ($record->last_error_at === null) {
+        if ($record->lasterrorat === null) {
             return true;
         }
 
@@ -280,7 +280,7 @@ class course_ai_repository {
             return false;
         }
 
-        return (time() - $record->last_error_at) >= $delay;
+        return (time() - $record->lasterrorat) >= $delay;
     }
 
     /**
@@ -299,15 +299,15 @@ class course_ai_repository {
 
         $update = new \stdClass();
         $update->id = $record->id;
-        $update->sync_status = 'none';
-        $update->files_total = null;
-        $update->files_completed = null;
-        $update->progress_percent = null;
-        $update->error_count = 0;
-        $update->error_message = null;
-        $update->last_error_at = null;
-        $update->last_sync_started = null;
-        $update->last_sync_completed = null;
+        $update->syncstatus = 'none';
+        $update->filestotal = null;
+        $update->filescompleted = null;
+        $update->progresspercent = null;
+        $update->errorcount = 0;
+        $update->errormessage = null;
+        $update->lasterrorat = null;
+        $update->lastsyncstarted = null;
+        $update->lastsynccompleted = null;
         $update->timemodified = time();
 
         $DB->update_record(self::TABLE, $update);
@@ -334,7 +334,7 @@ class course_ai_repository {
     public function get_by_status(string $status): array {
         global $DB;
 
-        return $DB->get_records(self::TABLE, ['sync_status' => $status]);
+        return $DB->get_records(self::TABLE, ['syncstatus' => $status]);
     }
 
     /**

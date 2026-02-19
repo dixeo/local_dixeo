@@ -8,29 +8,29 @@
     * courseid - The course ID
     * status - Current sync status (none, syncing, synchronized, error, paused)
     * enabled - Whether sync is enabled
-    * status_class - CSS class for status (none, syncing, synchronized, error, paused, disabled)
+    * statusclass - CSS class for status (none, syncing, synchronized, error, paused, disabled)
     * tooltip - Tooltip text for the button
-    * status_message - Status message for the dropdown
-    * show_progress - Whether to show progress bar
-    * progress_percent - Progress percentage (0-100)
-    * files_total - Total number of files
-    * files_completed - Number of synced files
-    * last_sync - Formatted last sync date (optional)
-    * error_message - Error message if status is error (optional)
+    * statusmessage - Status message for the dropdown
+    * showprogress - Whether to show progress bar
+    * progresspercent - Progress percentage (0-100)
+    * filestotal - Total number of files
+    * filescompleted - Number of synced files
+    * lastsync - Formatted last sync date (optional)
+    * errormessage - Error message if status is error (optional)
 
     Example context (json):
     {
         "courseid": 2,
         "status": "synchronized",
         "enabled": true,
-        "status_class": "synchronized",
+        "statusclass": "synchronized",
         "tooltip": "Files synchronized",
-        "status_message": "15 files synced",
-        "show_progress": false,
-        "progress_percent": 100,
-        "files_total": 15,
-        "files_completed": 15,
-        "last_sync": "15 Jan 2025, 10:30"
+        "statusmessage": "15 files synced",
+        "showprogress": false,
+        "progresspercent": 100,
+        "filestotal": 15,
+        "filescompleted": 15,
+        "lastsync": "15 Jan 2025, 10:30"
     }
 }}
 <div id="dixeo-sync-indicator"
@@ -41,7 +41,7 @@
 
     {{! Branded button - Dixeo + status dot }}
     <button type="button"
-            class="dixeo-sync-btn dixeo-sync-btn--{{status_class}}"
+            class="dixeo-sync-btn dixeo-sync-btn--{{statusclass}}"
             title="{{#str}}filesync_title, local_dixeo{{/str}}: {{tooltip}}"
             aria-label="{{#str}}filesync_title, local_dixeo{{/str}}: {{tooltip}}"
             aria-haspopup="true"
@@ -50,12 +50,12 @@
             id="dixeo-sync-dropdown-toggle">
         <span class="dixeo-sync-btn__brand">Dixeo</span>
         <span class="dixeo-sync-btn__dot" aria-hidden="true"></span>
-        {{#files_total}}
-        <span class="dixeo-sync-btn__count" data-region="sync-badge-count">{{files_total}}</span>
-        {{/files_total}}
-        {{^files_total}}
+        {{#filestotal}}
+        <span class="dixeo-sync-btn__count" data-region="sync-badge-count">{{filestotal}}</span>
+        {{/filestotal}}
+        {{^filestotal}}
         <span class="dixeo-sync-btn__count d-none" data-region="sync-badge-count">0</span>
-        {{/files_total}}
+        {{/filestotal}}
     </button>
 
     {{! Dropdown panel - opens downward }}
@@ -70,31 +70,31 @@
         {{! Status section }}
         <div class="dixeo-sync-dropdown__status">
             <p class="dixeo-sync-dropdown__status-text" data-region="status-message">
-                {{status_message}}
+                {{statusmessage}}
             </p>
-            <p class="dixeo-sync-dropdown__status-meta{{^last_sync}} d-none{{/last_sync}}" data-region="last-sync">
-                {{#last_sync}}{{#str}}last_sync, local_dixeo{{/str}}: {{last_sync}}{{/last_sync}}
+            <p class="dixeo-sync-dropdown__status-meta{{^lastsync}} d-none{{/lastsync}}" data-region="last-sync">
+                {{#lastsync}}{{#str}}last_sync, local_dixeo{{/str}}: {{lastsync}}{{/lastsync}}
             </p>
-            {{#show_progress}}
+            {{#showprogress}}
             <div class="dixeo-sync-dropdown__progress">
                 <div class="dixeo-sync-dropdown__progress-bar"
                      role="progressbar"
-                     style="width: {{progress_percent}}%;"
-                     aria-valuenow="{{progress_percent}}"
+                     style="width: {{progresspercent}}%;"
+                     aria-valuenow="{{progresspercent}}"
                      aria-valuemin="0"
                      aria-valuemax="100"
                      data-region="progress-bar">
                 </div>
             </div>
             <p class="dixeo-sync-dropdown__status-meta" data-region="progress-text">
-                {{files_completed}} / {{files_total}} {{#str}}files, local_dixeo{{/str}}
+                {{filescompleted}} / {{filestotal}} {{#str}}files, local_dixeo{{/str}}
             </p>
-            {{/show_progress}}
+            {{/showprogress}}
         </div>
 
         {{! Error message - always present in DOM for JS toggling }}
-        <div class="dixeo-sync-dropdown__error{{^error_message}} d-none{{/error_message}}" data-region="error-message">
-            {{error_message}}
+        <div class="dixeo-sync-dropdown__error{{^errormessage}} d-none{{/errormessage}}" data-region="error-message">
+            {{errormessage}}
         </div>
 
         {{! Actions - visibility controlled by CSS via data-enabled attribute }}

@@ -6,19 +6,19 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key to course.id"/>
         <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether AI file sync is enabled for this course"/>
-        <FIELD NAME="sync_status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false" COMMENT="Sync status: none, syncing, synchronized, error, paused"/>
-        <FIELD NAME="files_total" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of files to sync"/>
-        <FIELD NAME="files_completed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Number of files successfully synced"/>
-        <FIELD NAME="progress_percent" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="Sync progress percentage 0-100"/>
-        <FIELD NAME="error_message" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error message if status is error"/>
-        <FIELD NAME="error_count" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of consecutive errors for retry backoff"/>
-        <FIELD NAME="last_error_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp of last error"/>
-        <FIELD NAME="last_sync_started" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync started"/>
-        <FIELD NAME="last_sync_completed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync completed successfully"/>
-        <FIELD NAME="enabled_by" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who enabled sync"/>
-        <FIELD NAME="enabled_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was enabled"/>
-        <FIELD NAME="disabled_by" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who disabled sync"/>
-        <FIELD NAME="disabled_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was disabled"/>
+        <FIELD NAME="syncstatus" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="none" SEQUENCE="false" COMMENT="Sync status: none, syncing, synchronized, error, paused"/>
+        <FIELD NAME="filestotal" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of files to sync"/>
+        <FIELD NAME="filescompleted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Number of files successfully synced"/>
+        <FIELD NAME="progresspercent" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="Sync progress percentage 0-100"/>
+        <FIELD NAME="errormessage" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error message if status is error"/>
+        <FIELD NAME="errorcount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of consecutive errors for retry backoff"/>
+        <FIELD NAME="lasterrorat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp of last error"/>
+        <FIELD NAME="lastsyncstarted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync started"/>
+        <FIELD NAME="lastsynccompleted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync completed successfully"/>
+        <FIELD NAME="enabledby" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who enabled sync"/>
+        <FIELD NAME="enabledat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was enabled"/>
+        <FIELD NAME="disabledby" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who disabled sync"/>
+        <FIELD NAME="disabledat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when sync was disabled"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was created"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Timestamp when record was last modified"/>
       </FIELDS>
@@ -27,7 +27,7 @@
         <KEY NAME="fk_courseid" TYPE="foreign-unique" FIELDS="courseid" REFTABLE="course" REFFIELDS="id" COMMENT="Foreign key to course table"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="idx_sync_status" UNIQUE="false" FIELDS="sync_status" COMMENT="Index for filtering by sync status"/>
+        <INDEX NAME="idx_syncstatus" UNIQUE="false" FIELDS="syncstatus" COMMENT="Index for filtering by sync status"/>
         <INDEX NAME="idx_enabled" UNIQUE="false" FIELDS="enabled" COMMENT="Index for filtering enabled courses"/>
       </INDEXES>
     </TABLE>

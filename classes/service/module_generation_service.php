@@ -69,7 +69,7 @@ class module_generation_service {
      * @param string $instructions Instructions for the AI.
      * @param int $courseid The course ID.
      * @param int|null $sectionnumber Target section number.
-     * @return operation_result Pending operation result with job_id.
+     * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
     public function submit_generate_job_for_course(
@@ -87,14 +87,14 @@ class module_generation_service {
     /**
      * Submit a module generation job without polling.
      *
-     * Returns immediately with job_id. Use job_service::get_job_status() to poll.
+     * Returns immediately with jobid. Use job_service::get_job_status() to poll.
      * Prefer submit_generate_job_for_course() which builds context automatically.
      *
      * @param string $moduletype The module type (page, label, quiz, glossary).
      * @param string $instructions Instructions for the AI.
      * @param string $context Course/section context in markdown format.
      * @param int|null $courseid Optional course ID for RAG file search.
-     * @return operation_result Pending operation result with job_id.
+     * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
     public function submit_generate_job(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {

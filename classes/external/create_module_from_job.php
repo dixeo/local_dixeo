@@ -34,7 +34,7 @@ class create_module_from_job extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'job_id' => new external_value(PARAM_RAW, 'The completed job UUID'),
+            'jobid' => new external_value(PARAM_RAW, 'The completed job UUID'),
             'courseid' => new external_value(PARAM_INT, 'The course ID'),
             'sectionnumber' => new external_value(PARAM_INT, 'The section number', VALUE_DEFAULT, 0),
             'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, null),
@@ -54,7 +54,7 @@ class create_module_from_job extends external_api {
      */
     public static function execute(string $jobid, int $courseid, int $sectionnumber = 0, ?int $beforemod = null): array {
         $params = self::validate_parameters(self::execute_parameters(), [
-            'job_id' => $jobid,
+            'jobid' => $jobid,
             'courseid' => $courseid,
             'sectionnumber' => $sectionnumber,
             'beforemod' => $beforemod,
@@ -64,7 +64,7 @@ class create_module_from_job extends external_api {
 
         try {
             $jobService = service_factory::get_job_service();
-            $status = $jobService->get_job_status($params['job_id']);
+            $status = $jobService->get_job_status($params['jobid']);
 
             if (!$status->is_completed()) {
                 return response_factory::module_creation_result(
@@ -132,8 +132,8 @@ class create_module_from_job extends external_api {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether the module was created successfully'),
             'cmid' => new external_value(PARAM_INT, 'The created course module ID (0 if failed)'),
-            'error_message' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
-            'error_code' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
+            'errormessage' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
+            'errorcode' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
     }
 

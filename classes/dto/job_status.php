@@ -201,19 +201,19 @@ class job_status {
      */
     public function to_array(): array {
         $data = [
-            'job_id' => $this->jobid,
+            'jobid' => $this->jobid,
             'type' => $this->type,
             'status' => $this->status,
             'progress' => $this->progress,
-            'created_at' => $this->createdat,
+            'createdat' => $this->createdat,
         ];
 
         if ($this->updatedat !== null) {
-            $data['updated_at'] = $this->updatedat;
+            $data['updatedat'] = $this->updatedat;
         }
 
         if ($this->completedat !== null) {
-            $data['completed_at'] = $this->completedat;
+            $data['completedat'] = $this->completedat;
         }
 
         if ($this->result !== null) {
@@ -221,7 +221,7 @@ class job_status {
         }
 
         if ($this->creditsused !== null) {
-            $data['credits_used'] = $this->creditsused;
+            $data['creditsused'] = $this->creditsused;
         }
 
         // RFC 7807 Problem Details format for errors.
@@ -235,7 +235,7 @@ class job_status {
         }
 
         if ($this->processingtimeseconds !== null) {
-            $data['processing_time_seconds'] = $this->processingtimeseconds;
+            $data['processingtimeseconds'] = $this->processingtimeseconds;
         }
 
         if ($this->namespace !== null) {

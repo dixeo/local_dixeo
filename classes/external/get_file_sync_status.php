@@ -60,12 +60,12 @@ class get_file_sync_status extends external_api {
         return [
             'enabled' => $status->enabled,
             'status' => $status->status,
-            'files_total' => $status->files_total,
-            'files_completed' => $status->files_completed,
-            'progress_percent' => $status->progress_percent,
-            'error_message' => $status->error_message,
-            'last_sync_started' => $status->last_sync_started,
-            'last_sync_completed' => $status->last_sync_completed,
+            'filestotal' => $status->filestotal,
+            'filescompleted' => $status->filescompleted,
+            'progresspercent' => $status->progresspercent,
+            'errormessage' => $status->errormessage,
+            'lastsyncstarted' => $status->lastsyncstarted,
+            'lastsynccompleted' => $status->lastsynccompleted,
         ];
     }
 
@@ -78,12 +78,12 @@ class get_file_sync_status extends external_api {
         return new external_single_structure([
             'enabled' => new external_value(PARAM_BOOL, 'Whether sync is enabled'),
             'status' => new external_value(PARAM_ALPHANUMEXT, 'Sync status (none, syncing, synchronized, outdated, error, paused)'),
-            'files_total' => new external_value(PARAM_INT, 'Total number of files', VALUE_OPTIONAL),
-            'files_completed' => new external_value(PARAM_INT, 'Number of files synced', VALUE_OPTIONAL),
-            'progress_percent' => new external_value(PARAM_INT, 'Progress percentage 0-100', VALUE_OPTIONAL),
-            'error_message' => new external_value(PARAM_RAW, 'Error message if status is error', VALUE_OPTIONAL),
-            'last_sync_started' => new external_value(PARAM_INT, 'Timestamp of last sync start', VALUE_OPTIONAL),
-            'last_sync_completed' => new external_value(PARAM_INT, 'Timestamp of last successful sync', VALUE_OPTIONAL),
+            'filestotal' => new external_value(PARAM_INT, 'Total number of files', VALUE_OPTIONAL),
+            'filescompleted' => new external_value(PARAM_INT, 'Number of files synced', VALUE_OPTIONAL),
+            'progresspercent' => new external_value(PARAM_INT, 'Progress percentage 0-100', VALUE_OPTIONAL),
+            'errormessage' => new external_value(PARAM_RAW, 'Error message if status is error', VALUE_OPTIONAL),
+            'lastsyncstarted' => new external_value(PARAM_INT, 'Timestamp of last sync start', VALUE_OPTIONAL),
+            'lastsynccompleted' => new external_value(PARAM_INT, 'Timestamp of last successful sync', VALUE_OPTIONAL),
         ]);
     }
 }

@@ -30,7 +30,7 @@ class cancel_job extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'job_id' => new external_value(PARAM_RAW, 'The job UUID to cancel'),
+            'jobid' => new external_value(PARAM_RAW, 'The job UUID to cancel'),
         ]);
     }
 
@@ -42,25 +42,25 @@ class cancel_job extends external_api {
      */
     public static function execute(string $jobid): array {
         $params = self::validate_parameters(self::execute_parameters(), [
-            'job_id' => $jobid,
+            'jobid' => $jobid,
         ]);
 
         self::validate_system_capability();
 
         try {
             $service = service_factory::get_job_service();
-            $result = $service->cancel_job($params['job_id']);
+            $result = $service->cancel_job($params['jobid']);
 
             $status = $result['status'] ?? 'cancelled';
             return response_factory::cancellation_result(
-                $params['job_id'],
+                $params['jobid'],
                 true,
                 'Job ' . $status . ' successfully'
             );
 
         } catch (api_exception $e) {
             return response_factory::cancellation_result(
-                $params['job_id'],
+                $params['jobid'],
                 false,
                 $e->getMessage(),
                 $e->get_error_code()
@@ -76,9 +76,9 @@ class cancel_job extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether the cancellation was successful'),
-            'job_id' => new external_value(PARAM_RAW, 'The job UUID'),
+            'jobid' => new external_value(PARAM_RAW, 'The job UUID'),
             'message' => new external_value(PARAM_RAW, 'Status message'),
-            'error_code' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
+            'errorcode' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
     }
 }

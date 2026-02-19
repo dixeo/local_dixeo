@@ -24,7 +24,7 @@
     * error - string|null - Error message if any.
     * balance - object - Credit balance information.
     * usage - object - Weekly usage statistics.
-    * chart_data - string - JSON chart data with today highlighting.
+    * chartdata - string - JSON chart data with today highlighting.
     * transactions - array - Transaction list.
     * pagination - object - Pagination data.
 
@@ -34,11 +34,11 @@
         "balance": {
             "formatted": "9,976 credits",
             "state": "active",
-            "state_class": "success"
+            "stateclass": "success"
         },
         "usage": {
-            "week_total_formatted": "24 credits",
-            "week_range": "Dec 16 - Dec 22"
+            "weektotalformatted": "24 credits",
+            "weekrange": "Dec 16 - Dec 22"
         }
     }
 }}
@@ -47,7 +47,7 @@
         {{{error}}}
     </div>
     {{^configured}}
-        <a href="{{{settings_url}}}" class="btn btn-primary">
+        <a href="{{{settingsurl}}}" class="btn btn-primary">
             {{#str}}configure_api, local_dixeo{{/str}}
         </a>
     {{/configured}}
@@ -62,20 +62,20 @@
         <div class="card-body">
             <div class="d-flex align-items-center" style="gap: 1rem;">
                 <span class="h2 mb-0">{{{balance.formatted}}}</span>
-                <span class="badge bg-{{balance.state_class}}">
-                    {{{balance.state_description}}}
+                <span class="badge bg-{{balance.stateclass}}">
+                    {{{balance.statedescription}}}
                 </span>
             </div>
-            {{#balance.is_frozen}}
+            {{#balance.isfrozen}}
                 <div class="alert alert-warning mt-3 mb-0">
                     {{#str}}account_frozen_warning, local_dixeo{{/str}}
                 </div>
-            {{/balance.is_frozen}}
-            {{#balance.is_suspended}}
+            {{/balance.isfrozen}}
+            {{#balance.issuspended}}
                 <div class="alert alert-danger mt-3 mb-0">
                     {{#str}}account_suspended_warning, local_dixeo{{/str}}
                 </div>
-            {{/balance.is_suspended}}
+            {{/balance.issuspended}}
         </div>
     </div>
 
@@ -83,21 +83,21 @@
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0">{{#str}}usage_statistics, local_dixeo{{/str}}</h4>
-            <span class="text-muted small">{{{usage.week_range}}}</span>
+            <span class="text-muted small">{{{usage.weekrange}}}</span>
         </div>
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-12">
                     <div class="text-muted">{{#str}}week_total, local_dixeo{{/str}}</div>
-                    <div class="h5">{{{usage.week_total_formatted}}}</div>
+                    <div class="h5">{{{usage.weektotalformatted}}}</div>
                 </div>
             </div>
 
-            {{#has_chart_data}}
+            {{#haschartdata}}
                 <div class="chart-container" style="position: relative; height: 250px;">
                     <canvas id="usageChart"></canvas>
                 </div>
-            {{/has_chart_data}}
+            {{/haschartdata}}
         </div>
     </div>
 
@@ -107,7 +107,7 @@
             <h4 class="mb-0">{{#str}}recent_transactions, local_dixeo{{/str}}</h4>
         </div>
         <div class="card-body">
-            {{#has_transactions}}
+            {{#hastransactions}}
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -122,15 +122,15 @@
                             {{#transactions}}
                                 <tr>
                                     <td>
-                                        <span class="text-nowrap">{{{created_at_formatted}}}</span>
+                                        <span class="text-nowrap">{{{createdatformatted}}}</span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{type_class}}">{{{type_label}}}</span>
+                                        <span class="badge bg-{{typeclass}}">{{{typelabel}}}</span>
                                     </td>
                                     <td>{{{description}}}</td>
                                     <td class="text-end">
-                                        <span class="text-{{type_class}}">
-                                            {{amount_sign}}{{{amount_formatted}}}
+                                        <span class="text-{{typeclass}}">
+                                            {{amountsign}}{{{amountformatted}}}
                                         </span>
                                     </td>
                                 </tr>
@@ -139,53 +139,53 @@
                     </table>
                 </div>
 
-                {{#has_pagination}}
+                {{#haspagination}}
                     <nav aria-label="{{#str}}pagination, local_dixeo{{/str}}">
                         <ul class="pagination justify-content-center mb-0">
-                            <li class="page-item {{^pagination.has_prev}}disabled{{/pagination.has_prev}}">
-                                <a class="page-link" href="{{{report_url}}}?offset={{pagination.prev_offset}}">
+                            <li class="page-item {{^pagination.hasprev}}disabled{{/pagination.hasprev}}">
+                                <a class="page-link" href="{{{reporturl}}}?offset={{pagination.prevoffset}}">
                                     {{#str}}previous{{/str}}
                                 </a>
                             </li>
                             <li class="page-item disabled">
                                 <span class="page-link">
-                                    {{#str}}page_x_of_y, local_dixeo, {"current": "{{pagination.current_page}}", "total": "{{pagination.total_pages}}"}{{/str}}
+                                    {{#str}}page_x_of_y, local_dixeo, {"current": "{{pagination.currentpage}}", "total": "{{pagination.totalpages}}"}{{/str}}
                                 </span>
                             </li>
-                            <li class="page-item {{^pagination.has_next}}disabled{{/pagination.has_next}}">
-                                <a class="page-link" href="{{{report_url}}}?offset={{pagination.next_offset}}">
+                            <li class="page-item {{^pagination.hasnext}}disabled{{/pagination.hasnext}}">
+                                <a class="page-link" href="{{{reporturl}}}?offset={{pagination.nextoffset}}">
                                     {{#str}}next{{/str}}
                                 </a>
                             </li>
                         </ul>
                     </nav>
-                {{/has_pagination}}
-            {{/has_transactions}}
-            {{^has_transactions}}
+                {{/haspagination}}
+            {{/hastransactions}}
+            {{^hastransactions}}
                 <div class="alert alert-info mb-0">
                     {{#str}}no_transactions, local_dixeo{{/str}}
                 </div>
-            {{/has_transactions}}
+            {{/hastransactions}}
         </div>
     </div>
 {{/error}}
 
-{{#has_chart_data}}
+{{#haschartdata}}
 {{#js}}
 require(['core/chartjs'], function(Chart) {
     var ctx = document.getElementById('usageChart').getContext('2d');
-    var chartData = {{{chart_data}}};
+    var chartData = {{{chartdata}}};
 
     // Create background colors array with highlight for today
     var backgroundColors = chartData.values.map(function(value, index) {
-        if (chartData.today_index === index) {
+        if (chartData.todayindex === index) {
             return 'rgba(37, 99, 235, 0.8)'; // Bright blue for today
         }
         return 'rgba(148, 163, 184, 0.5)'; // Slate gray for other days
     });
 
     var borderColors = chartData.values.map(function(value, index) {
-        if (chartData.today_index === index) {
+        if (chartData.todayindex === index) {
             return 'rgba(37, 99, 235, 1)'; // Bright blue border for today
         }
         return 'rgba(148, 163, 184, 0.8)'; // Slate gray border for other days
@@ -218,8 +218,8 @@ require(['core/chartjs'], function(Chart) {
                             return context.raw.toLocaleString() + ' credits';
                         },
                         title: function(context) {
-                            var fullLabel = chartData.full_labels[context[0].dataIndex];
-                            if (chartData.today_index === context[0].dataIndex) {
+                            var fullLabel = chartData.fulllabels[context[0].dataIndex];
+                            if (chartData.todayindex === context[0].dataIndex) {
                                 return fullLabel + ' (Today)';
                             }
                             return fullLabel;
@@ -249,4 +249,4 @@ require(['core/chartjs'], function(Chart) {
     });
 });
 {{/js}}
-{{/has_chart_data}}
+{{/haschartdata}}

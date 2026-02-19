@@ -208,7 +208,7 @@ class operation_result {
     public function to_array(): array {
         $data = [
             'completed' => $this->completed,
-            'job_id' => $this->jobid,
+            'jobid' => $this->jobid,
             'status' => $this->status,
             'progress' => $this->progress,
         ];
@@ -218,13 +218,13 @@ class operation_result {
             $data['result'] = $this->result;
         }
         if ($this->creditsused !== null) {
-            $data['credits_used'] = $this->creditsused;
+            $data['creditsused'] = $this->creditsused;
         }
         if ($this->errormessage !== null) {
-            $data['error_message'] = $this->errormessage;
+            $data['errormessage'] = $this->errormessage;
         }
         if ($this->errorcode !== null) {
-            $data['error_code'] = $this->errorcode;
+            $data['errorcode'] = $this->errorcode;
         }
 
         return $data;

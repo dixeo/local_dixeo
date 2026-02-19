@@ -57,5 +57,89 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025122201, 'local', 'dixeo');
     }
 
+    // Rename snake_case columns to concatenated lowercase per Moodle naming convention.
+    if ($oldversion < 2025122204) {
+        $table = new xmldb_table('local_dixeo_course_ai');
+
+        // Only rename if the old columns still exist (idempotent upgrade).
+        if ($dbman->field_exists($table, 'sync_status')) {
+            $field = new xmldb_field('sync_status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'none', 'enabled');
+            $dbman->rename_field($table, $field, 'syncstatus');
+        }
+
+        if ($dbman->field_exists($table, 'files_total')) {
+            $field = new xmldb_field('files_total', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'syncstatus');
+            $dbman->rename_field($table, $field, 'filestotal');
+        }
+
+        if ($dbman->field_exists($table, 'files_completed')) {
+            $field = new xmldb_field('files_completed', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'filestotal');
+            $dbman->rename_field($table, $field, 'filescompleted');
+        }
+
+        if ($dbman->field_exists($table, 'progress_percent')) {
+            $field = new xmldb_field('progress_percent', XMLDB_TYPE_INTEGER, '3', null, null, null, null, 'filescompleted');
+            $dbman->rename_field($table, $field, 'progresspercent');
+        }
+
+        if ($dbman->field_exists($table, 'error_message')) {
+            $field = new xmldb_field('error_message', XMLDB_TYPE_TEXT, null, null, null, null, null, 'progresspercent');
+            $dbman->rename_field($table, $field, 'errormessage');
+        }
+
+        if ($dbman->field_exists($table, 'error_count')) {
+            $field = new xmldb_field('error_count', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'errormessage');
+            $dbman->rename_field($table, $field, 'errorcount');
+        }
+
+        if ($dbman->field_exists($table, 'last_error_at')) {
+            $field = new xmldb_field('last_error_at', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'errorcount');
+            $dbman->rename_field($table, $field, 'lasterrorat');
+        }
+
+        if ($dbman->field_exists($table, 'last_sync_started')) {
+            $field = new xmldb_field('last_sync_started', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'lasterrorat');
+            $dbman->rename_field($table, $field, 'lastsyncstarted');
+        }
+
+        if ($dbman->field_exists($table, 'last_sync_completed')) {
+            $field = new xmldb_field('last_sync_completed', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'lastsyncstarted');
+            $dbman->rename_field($table, $field, 'lastsynccompleted');
+        }
+
+        if ($dbman->field_exists($table, 'enabled_by')) {
+            $field = new xmldb_field('enabled_by', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'lastsynccompleted');
+            $dbman->rename_field($table, $field, 'enabledby');
+        }
+
+        if ($dbman->field_exists($table, 'enabled_at')) {
+            $field = new xmldb_field('enabled_at', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'enabledby');
+            $dbman->rename_field($table, $field, 'enabledat');
+        }
+
+        if ($dbman->field_exists($table, 'disabled_by')) {
+            $field = new xmldb_field('disabled_by', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'enabledat');
+            $dbman->rename_field($table, $field, 'disabledby');
+        }
+
+        if ($dbman->field_exists($table, 'disabled_at')) {
+            $field = new xmldb_field('disabled_at', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'disabledby');
+            $dbman->rename_field($table, $field, 'disabledat');
+        }
+
+        // Replace the old snake_case index with the new concatenated name.
+        $oldindex = new xmldb_index('idx_sync_status', XMLDB_INDEX_NOTUNIQUE, ['syncstatus']);
+        if ($dbman->index_exists($table, $oldindex)) {
+            $dbman->drop_index($table, $oldindex);
+        }
+
+        $newindex = new xmldb_index('idx_syncstatus', XMLDB_INDEX_NOTUNIQUE, ['syncstatus']);
+        if (!$dbman->index_exists($table, $newindex)) {
+            $dbman->add_index($table, $newindex);
+        }
+
+        upgrade_plugin_savepoint(true, 2025122204, 'local', 'dixeo');
+    }
+
     return true;
 }

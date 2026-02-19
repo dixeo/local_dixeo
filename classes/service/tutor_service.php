@@ -53,7 +53,7 @@ class tutor_service {
      * @param int $userid The user ID.
      * @param string $message The user message.
      * @param string $pagecontext Optional page context information.
-     * @return operation_result Pending operation result with job_id.
+     * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
     public function submit_message(int $courseid, int $userid, string $message, string $pagecontext = ''): operation_result {

@@ -58,7 +58,7 @@ class job_failed_exception extends api_exception {
      *
      * @return string The job ID that failed.
      */
-    public function get_job_id(): string {
+    public function get_jobid(): string {
         return $this->jobid;
     }
 

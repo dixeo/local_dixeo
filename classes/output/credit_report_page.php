@@ -73,7 +73,7 @@ class credit_report_page implements renderable, templatable {
             return [
                 'configured' => false,
                 'error' => get_string('api_key_not_configured', 'local_dixeo'),
-                'settings_url' => (new \moodle_url('/admin/settings.php', ['section' => 'local_dixeo']))->out(false),
+                'settingsurl' => (new \moodle_url('/admin/settings.php', ['section' => 'local_dixeo']))->out(false),
             ];
         }
 
@@ -132,34 +132,34 @@ class credit_report_page implements renderable, templatable {
                 'credits' => $balance->credits,
                 'formatted' => $balance->get_formatted_balance(),
                 'state' => $balance->state,
-                'state_description' => $balance->get_state_description(),
-                'state_class' => $this->get_state_class($balance->state),
-                'is_active' => $balance->is_active(),
-                'is_frozen' => $balance->is_frozen(),
-                'is_suspended' => $balance->is_suspended(),
+                'statedescription' => $balance->get_state_description(),
+                'stateclass' => $this->get_state_class($balance->state),
+                'isactive' => $balance->is_active(),
+                'isfrozen' => $balance->is_frozen(),
+                'issuspended' => $balance->is_suspended(),
             ],
 
             // Usage section - weekly view.
             'usage' => [
-                'week_total' => $weektotal,
-                'week_total_formatted' => credit_service::format_credits($weektotal),
-                'week_range' => $this->format_week_range($weekdates),
+                'weektotal' => $weektotal,
+                'weektotalformatted' => credit_service::format_credits($weektotal),
+                'weekrange' => $this->format_week_range($weekdates),
             ],
 
             // Chart data for JavaScript.
-            'chart_data' => json_encode($chartdata),
-            'has_chart_data' => true, // Always show the week chart.
+            'chartdata' => json_encode($chartdata),
+            'haschartdata' => true, // Always show the week chart.
 
             // Transactions table.
             'transactions' => $transactions,
-            'has_transactions' => !empty($transactions),
+            'hastransactions' => !empty($transactions),
 
             // Pagination.
             'pagination' => $pagination,
-            'has_pagination' => $pagination['total_pages'] > 1,
+            'haspagination' => $pagination['totalpages'] > 1,
 
             // URLs.
-            'report_url' => (new \moodle_url('/local/dixeo/credit_report.php'))->out(false),
+            'reporturl' => (new \moodle_url('/local/dixeo/credit_report.php'))->out(false),
         ];
     }
 
@@ -247,10 +247,10 @@ class credit_report_page implements renderable, templatable {
 
         return [
             'labels' => $labels,
-            'full_labels' => $fulllabels,
+            'fulllabels' => $fulllabels,
             'values' => $values,
-            'is_today' => $istoday,
-            'today_index' => array_search(true, $istoday),
+            'istoday' => $istoday,
+            'todayindex' => array_search(true, $istoday),
             'label' => get_string('usage_chart_label', 'local_dixeo'),
         ];
     }
@@ -281,19 +281,19 @@ class credit_report_page implements renderable, templatable {
         return [
             'id' => $tx['id'] ?? '',
             'type' => $type,
-            'type_label' => get_string('transaction_type_' . $type, 'local_dixeo'),
-            'type_class' => $this->get_transaction_type_class($type),
+            'typelabel' => get_string('transaction_type_' . $type, 'local_dixeo'),
+            'typeclass' => $this->get_transaction_type_class($type),
             'amount' => $amount,
-            'amount_formatted' => credit_service::format_credits(abs($amount)),
-            'amount_sign' => $amount >= 0 ? '+' : '-',
+            'amountformatted' => credit_service::format_credits(abs($amount)),
+            'amountsign' => $amount >= 0 ? '+' : '-',
             'description' => $tx['description'] ?? '',
-            'created_at' => isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
-            'created_at_formatted' => userdate(
+            'createdat' => isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
+            'createdatformatted' => userdate(
                 isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
                 get_string('strftimedatetime', 'langconfig')
             ),
-            'balance_after' => $tx['balanceAfter'] ?? null,
-            'balance_after_formatted' => isset($tx['balanceAfter'])
+            'balanceafter' => $tx['balanceAfter'] ?? null,
+            'balanceafterformatted' => isset($tx['balanceAfter'])
                 ? credit_service::format_credits($tx['balanceAfter'])
                 : null,
         ];
@@ -318,13 +318,13 @@ class credit_report_page implements renderable, templatable {
             'total' => $total,
             'limit' => $limit,
             'offset' => $offset,
-            'has_more' => $hasmore,
-            'total_pages' => $totalpages,
-            'current_page' => $currentpage,
-            'has_prev' => $offset > 0,
-            'has_next' => $hasmore,
-            'prev_offset' => max(0, $offset - $limit),
-            'next_offset' => $offset + $limit,
+            'hasmore' => $hasmore,
+            'totalpages' => $totalpages,
+            'currentpage' => $currentpage,
+            'hasprev' => $offset > 0,
+            'hasnext' => $hasmore,
+            'prevoffset' => max(0, $offset - $limit),
+            'nextoffset' => $offset + $limit,
         ];
     }
 

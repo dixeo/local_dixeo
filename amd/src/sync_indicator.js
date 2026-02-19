@@ -283,8 +283,8 @@ const handleEnable = async() => {
             currentStatus = syncResult.status;
             updateIndicatorUI({
                 status: syncResult.status,
-                files_total: syncResult.files_total,
-                files_completed: syncResult.files_completed,
+                filestotal: syncResult.filestotal,
+                filescompleted: syncResult.filescompleted,
                 enabled: true,
             });
         }
@@ -381,8 +381,8 @@ const handleResync = async() => {
             currentStatus = result.status;
             updateIndicatorUI({
                 status: result.status,
-                files_total: result.files_total,
-                files_completed: result.files_completed,
+                filestotal: result.filestotal,
+                filescompleted: result.filescompleted,
                 enabled: true,
             });
         } else {
@@ -542,16 +542,16 @@ const updateIndicatorUI = (status = null) => {
     button.classList.add(`dixeo-sync-btn--${statusClass}`);
 
     // Update progress if available.
-    if (status && status.progress_percent !== null) {
+    if (status && status.progresspercent !== null) {
         const progressBar = container.querySelector('[data-region="progress-bar"]');
         if (progressBar) {
-            progressBar.style.width = `${status.progress_percent}%`;
-            progressBar.setAttribute('aria-valuenow', status.progress_percent);
+            progressBar.style.width = `${status.progresspercent}%`;
+            progressBar.setAttribute('aria-valuenow', status.progresspercent);
         }
 
         const progressText = container.querySelector('[data-region="progress-text"]');
-        if (progressText && status.files_completed !== null && status.files_total !== null) {
-            progressText.textContent = `${status.files_completed} / ${status.files_total}`;
+        if (progressText && status.filescompleted !== null && status.filestotal !== null) {
+            progressText.textContent = `${status.filescompleted} / ${status.filestotal}`;
         }
     }
 
@@ -564,8 +564,8 @@ const updateIndicatorUI = (status = null) => {
     // Show or hide error message based on current status.
     const errorMessage = container.querySelector('[data-region="error-message"]');
     if (errorMessage) {
-        if (status && status.error_message && currentStatus === 'error') {
-            errorMessage.textContent = status.error_message;
+        if (status && status.errormessage && currentStatus === 'error') {
+            errorMessage.textContent = status.errormessage;
             errorMessage.classList.remove('d-none');
         } else {
             errorMessage.classList.add('d-none');
@@ -584,7 +584,7 @@ const updateIndicatorUI = (status = null) => {
 
     // Update badge count.
     if (status) {
-        updateBadgeCount(status.files_total);
+        updateBadgeCount(status.filestotal);
     }
 };
 
@@ -599,14 +599,14 @@ const getStatusMessage = (status) => {
         return strings.filesync_status_disabled || 'Sync disabled';
     }
 
-    if (status.status === 'synchronized' && status.files_total !== null) {
+    if (status.status === 'synchronized' && status.filestotal !== null) {
         const template = strings.filesync_files_count || '{$a} files';
-        return template.replace('{$a}', status.files_total);
+        return template.replace('{$a}', status.filestotal);
     }
 
-    if (status.status === 'syncing' && status.progress_percent !== null) {
+    if (status.status === 'syncing' && status.progresspercent !== null) {
         const template = strings.filesync_progress || '{$a}% complete';
-        return template.replace('{$a}', status.progress_percent);
+        return template.replace('{$a}', status.progresspercent);
     }
 
     const stringKey = `filesync_status_${status.status}`;

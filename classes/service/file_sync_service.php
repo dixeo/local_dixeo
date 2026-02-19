@@ -126,8 +126,8 @@ class file_sync_service {
      * Returns a status object with all relevant fields for UI display.
      *
      * @param int $courseid The course ID.
-     * @return \stdClass Status object with: enabled, status, files_total, files_completed,
-     *                   progress_percent, error_message, last_sync_started, last_sync_completed.
+     * @return \stdClass Status object with: enabled, status, filestotal, filescompleted,
+     *                   progresspercent, errormessage, lastsyncstarted, lastsynccompleted.
      */
     public function get_status(int $courseid): \stdClass {
         $record = $this->repository->get_by_courseid($courseid);
@@ -137,23 +137,23 @@ class file_sync_service {
         if ($record === null) {
             $status->enabled = true;
             $status->status = 'none';
-            $status->files_total = null;
-            $status->files_completed = null;
-            $status->progress_percent = null;
-            $status->error_message = null;
-            $status->last_sync_started = null;
-            $status->last_sync_completed = null;
+            $status->filestotal = null;
+            $status->filescompleted = null;
+            $status->progresspercent = null;
+            $status->errormessage = null;
+            $status->lastsyncstarted = null;
+            $status->lastsynccompleted = null;
             return $status;
         }
 
         $status->enabled = (bool) $record->enabled;
-        $status->status = $record->sync_status;
-        $status->files_total = $record->files_total;
-        $status->files_completed = $record->files_completed;
-        $status->progress_percent = $record->progress_percent;
-        $status->error_message = $record->error_message;
-        $status->last_sync_started = $record->last_sync_started;
-        $status->last_sync_completed = $record->last_sync_completed;
+        $status->status = $record->syncstatus;
+        $status->filestotal = $record->filestotal;
+        $status->filescompleted = $record->filescompleted;
+        $status->progresspercent = $record->progresspercent;
+        $status->errormessage = $record->errormessage;
+        $status->lastsyncstarted = $record->lastsyncstarted;
+        $status->lastsynccompleted = $record->lastsynccompleted;
 
         return $status;
     }
@@ -188,17 +188,17 @@ class file_sync_service {
 
             // Update progress with file count.
             $this->repository->update_sync_status($courseid, 'syncing', [
-                'files_total' => $filecount,
-                'files_completed' => 0,
-                'progress_percent' => 0,
+                'filestotal' => $filecount,
+                'filescompleted' => 0,
+                'progresspercent' => 0,
             ]);
 
             if ($filecount === 0) {
                 // No files to sync - mark as synchronized.
                 $this->repository->update_sync_status($courseid, 'synchronized', [
-                    'files_total' => 0,
-                    'files_completed' => 0,
-                    'progress_percent' => 100,
+                    'filestotal' => 0,
+                    'filescompleted' => 0,
+                    'progresspercent' => 100,
                 ]);
                 return;
             }
@@ -210,9 +210,9 @@ class file_sync_service {
             // Don't mark as 'synchronized' until API confirms indexing is complete.
             $apistatus = $result['status'] ?? 'syncing';
             $this->repository->update_sync_status($courseid, $apistatus, [
-                'files_total' => $result['fileCount'] ?? $filecount,
-                'files_completed' => $result['syncedCount'] ?? 0,
-                'progress_percent' => 0,
+                'filestotal' => $result['fileCount'] ?? $filecount,
+                'filescompleted' => $result['syncedCount'] ?? 0,
+                'progresspercent' => 0,
             ]);
 
             $this->repository->clear_error($courseid);
@@ -247,7 +247,7 @@ class file_sync_service {
         }
 
         // Don't override an active sync.
-        if ($record->sync_status === 'syncing') {
+        if ($record->syncstatus === 'syncing') {
             return;
         }
 
@@ -273,7 +273,7 @@ class file_sync_service {
 
         // Check current status - if already syncing, skip to avoid duplicate work.
         $record = $this->repository->get_by_courseid($courseid);
-        if ($record !== null && $record->sync_status === 'syncing') {
+        if ($record !== null && $record->syncstatus === 'syncing') {
             return;
         }
 
@@ -350,9 +350,9 @@ class file_sync_service {
             $apiStatus = $this->client->get_files_status((string) $courseid);
 
             $progress = [
-                'files_total' => $apiStatus['fileCount'] ?? null,
-                'files_completed' => $apiStatus['syncedCount'] ?? null,
-                'progress_percent' => $apiStatus['progress']['percent'] ?? null,
+                'filestotal' => $apiStatus['fileCount'] ?? null,
+                'filescompleted' => $apiStatus['syncedCount'] ?? null,
+                'progresspercent' => $apiStatus['progress']['percent'] ?? null,
             ];
 
             $status = $apiStatus['status'] ?? 'none';

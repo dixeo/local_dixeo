@@ -30,7 +30,7 @@ class get_job_status extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'job_id' => new external_value(PARAM_RAW, 'The job UUID'),
+            'jobid' => new external_value(PARAM_RAW, 'The job UUID'),
         ]);
     }
 
@@ -42,14 +42,14 @@ class get_job_status extends external_api {
      */
     public static function execute(string $jobid): array {
         $params = self::validate_parameters(self::execute_parameters(), [
-            'job_id' => $jobid,
+            'jobid' => $jobid,
         ]);
 
         self::validate_system_capability();
 
         try {
             $service = service_factory::get_job_service();
-            $status = $service->get_job_status($params['job_id']);
+            $status = $service->get_job_status($params['jobid']);
 
             $data = $status->to_array();
             // Encode result as JSON since it has dynamic structure.
@@ -60,7 +60,7 @@ class get_job_status extends external_api {
             return $data;
 
         } catch (api_exception $e) {
-            return response_factory::job_status_error($params['job_id'], $e);
+            return response_factory::job_status_error($params['jobid'], $e);
         }
     }
 
@@ -71,15 +71,15 @@ class get_job_status extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'job_id' => new external_value(PARAM_RAW, 'The job UUID'),
+            'jobid' => new external_value(PARAM_RAW, 'The job UUID'),
             'type' => new external_value(PARAM_ALPHANUMEXT, 'The job type'),
             'status' => new external_value(PARAM_ALPHA, 'Current status (pending, processing, completed, failed)'),
             'progress' => new external_value(PARAM_INT, 'Progress percentage (0-100)'),
-            'created_at' => new external_value(PARAM_INT, 'Unix timestamp when created'),
-            'updated_at' => new external_value(PARAM_INT, 'Unix timestamp when last updated', VALUE_OPTIONAL),
-            'completed_at' => new external_value(PARAM_INT, 'Unix timestamp when completed', VALUE_OPTIONAL),
+            'createdat' => new external_value(PARAM_INT, 'Unix timestamp when created'),
+            'updatedat' => new external_value(PARAM_INT, 'Unix timestamp when last updated', VALUE_OPTIONAL),
+            'completedat' => new external_value(PARAM_INT, 'Unix timestamp when completed', VALUE_OPTIONAL),
             'result' => new external_value(PARAM_RAW, 'The result data as JSON', VALUE_OPTIONAL),
-            'credits_used' => new external_value(PARAM_INT, 'Credits consumed', VALUE_OPTIONAL),
+            'creditsused' => new external_value(PARAM_INT, 'Credits consumed', VALUE_OPTIONAL),
             // RFC 7807 Problem Details format.
             'error' => new external_single_structure([
                 'type' => new external_value(PARAM_ALPHANUMEXT, 'Error type identifier', VALUE_OPTIONAL),
@@ -87,7 +87,7 @@ class get_job_status extends external_api {
                 'status' => new external_value(PARAM_INT, 'HTTP status code', VALUE_OPTIONAL),
                 'detail' => new external_value(PARAM_RAW, 'Detailed error description', VALUE_OPTIONAL),
             ], 'Error information (RFC 7807)', VALUE_OPTIONAL),
-            'processing_time_seconds' => new external_value(PARAM_FLOAT, 'Processing time in seconds', VALUE_OPTIONAL),
+            'processingtimeseconds' => new external_value(PARAM_FLOAT, 'Processing time in seconds', VALUE_OPTIONAL),
             'namespace' => new external_value(PARAM_RAW, 'The namespace', VALUE_OPTIONAL),
         ]);
     }

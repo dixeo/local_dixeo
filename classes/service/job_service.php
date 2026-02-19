@@ -45,11 +45,11 @@ class job_service {
     /**
      * Submit a job to the API without waiting for completion.
      *
-     * Returns immediately with job_id. Use get_job_status() to poll.
+     * Returns immediately with jobid. Use get_job_status() to poll.
      *
      * @param string $endpoint The API endpoint to submit to.
      * @param array $payload The request payload.
-     * @return operation_result Pending operation result with job_id.
+     * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
     public function submit_job(string $endpoint, array $payload): operation_result {

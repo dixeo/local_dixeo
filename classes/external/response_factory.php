@@ -42,8 +42,8 @@ class response_factory {
     public static function from_api_exception(api_exception $exception, array $defaults = []): array {
         return array_merge($defaults, [
             'success' => false,
-            'error_message' => $exception->getMessage(),
-            'error_code' => $exception->get_error_code(),
+            'errormessage' => $exception->getMessage(),
+            'errorcode' => $exception->get_error_code(),
         ]);
     }
 
@@ -64,8 +64,8 @@ class response_factory {
     ): array {
         return array_merge($defaults, [
             'success' => false,
-            'error_message' => $exception->getMessage(),
-            'error_code' => $errorcode,
+            'errormessage' => $exception->getMessage(),
+            'errorcode' => $errorcode,
         ]);
     }
 
@@ -82,8 +82,8 @@ class response_factory {
     public static function error(string $message, string $errorcode, array $defaults = []): array {
         return array_merge($defaults, [
             'success' => false,
-            'error_message' => $message,
-            'error_code' => $errorcode,
+            'errormessage' => $message,
+            'errorcode' => $errorcode,
         ]);
     }
 
@@ -98,11 +98,11 @@ class response_factory {
     public static function job_error(api_exception $exception): array {
         return [
             'completed' => false,
-            'job_id' => '',
+            'jobid' => '',
             'status' => 'failed',
             'progress' => 0,
-            'error_message' => $exception->getMessage(),
-            'error_code' => $exception->get_error_code(),
+            'errormessage' => $exception->getMessage(),
+            'errorcode' => $exception->get_error_code(),
         ];
     }
 
@@ -120,11 +120,11 @@ class response_factory {
         $errorcode = $exception->get_error_code();
 
         return [
-            'job_id' => $jobid,
+            'jobid' => $jobid,
             'type' => '',
             'status' => 'failed',
             'progress' => 0,
-            'created_at' => 0,
+            'createdat' => 0,
             // RFC 7807 Problem Details format.
             'error' => [
                 'type' => $errorcode,
@@ -152,12 +152,12 @@ class response_factory {
     ): array {
         $response = [
             'success' => $success,
-            'job_id' => $jobid,
+            'jobid' => $jobid,
             'message' => $message,
         ];
 
         if ($errorcode !== null) {
-            $response['error_code'] = $errorcode;
+            $response['errorcode'] = $errorcode;
         }
 
         return $response;
@@ -181,8 +181,8 @@ class response_factory {
         return [
             'success' => $success,
             'cmid' => $cmid,
-            'error_message' => $errormessage,
-            'error_code' => $errorcode,
+            'errormessage' => $errormessage,
+            'errorcode' => $errorcode,
         ];
     }
 }

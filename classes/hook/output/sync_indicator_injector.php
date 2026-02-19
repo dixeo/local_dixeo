@@ -59,7 +59,7 @@ class sync_indicator_injector {
             $COURSE->id,
             $status->status,
             $status->enabled,
-            $status->files_total,
+            $status->filestotal,
         ]);
     }
 
@@ -77,21 +77,21 @@ class sync_indicator_injector {
             'courseid' => $courseid,
             'status' => $status->status,
             'enabled' => $status->enabled,
-            'status_class' => $statusclass,
+            'statusclass' => $statusclass,
             'tooltip' => self::get_tooltip($status),
-            'status_message' => self::get_status_message($status),
-            'show_progress' => $status->status === 'syncing' && $status->progress_percent !== null,
-            'progress_percent' => $status->progress_percent,
-            'files_total' => $status->files_total,
-            'files_completed' => $status->files_completed,
+            'statusmessage' => self::get_status_message($status),
+            'showprogress' => $status->status === 'syncing' && $status->progresspercent !== null,
+            'progresspercent' => $status->progresspercent,
+            'filestotal' => $status->filestotal,
+            'filescompleted' => $status->filescompleted,
         ];
 
-        if ($status->last_sync_completed) {
-            $context['last_sync'] = userdate($status->last_sync_completed, get_string('strftimedatetimeshort', 'core_langconfig'));
+        if ($status->lastsynccompleted) {
+            $context['lastsync'] = userdate($status->lastsynccompleted, get_string('strftimedatetimeshort', 'core_langconfig'));
         }
 
-        if ($status->error_message && $status->status === 'error') {
-            $context['error_message'] = $status->error_message;
+        if ($status->errormessage && $status->status === 'error') {
+            $context['errormessage'] = $status->errormessage;
         }
 
         return $context;
@@ -130,12 +130,12 @@ class sync_indicator_injector {
             return get_string('filesync_status_disabled', 'local_dixeo');
         }
 
-        if ($status->status === 'synchronized' && $status->files_total !== null) {
-            return get_string('filesync_files_count', 'local_dixeo', $status->files_total);
+        if ($status->status === 'synchronized' && $status->filestotal !== null) {
+            return get_string('filesync_files_count', 'local_dixeo', $status->filestotal);
         }
 
-        if ($status->status === 'syncing' && $status->progress_percent !== null) {
-            return get_string('filesync_progress', 'local_dixeo', $status->progress_percent);
+        if ($status->status === 'syncing' && $status->progresspercent !== null) {
+            return get_string('filesync_progress', 'local_dixeo', $status->progresspercent);
         }
 
         if ($status->status === 'outdated') {

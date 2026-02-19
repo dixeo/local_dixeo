@@ -53,6 +53,14 @@ class get_module_types extends external_api {
                 $modname = $type['type'];
                 $type['installed'] = isset($installedmods[$modname]);
             }
+            unset($type);
+
+            // Non-admins only see installed module types (no lock icon / "plugin required" options).
+            if (!is_siteadmin()) {
+                $types = array_values(array_filter($types, function($t) {
+                    return !empty($t['installed']);
+                }));
+            }
 
             return response_factory::success(['types' => $types]);
 
@@ -80,8 +88,8 @@ class get_module_types extends external_api {
                 ]),
                 'List of available module types'
             ),
-            'error_message' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
-            'error_code' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
+            'errormessage' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
+            'errorcode' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
     }
 }

@@ -62,7 +62,7 @@ class process_file_sync extends adhoc_task {
         // Check if a sync was completed recently (within debounce window).
         // This prevents duplicate syncs when user clicks "Sync Now" while a task is pending.
         $status = $service->get_status($courseid);
-        if ($status->last_sync_completed && (time() - $status->last_sync_completed) < self::DEBOUNCE_WINDOW) {
+        if ($status->lastsynccompleted && (time() - $status->lastsynccompleted) < self::DEBOUNCE_WINDOW) {
             mtrace("process_file_sync: Recent sync found for course {$courseid}, skipping");
             return;
         }

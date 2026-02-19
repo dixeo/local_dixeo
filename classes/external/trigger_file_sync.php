@@ -72,8 +72,8 @@ class trigger_file_sync extends external_api {
             return [
                 'success' => true,
                 'status' => $status->status,
-                'files_total' => $status->files_total,
-                'files_completed' => $status->files_completed,
+                'filestotal' => $status->filestotal,
+                'filescompleted' => $status->filescompleted,
             ];
 
         } catch (\Throwable $e) {
@@ -94,8 +94,8 @@ class trigger_file_sync extends external_api {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether the sync succeeded'),
             'status' => new external_value(PARAM_ALPHANUMEXT, 'Current sync status'),
-            'files_total' => new external_value(PARAM_INT, 'Total files synced', VALUE_OPTIONAL),
-            'files_completed' => new external_value(PARAM_INT, 'Files successfully synced', VALUE_OPTIONAL),
+            'filestotal' => new external_value(PARAM_INT, 'Total files synced', VALUE_OPTIONAL),
+            'filescompleted' => new external_value(PARAM_INT, 'Files successfully synced', VALUE_OPTIONAL),
             'error' => new external_value(PARAM_RAW, 'Error message if failed', VALUE_OPTIONAL),
         ]);
     }
