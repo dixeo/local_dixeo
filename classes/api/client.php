@@ -144,7 +144,16 @@ class client {
             }
             $response = $curl->delete($url);
         } else {
-            $response = $curl->post($url, json_encode($data));
+            $jsonPayload = json_encode($data);
+            if ($jsonPayload === false) {
+                throw new api_exception(
+                    'invalid_payload',
+                    'Failed to encode request payload as JSON: ' . json_last_error_msg(),
+                    0
+                );
+            }
+
+            $response = $curl->post($url, $jsonPayload);
         }
 
         // Check for curl errors.

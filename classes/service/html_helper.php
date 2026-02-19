@@ -60,18 +60,19 @@ class html_helper {
      * @return string The truncated context with indicator if truncated.
      */
     public function truncate_context(string $context, int $maxsize = self::MAX_CONTEXT_SIZE): string {
-        if (strlen($context) <= $maxsize) {
+        if ($this->byte_length($context) <= $maxsize) {
             return $context;
         }
 
-        $truncated = substr($context, 0, $maxsize - self::TRUNCATION_SUFFIX_SPACE);
+        $truncateAt = $maxsize - self::TRUNCATION_SUFFIX_SPACE;
+        $truncated = $this->utf8_strcut($context, 0, $truncateAt);
 
         // Try to truncate at a reasonable boundary (newline).
-        $lastnewline = strrpos($truncated, "\n");
+        $lastnewline = $this->utf8_strrpos($truncated, "\n");
         $boundaryLimit = $maxsize - self::TRUNCATION_BOUNDARY_SEARCH;
 
         if ($lastnewline !== false && $lastnewline > $boundaryLimit) {
-            $truncated = substr($truncated, 0, $lastnewline);
+            $truncated = $this->utf8_substr($truncated, 0, $lastnewline);
         }
 
         return $truncated . "\n\n[Context truncated due to size limit]";
@@ -87,10 +88,58 @@ class html_helper {
      * @return string The truncated text with ellipsis if truncated.
      */
     public function truncate_text(string $text, int $maxlength): string {
-        if (strlen($text) <= $maxlength) {
+        if ($this->utf8_length($text) <= $maxlength) {
             return $text;
         }
 
-        return substr($text, 0, $maxlength - 3) . '...';
+        return $this->utf8_substr($text, 0, $maxlength - 3) . '...';
+    }
+
+    private function byte_length(string $text): int {
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($text, '8bit');
+        }
+
+        return strlen($text);
+    }
+
+    private function utf8_length(string $text): int {
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($text, 'UTF-8');
+        }
+
+        return strlen($text);
+    }
+
+    private function utf8_substr(string $text, int $start, ?int $length = null): string {
+        if (function_exists('mb_substr')) {
+            if ($length === null) {
+                return mb_substr($text, $start, null, 'UTF-8');
+            }
+
+            return mb_substr($text, $start, $length, 'UTF-8');
+        }
+
+        if ($length === null) {
+            return substr($text, $start);
+        }
+
+        return substr($text, $start, $length);
+    }
+
+    private function utf8_strcut(string $text, int $start, int $length): string {
+        if (function_exists('mb_strcut')) {
+            return mb_strcut($text, $start, $length, 'UTF-8');
+        }
+
+        return substr($text, $start, $length);
+    }
+
+    private function utf8_strrpos(string $text, string $needle): int|false {
+        if (function_exists('mb_strrpos')) {
+            return mb_strrpos($text, $needle, 0, 'UTF-8');
+        }
+
+        return strrpos($text, $needle);
     }
 }
