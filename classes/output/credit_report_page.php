@@ -82,7 +82,7 @@ class credit_report_page implements renderable, templatable {
         } catch (\Exception $e) {
             return [
                 'configured' => true,
-                'error' => get_string('api_error', 'local_dixeo', $e->getMessage()),
+                'error' => $e->getMessage(),
             ];
         }
     }

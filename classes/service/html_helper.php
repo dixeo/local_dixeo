@@ -47,6 +47,10 @@ class html_helper {
         // Normalize whitespace to single spaces.
         $text = preg_replace('/\s+/', ' ', $text);
 
+        // Strip invalid UTF-8 byte sequences to prevent json_encode() failures
+        // when database content contains non-UTF-8 characters (e.g. from Word copy-paste).
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+
         return trim($text);
     }
 

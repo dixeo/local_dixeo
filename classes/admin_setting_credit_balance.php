@@ -149,7 +149,7 @@ class admin_setting_credit_balance extends \admin_setting {
 
             return \html_writer::tag(
                 'div',
-                get_string('api_error', 'local_dixeo', $message),
+                $message,
                 ['class' => 'alert alert-danger']
             );
         }
