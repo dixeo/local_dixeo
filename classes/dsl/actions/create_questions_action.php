@@ -134,7 +134,7 @@ class create_questions_action {
 
             // Create resolver with this question's data for per-item field resolution.
             $itemresolver = $resolver->with_ai_data($itemdata);
-            $resolvedfields = $itemresolver->resolve_fields($fieldsspec);
+            $resolvedfields = $itemresolver->resolve_fields($fieldsspec, true);
 
             // Resolve question_type per item (supports both static string and dynamic source).
             $questiontype = $this->resolve_question_type($questiontypespec, $itemresolver);

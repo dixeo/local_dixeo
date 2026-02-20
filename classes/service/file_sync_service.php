@@ -317,7 +317,7 @@ class file_sync_service {
                 continue;
             }
 
-            if (!$cm->uservisible) {
+            if (!$cm->visible) {
                 continue;
             }
 

@@ -114,10 +114,17 @@ class create_module_from_job extends external_api {
                 $e->get_error_code()
             );
         } catch (\Exception $e) {
+            // For moodle_exception (including dsl_exception), getMessage() returns the
+            // language string key, not the detailed error. Extract debuginfo for details.
+            $message = $e->getMessage();
+            if ($e instanceof \moodle_exception && !empty($e->debuginfo)) {
+                $message = $e->debuginfo;
+            }
+
             return response_factory::module_creation_result(
                 false,
                 0,
-                $e->getMessage(),
+                $message,
                 'dsl_execution_error'
             );
         }

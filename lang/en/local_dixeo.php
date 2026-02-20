@@ -132,6 +132,9 @@ $string['credits'] = 'credits';
 // Privacy.
 $string['privacy:metadata'] = 'The Dixeo plugin sends course content to the Dixeo AI API for processing but does not store personal data locally.';
 
+// DSL errors.
+$string['dsl_error'] = 'Module creation failed: {$a}';
+
 // Quiz question feedback.
 $string['feedback_correct'] = 'Correct!';
 

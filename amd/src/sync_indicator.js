@@ -48,11 +48,11 @@ export const init = async(courseid, status, enabled, filesTotal) => {
     currentStatus = status;
     isEnabled = enabled;
 
+    // Relocate before async ops to avoid race conditions with other modules.
+    relocateToTitle();
+
     // Load language strings.
     await loadStrings();
-
-    // Relocate indicator next to course title.
-    relocateToTitle();
 
     // Update badge count on init.
     updateBadgeCount(filesTotal);

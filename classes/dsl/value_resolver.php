@@ -304,14 +304,23 @@ class value_resolver {
      * Resolve all fields in a fields specification array.
      *
      * @param array $fieldsspec The fields specification (field => {"source": ...} or {"value": ...}).
+     * @param bool $islenient When true, missing data paths resolve to null instead of throwing.
+     *                        Use for union field specs where items have different shapes (e.g., quiz question types).
      * @return array The resolved field values.
-     * @throws dsl_exception If any field cannot be resolved.
+     * @throws dsl_exception If any field cannot be resolved (when not lenient).
      */
-    public function resolve_fields(array $fieldsspec): array {
+    public function resolve_fields(array $fieldsspec, bool $islenient = false): array {
         $resolved = [];
 
         foreach ($fieldsspec as $fieldname => $fieldspec) {
-            $resolved[$fieldname] = $this->resolve($fieldspec, $fieldname);
+            try {
+                $resolved[$fieldname] = $this->resolve($fieldspec, $fieldname);
+            } catch (dsl_exception $e) {
+                if (!$islenient) {
+                    throw $e;
+                }
+                $resolved[$fieldname] = null;
+            }
         }
 
         return $resolved;

@@ -40,7 +40,7 @@ class dsl_exception extends \moodle_exception {
         $this->actiontype = $actiontype;
         $this->context = $context;
 
-        parent::__construct('dsl_error', 'local_dixeo', '', null, $message);
+        parent::__construct('dsl_error', 'local_dixeo', '', $message, $message);
 
         // Chain the previous exception if provided.
         if ($previous !== null) {
