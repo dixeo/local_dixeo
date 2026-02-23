@@ -22,7 +22,7 @@ function xmldb_local_dixeo_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     // Upgrade to add the course_ai table for file sync tracking.
-    if ($oldversion < 2025122201) {
+    if ($oldversion < 2026022300) {
         $table = new xmldb_table('local_dixeo_course_ai');
 
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
@@ -54,11 +54,11 @@ function xmldb_local_dixeo_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-        upgrade_plugin_savepoint(true, 2025122201, 'local', 'dixeo');
+        upgrade_plugin_savepoint(true, 2026022300, 'local', 'dixeo');
     }
 
     // Rename snake_case columns to concatenated lowercase per Moodle naming convention.
-    if ($oldversion < 2025122204) {
+    if ($oldversion < 2026022301) {
         $table = new xmldb_table('local_dixeo_course_ai');
 
         // Only rename if the old columns still exist (idempotent upgrade).
@@ -138,7 +138,7 @@ function xmldb_local_dixeo_upgrade($oldversion) {
             $dbman->add_index($table, $newindex);
         }
 
-        upgrade_plugin_savepoint(true, 2025122204, 'local', 'dixeo');
+        upgrade_plugin_savepoint(true, 2026022301, 'local', 'dixeo');
     }
 
     return true;
