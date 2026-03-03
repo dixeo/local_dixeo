@@ -41,9 +41,9 @@ $string['api_configuration_desc'] = 'Verbindung zur Dixeo-AI-API konfigurieren.'
 $string['api_url'] = 'API-URL';
 $string['api_url_desc'] = 'Basis-URL für die Dixeo-API. Standard: https://api.dixeo.com';
 $string['api_key'] = 'API-Schlüssel';
-$string['api_key_desc'] = 'Ihr Dixeo-API-Schlüssel. Erhalten Sie einen im Dixeo-Dashboard.';
+$string['api_key_desc'] = 'Ihr Dixeo-API-Schlüssel. Sie erhalten ihn im Dixeo-Dashboard.';
 $string['namespace'] = 'Namespace';
-$string['namespace_desc'] = 'Nur erforderlich, wenn mehrere Moodle-Sites denselben API-Schlüssel nutzen. Jede Site sollte einen anderen Namespace verwenden (z. B. "production", "staging", "site1"), um Daten getrennt zu halten. Lassen Sie "default", wenn dies die einzige Site ist, die diesen API-Schlüssel verwendet.';
+$string['namespace_desc'] = 'Nur erforderlich, wenn mehrere Moodle-Sites denselben API-Schlüssel nutzen. Jede Website sollte einen anderen Namespace verwenden (z. B. "production", "staging", "site1"), um Daten getrennt zu halten. Lassen Sie "default", wenn dies die einzige Website ist, die diesen API-Schlüssel verwendet.';
 $string['credit_information'] = 'Kreditinformationen';
 $string['current_balance'] = 'Aktueller Kontostand';
 $string['current_balance_desc'] = 'Ihr aktueller Dixeo-Kreditstand. Credits werden für KI-Operationen verwendet.';
@@ -59,9 +59,9 @@ $string['state_suspended'] = 'Gesperrt';
 // Credit report page.
 $string['usage_statistics'] = 'Nutzungsstatistiken';
 $string['this_week_usage'] = 'Diese Woche';
-$string['week_total'] = 'Gesamt diese Woche';
+$string['week_total'] = 'Gesamtverbrauch diese Woche';
 $string['recent_transactions'] = 'Transaktionsverlauf';
-$string['total_used'] = 'Gesamt verwendet';
+$string['total_used'] = 'Gesamtverbrauch';
 $string['average_per_period'] = 'Durchschnitt pro {$a}';
 $string['data_points'] = 'Datenpunkte';
 $string['no_usage_data'] = 'Keine Nutzungsdaten für den gewählten Zeitraum verfügbar.';
@@ -110,7 +110,7 @@ $string['page_x_of_y'] = 'Seite {$a->current} von {$a->total}';
 // Warnings and errors.
 $string['api_key_not_configured'] = 'Der Dixeo-API-Schlüssel ist nicht konfiguriert. Bitte konfigurieren Sie ihn in den Plugin-Einstellungen.';
 $string['api_error'] = 'API-Fehler: {$a}';
-$string['account_frozen_warning'] = 'Ihr Konto ist wegen niedrigem Kreditstand eingefroren. Bitte laden Sie Credits auf, um Dixeo-AI-Funktionen weiter zu nutzen.';
+$string['account_frozen_warning'] = 'Ihr Konto ist wegen niedrigen Kreditstands eingefroren. Bitte laden Sie Credits auf, um Dixeo-AI-Funktionen weiter zu nutzen.';
 $string['account_suspended_warning'] = 'Ihr Konto wurde gesperrt. Bitte wenden Sie sich an den Dixeo-Support.';
 
 // Errors (used in exceptions).
@@ -143,7 +143,7 @@ $string['task_process_file_sync'] = 'Dixeo-Dateisynchronisation verarbeiten';
 $string['filesync_title'] = 'Dixeo-Dateisynchronisation';
 $string['filesync_label'] = 'Synchronisieren';
 $string['filesync_status_none'] = 'Keine Dateien synchronisiert';
-$string['filesync_status_syncing'] = 'Synchronisiere Dateien...';
+$string['filesync_status_syncing'] = 'Dateien werden synchronisiert...';
 $string['filesync_status_synchronized'] = 'Dateien synchronisiert';
 $string['filesync_status_error'] = 'Synchronisationsfehler';
 $string['filesync_status_outdated'] = 'Inhalt geändert, Synchronisation nötig';
