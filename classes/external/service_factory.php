@@ -14,6 +14,8 @@
 namespace local_dixeo\external;
 
 use local_dixeo\api\client;
+use local_dixeo\service\course_structure_service;
+use local_dixeo\service\course_template_service;
 use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
 use local_dixeo\service\tutor_service;
@@ -34,6 +36,12 @@ class service_factory {
 
     /** @var tutor_service|null Mock tutor service instance for unit testing. */
     private static ?tutor_service $testtutorservice = null;
+
+    /** @var course_structure_service|null Mock course structure service for unit testing. */
+    private static ?course_structure_service $testcoursestructureservice = null;
+
+    /** @var course_template_service|null Mock course template service for unit testing. */
+    private static ?course_template_service $testcoursetemplateservice = null;
 
     /** @var client|null Mock client instance for unit testing. */
     private static ?client $testclient = null;
@@ -81,6 +89,36 @@ class service_factory {
         }
 
         return new tutor_service();
+    }
+
+    /**
+     * Get a course_structure_service instance.
+     *
+     * Returns a fresh instance unless a test instance has been set.
+     *
+     * @return course_structure_service The service instance.
+     */
+    public static function get_course_structure_service(): course_structure_service {
+        if (self::$testcoursestructureservice !== null) {
+            return self::$testcoursestructureservice;
+        }
+
+        return new course_structure_service();
+    }
+
+    /**
+     * Get a course_template_service instance.
+     *
+     * Returns a fresh instance unless a test instance has been set.
+     *
+     * @return course_template_service The service instance.
+     */
+    public static function get_course_template_service(): course_template_service {
+        if (self::$testcoursetemplateservice !== null) {
+            return self::$testcoursetemplateservice;
+        }
+
+        return new course_template_service();
     }
 
     /**
@@ -133,6 +171,28 @@ class service_factory {
     }
 
     /**
+     * Set a test course structure service instance.
+     *
+     * Use this in unit tests to inject mock services.
+     *
+     * @param course_structure_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_course_structure_service(?course_structure_service $service): void {
+        self::$testcoursestructureservice = $service;
+    }
+
+    /**
+     * Set a test course template service instance.
+     *
+     * Use this in unit tests to inject mock services.
+     *
+     * @param course_template_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_course_template_service(?course_template_service $service): void {
+        self::$testcoursetemplateservice = $service;
+    }
+
+    /**
      * Set a test client instance.
      *
      * Use this in unit tests to inject mock clients.
@@ -152,6 +212,8 @@ class service_factory {
         self::$testjobservice = null;
         self::$testmodulegenerationservice = null;
         self::$testtutorservice = null;
+        self::$testcoursestructureservice = null;
+        self::$testcoursetemplateservice = null;
         self::$testclient = null;
     }
 }

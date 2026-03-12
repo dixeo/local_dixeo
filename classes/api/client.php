@@ -91,6 +91,18 @@ class client {
     }
 
     /**
+     * Send a PUT request to the API.
+     *
+     * @param string $endpoint The API endpoint (e.g., '/v1/courses/templates/{id}').
+     * @param array $data The request payload.
+     * @return array The decoded response data.
+     * @throws api_exception If the request fails.
+     */
+    public function put(string $endpoint, array $data = []): array {
+        return $this->request('PUT', $endpoint, $data);
+    }
+
+    /**
      * Send an HTTP request to the API.
      *
      * @param string $method The HTTP method (GET, POST, etc.).
@@ -153,6 +165,9 @@ class client {
                 );
             }
 
+            if ($method === 'PUT') {
+                $curl->setopt(['CURLOPT_CUSTOMREQUEST' => 'PUT']);
+            }
             $response = $curl->post($url, $jsonPayload);
         }
 
@@ -185,6 +200,11 @@ class client {
 
         // Debug logging.
         debugging('Dixeo API Response - HTTP Code: ' . $httpcode . ', Response: ' . substr($response, 0, 1000), DEBUG_DEVELOPER);
+
+        // Handle 204 No Content (e.g., DELETE responses) — no body to parse.
+        if ($httpcode === 204) {
+            return [];
+        }
 
         // Handle JSON parse errors.
         if (json_last_error() !== JSON_ERROR_NONE) {

@@ -74,7 +74,7 @@ class polling_config {
      * Job types have different expected processing times:
      * - edit_module: Fast edits to existing content (~2-5 seconds)
      * - generate_module: Creating new modules (~5-15 seconds)
-     * - course_gen: Full course generation (~30-120 seconds)
+     * - generate_course_structure: AI-driven course outline generation (~30-120 seconds)
      *
      * @param string $jobtype The job type identifier.
      * @return self The polling configuration for the job type.
@@ -91,7 +91,7 @@ class polling_config {
                 self::GENERATE_POLL_INTERVAL_MS,
                 self::GENERATE_TIMEOUT_MS
             ),
-            'course_gen' => new self(
+            'generate_course_structure' => new self(
                 self::COURSE_GEN_INITIAL_DELAY_MS,
                 self::COURSE_GEN_POLL_INTERVAL_MS,
                 self::COURSE_GEN_TIMEOUT_MS

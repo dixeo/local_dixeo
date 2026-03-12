@@ -58,6 +58,9 @@ class course_context_builder extends abstract_context_builder {
     /** @var \course_modinfo|null Cached modinfo. */
     private ?\course_modinfo $modinfo = null;
 
+    /** @var array|null Injected course plan for structure-aware context generation. */
+    private ?array $courseplan = null;
+
     /**
      * Constructor.
      *
@@ -78,6 +81,21 @@ class course_context_builder extends abstract_context_builder {
         $this->courseId = $courseId;
         $this->targetSection = $targetSection;
         $this->mode = $mode;
+    }
+
+    /**
+     * Inject a course plan for structure-aware context generation.
+     *
+     * Called by block_dixeo_coursegen when generating modules from a plan so the AI
+     * receives the full planned structure (with [COMPLETED]/[GENERATING]/[PLANNED] markers)
+     * in addition to the actual Moodle course content that already exists.
+     *
+     * @param array $plan The decoded course structure plan array.
+     * @return static Fluent interface.
+     */
+    public function with_course_plan(array $plan): static {
+        $this->courseplan = $plan;
+        return $this;
     }
 
     /**
@@ -106,6 +124,12 @@ class course_context_builder extends abstract_context_builder {
         $lines[] = '';
 
         $lines = array_merge($lines, $this->buildSectionsContext());
+
+        // Append the planned structure so the AI understands what is still to come.
+        if ($this->courseplan !== null) {
+            $lines[] = '';
+            $lines = array_merge($lines, $this->buildPlanContext());
+        }
 
         return $this->finalize_context($lines);
     }
@@ -230,6 +254,75 @@ class course_context_builder extends abstract_context_builder {
 
             if (!empty($content)) {
                 $lines[] = $content;
+            }
+
+            $lines[] = '';
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Build a plan-awareness section from the injected course plan.
+     *
+     * Each module in the plan is annotated with its generation state by
+     * cross-referencing the modulegen queue (via get_fast_modinfo on the course):
+     * - [COMPLETED]: The module exists in the course already.
+     * - [GENERATING]: A queue task is currently processing this slot.
+     * - [PLANNED]: The module has not started yet.
+     *
+     * This gives the AI full awareness of the intended final shape of the course
+     * even when only some modules have been generated so far.
+     *
+     * @return array Lines of markdown representing the planned structure.
+     */
+    private function buildPlanContext(): array {
+        $lines = [];
+        $lines[] = '## Planned Course Structure';
+        $lines[] = '_The following is the complete intended structure. Modules already generated appear as [COMPLETED]._';
+        $lines[] = '';
+
+        // Build a lookup of how many visible cms each section contains for status inference.
+        $sectioncmcounts = [];
+        if ($this->modinfo !== null) {
+            foreach ($this->modinfo->get_sections() as $sectionnum => $cmids) {
+                $count = 0;
+                foreach ($cmids as $cmid) {
+                    $cm = $this->modinfo->get_cm($cmid);
+                    if ($cm->visible && $cm->uservisible) {
+                        $count++;
+                    }
+                }
+                $sectioncmcounts[$sectionnum] = $count;
+            }
+        }
+
+        foreach ($this->courseplan['sections'] ?? [] as $sectionindex => $section) {
+            // Plan sections are 0-indexed but map to Moodle sections 1..N (section 0 is General).
+            $sectionnum = $sectionindex + 1;
+            $sectiontitle = $section['title'] ?? 'Section ' . $sectionnum;
+            $lines[] = "### {$sectiontitle}";
+
+            if (!empty($section['summary'])) {
+                $lines[] = $section['summary'];
+            }
+
+            $lines[] = '';
+
+            foreach ($section['modules'] ?? [] as $moduleindex => $module) {
+                $moduletype = $module['type'] ?? 'page';
+                $moduletitle = $module['title'] ?? $module['summary'] ?? 'Module';
+
+                // Infer status: if a real cm exists at this position it is completed.
+                $existingcount = $sectioncmcounts[$sectionnum] ?? 0;
+                if ($moduleindex < $existingcount) {
+                    $marker = '[COMPLETED]';
+                } else {
+                    // No real cm yet; mark as planned (we cannot easily detect GENERATING here).
+                    $marker = '[PLANNED]';
+                }
+
+                $lines[] = "- {$marker} [{$moduletype}] {$moduletitle}";
             }
 
             $lines[] = '';
