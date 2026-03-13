@@ -1,8 +1,8 @@
 <?php
 /**
- * Service for AI-powered module generation and editing.
+ * Service for AI-powered module generation and fill operations.
  *
- * Handles module generation and regeneration (editing) operations,
+ * Handles module generation (create) and fill (content-only) operations,
  * building appropriate context and submitting jobs to the Dixeo API.
  *
  * @package    local_dixeo
@@ -19,18 +19,24 @@ use local_dixeo\context\course_context_builder;
 use local_dixeo\dto\operation_result;
 
 /**
- * Service for module generation and editing operations.
+ * Service for module generation and fill operations.
  */
 class module_generation_service {
 
-    /** @var string API endpoint for module generation. */
+    /** @var string API endpoint for module generation (create mode). */
     private const GENERATE_ENDPOINT = '/v1/modules/generate';
 
-    /** @var string API endpoint for module editing. */
+    /** @var string API endpoint for module fill (content only, no name/intro). */
+    private const FILL_ENDPOINT = '/v1/modules/fill';
+
+    /** @var string API endpoint for module editing (surgical edits to existing content). */
     private const EDIT_ENDPOINT = '/v1/modules/edit';
 
     /** @var string Job type for generation operations. */
     private const JOB_TYPE_GENERATE = 'generate_module';
+
+    /** @var string Job type for fill operations. */
+    private const JOB_TYPE_FILL = 'fill_module';
 
     /** @var string Job type for edit operations. */
     private const JOB_TYPE_EDIT = 'edit_module';
@@ -104,6 +110,60 @@ class module_generation_service {
     }
 
     /**
+     * Submit a module fill job for a course (content only, no name/intro).
+     *
+     * Used for structure-based generation where the module title and summary
+     * are already defined. Enriches the course context with module metadata
+     * so the AI generates coherent content.
+     *
+     * @param string $moduletype The module type (page, label, quiz, glossary).
+     * @param string $instructions Instructions for the AI.
+     * @param int $courseid The course ID.
+     * @param int|null $sectionnumber Target section number.
+     * @param string $title The module title from the course structure.
+     * @param string $summary The module summary from the course structure.
+     * @return operation_result Pending operation result with jobid.
+     * @throws api_exception If the API request fails.
+     */
+    public function submit_fill_job_for_course(
+        string $moduletype,
+        string $instructions,
+        int $courseid,
+        ?int $sectionnumber,
+        string $title,
+        string $summary
+    ): operation_result {
+        $mode = $this->get_context_mode($moduletype);
+        $context = context_builder_factory::buildModuleFillContext(
+            $courseid,
+            $sectionnumber,
+            $mode,
+            $title,
+            $summary
+        );
+
+        return $this->submit_fill_job($moduletype, $instructions, $context, $courseid);
+    }
+
+    /**
+     * Submit a module fill job without polling (content only, no name/intro).
+     *
+     * Returns immediately with jobid. Use job_service::get_job_status() to poll.
+     *
+     * @param string $moduletype The module type (page, label, quiz, glossary).
+     * @param string $instructions Instructions for the AI.
+     * @param string $context Course/section context in markdown format.
+     * @param int|null $courseid Optional course ID for RAG file search.
+     * @return operation_result Pending operation result with jobid.
+     * @throws api_exception If the API request fails.
+     */
+    public function submit_fill_job(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+        $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
+
+        return $this->jobService->submit_job(self::FILL_ENDPOINT, $payload);
+    }
+
+    /**
      * Generate a new module using AI (blocking).
      *
      * Submits a generation request and polls for completion.
@@ -126,9 +186,67 @@ class module_generation_service {
     }
 
     /**
-     * Regenerate (edit) an existing module using AI.
+     * Fill a module using AI (content only, no name/intro generated).
      *
-     * Submits an edit request and polls for completion.
+     * Submits a fill request and polls for completion.
+     * Used for editing existing modules and generating content from a course structure.
+     *
+     * @param string $moduletype The module type (page, label, quiz, etc.).
+     * @param string $instructions Instructions for the AI.
+     * @param string $context Course/section context (includes existing content for edits).
+     * @param int|null $courseid Optional course ID for RAG file search.
+     * @return operation_result The operation result (completed or pending).
+     * @throws api_exception If an API error occurs.
+     */
+    public function fill_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+        $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
+
+        return $this->jobService->submit_and_wait(
+            self::FILL_ENDPOINT,
+            $payload,
+            self::JOB_TYPE_FILL
+        );
+    }
+
+    /**
+     * Fill a module by course module ID (for editing existing content).
+     *
+     * Simplified interface that resolves module type and context internally.
+     * Catches exceptions and returns failed operation_result instead of throwing.
+     *
+     * @param int $cmid The course module ID.
+     * @param string $instructions Instructions for the AI.
+     * @return operation_result The operation result (completed, pending, or failed).
+     */
+    public function fill_module_by_cmid(int $cmid, string $instructions): operation_result {
+        try {
+            $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
+            $moduletype = $cm->modname;
+            $courseid = (int) $cm->course;
+            $context = context_builder_factory::buildModuleEditContext($cmid);
+
+            return $this->fill_module($moduletype, $instructions, $context, $courseid);
+
+        } catch (api_exception $e) {
+            return operation_result::failed($e->getMessage(), 'api_error');
+        } catch (\dml_exception $e) {
+            return operation_result::failed(
+                'Module not found or database error: ' . $e->getMessage(),
+                'module_not_found'
+            );
+        } catch (\Throwable $e) {
+            return operation_result::failed(
+                'Unexpected error: ' . $e->getMessage(),
+                'unexpected_error'
+            );
+        }
+    }
+
+    /**
+     * Edit existing module content using AI (blocking).
+     *
+     * Submits an edit request to the dedicated edit endpoint and polls for completion.
+     * Unlike fill, this uses a specialized prompt for surgical, minimal edits.
      *
      * @param string $moduletype The module type (page, label).
      * @param string $instructions Instructions for the AI.
@@ -137,7 +255,7 @@ class module_generation_service {
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function regenerate_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function edit_module_content(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
         return $this->jobService->submit_and_wait(
@@ -164,7 +282,7 @@ class module_generation_service {
             $courseid = (int) $cm->course;
             $context = context_builder_factory::buildModuleEditContext($cmid);
 
-            return $this->regenerate_module($moduletype, $instructions, $context, $courseid);
+            return $this->edit_module_content($moduletype, $instructions, $context, $courseid);
 
         } catch (api_exception $e) {
             return operation_result::failed($e->getMessage(), 'api_error');
@@ -249,16 +367,12 @@ class module_generation_service {
     /**
      * Get the configured namespace.
      *
-     * @return string|null The namespace, or null if not configured.
+     * @return string The namespace.
      */
-    private function get_configured_namespace(): ?string {
-        $namespace = get_config('local_dixeo', 'namespace');
-
-        if (!empty($namespace)) {
-            return $namespace;
-        }
-
-        return local_dixeo_get_default_namespace();
+    private function get_configured_namespace(): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/dixeo/lib.php');
+        return \local_dixeo_get_configured_namespace();
     }
 
     /**

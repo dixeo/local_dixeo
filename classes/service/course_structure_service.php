@@ -138,6 +138,9 @@ class course_structure_service {
      * Optional fields are omitted entirely rather than sent as null to avoid
      * triggering validation errors on the server side.
      *
+     * Automatically includes the list of installed module types so the API only
+     * generates modules that this Moodle instance can actually create.
+     *
      * @param string $instructions Course description and generation instructions.
      * @param string $language Language for the generated content.
      * @param string|null $templateid Optional template UUID.
@@ -163,6 +166,7 @@ class course_structure_service {
         $payload = [
             'instructions' => $instructions,
             'language' => $language,
+            'availableTypes' => $this->get_installed_module_types(),
         ];
 
         if ($templateid !== null) {
@@ -182,17 +186,27 @@ class course_structure_service {
     }
 
     /**
+     * Get module type identifiers for all installed activity modules.
+     *
+     * Uses the same core_plugin_manager pattern as get_module_types web service.
+     *
+     * @return string[] List of installed module type names (e.g. ['page', 'quiz', 'label']).
+     */
+    private function get_installed_module_types(): array {
+        $pluginmanager = \core_plugin_manager::instance();
+        $installedmods = $pluginmanager->get_plugins_of_type('mod');
+
+        return array_keys($installedmods);
+    }
+
+    /**
      * Get the configured namespace from plugin settings.
      *
-     * @return string|null The namespace, or null if not configured.
+     * @return string The namespace.
      */
-    private function get_configured_namespace(): ?string {
-        $namespace = get_config('local_dixeo', 'namespace');
-
-        if (!empty($namespace)) {
-            return $namespace;
-        }
-
-        return local_dixeo_get_default_namespace();
+    private function get_configured_namespace(): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/dixeo/lib.php');
+        return \local_dixeo_get_configured_namespace();
     }
 }

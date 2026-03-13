@@ -41,7 +41,9 @@ class tutor_service {
     public function __construct(?job_service $jobservice = null, ?client $client = null) {
         $this->jobservice = $jobservice ?? new job_service();
         $this->client = $client ?? $this->jobservice->get_client();
-        $this->namespace = get_config('local_dixeo', 'namespace') ?: 'default';
+        global $CFG;
+        require_once($CFG->dirroot . '/local/dixeo/lib.php');
+        $this->namespace = \local_dixeo_get_configured_namespace();
     }
 
     /**

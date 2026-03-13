@@ -49,3 +49,21 @@ function local_dixeo_extend_settings_navigation(settings_navigation $settingsnav
 function local_dixeo_get_default_namespace(): string {
     return 'default';
 }
+
+/**
+ * Get the configured namespace for API requests.
+ *
+ * Returns the namespace from plugin settings, falling back to the default.
+ * This is the single source of truth for namespace resolution across all services.
+ *
+ * @return string The configured namespace.
+ */
+function local_dixeo_get_configured_namespace(): string {
+    $namespace = get_config('local_dixeo', 'namespace');
+
+    if (!empty($namespace)) {
+        return $namespace;
+    }
+
+    return local_dixeo_get_default_namespace();
+}

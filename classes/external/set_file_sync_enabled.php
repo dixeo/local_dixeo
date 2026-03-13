@@ -55,7 +55,7 @@ class set_file_sync_enabled extends external_api {
 
         self::validate_course_capability($params['courseid']);
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         try {
             if ($params['enabled']) {

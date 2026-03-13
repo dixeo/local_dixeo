@@ -15,6 +15,7 @@ namespace local_dixeo\task;
 
 use core\task\adhoc_task;
 use local_dixeo\api\exception\api_exception;
+use local_dixeo\external\service_factory;
 use local_dixeo\service\file_sync_service;
 
 /**
@@ -51,7 +52,7 @@ class process_file_sync extends adhoc_task {
 
         mtrace("process_file_sync: Starting sync for course {$courseid}");
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         // Check if sync is still enabled.
         if (!$service->is_enabled($courseid)) {

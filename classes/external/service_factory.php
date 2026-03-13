@@ -18,6 +18,7 @@ use local_dixeo\service\course_structure_service;
 use local_dixeo\service\course_template_service;
 use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
+use local_dixeo\service\file_sync_service;
 use local_dixeo\service\tutor_service;
 
 /**
@@ -42,6 +43,9 @@ class service_factory {
 
     /** @var course_template_service|null Mock course template service for unit testing. */
     private static ?course_template_service $testcoursetemplateservice = null;
+
+    /** @var file_sync_service|null Mock file sync service for unit testing. */
+    private static ?file_sync_service $testfilesyncservice = null;
 
     /** @var client|null Mock client instance for unit testing. */
     private static ?client $testclient = null;
@@ -122,6 +126,21 @@ class service_factory {
     }
 
     /**
+     * Get a file_sync_service instance.
+     *
+     * Returns a fresh instance unless a test instance has been set.
+     *
+     * @return file_sync_service The service instance.
+     */
+    public static function get_file_sync_service(): file_sync_service {
+        if (self::$testfilesyncservice !== null) {
+            return self::$testfilesyncservice;
+        }
+
+        return new file_sync_service();
+    }
+
+    /**
      * Get a client instance.
      *
      * Returns a fresh instance unless a test instance has been set.
@@ -193,6 +212,17 @@ class service_factory {
     }
 
     /**
+     * Set a test file sync service instance.
+     *
+     * Use this in unit tests to inject mock services.
+     *
+     * @param file_sync_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_file_sync_service(?file_sync_service $service): void {
+        self::$testfilesyncservice = $service;
+    }
+
+    /**
      * Set a test client instance.
      *
      * Use this in unit tests to inject mock clients.
@@ -214,6 +244,7 @@ class service_factory {
         self::$testtutorservice = null;
         self::$testcoursestructureservice = null;
         self::$testcoursetemplateservice = null;
+        self::$testfilesyncservice = null;
         self::$testclient = null;
     }
 }

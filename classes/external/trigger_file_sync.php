@@ -52,7 +52,7 @@ class trigger_file_sync extends external_api {
 
         self::validate_course_capability($params['courseid']);
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         // Check if sync is enabled.
         if (!$service->is_enabled($params['courseid'])) {

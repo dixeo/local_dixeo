@@ -118,17 +118,8 @@ class client {
 
         $this->validate_configuration();
 
-        $curl = new \curl();
+        $curl = $this->create_curl($this->timeout);
         $url = rtrim($this->baseurl, '/') . '/' . ltrim($endpoint, '/');
-
-        // Configure curl options.
-        $curl->setopt([
-            'CURLOPT_TIMEOUT' => $this->timeout,
-            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
-            'CURLOPT_RETURNTRANSFER' => true,
-            'CURLOPT_FOLLOWLOCATION' => true,
-            'CURLOPT_MAXREDIRS' => 3,
-        ]);
 
         // Set headers.
         $headers = [
@@ -240,6 +231,36 @@ class client {
     }
 
     /**
+     * Resolve the namespace to use for file operations.
+     *
+     * @param string|null $namespace Optional namespace override.
+     * @return string The resolved namespace.
+     */
+    private function resolve_namespace(?string $namespace): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/dixeo/lib.php');
+        return $namespace ?? \local_dixeo_get_configured_namespace();
+    }
+
+    /**
+     * Create a configured curl instance with common options.
+     *
+     * @param int $timeout Request timeout in seconds.
+     * @return \curl The configured curl instance.
+     */
+    private function create_curl(int $timeout): \curl {
+        $curl = new \curl();
+        $curl->setopt([
+            'CURLOPT_TIMEOUT' => $timeout,
+            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_FOLLOWLOCATION' => true,
+            'CURLOPT_MAXREDIRS' => 3,
+        ]);
+        return $curl;
+    }
+
+    /**
      * Check if the API is configured and reachable.
      *
      * @return bool True if the API is configured with a key.
@@ -288,18 +309,10 @@ class client {
             return ['uploaded' => 0, 'files' => []];
         }
 
-        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+        $namespace = $this->resolve_namespace($namespace);
 
-        $curl = new \curl();
+        $curl = $this->create_curl(300); // 5 minutes for file uploads.
         $url = rtrim($this->baseurl, '/') . '/v1/files';
-
-        $curl->setopt([
-            'CURLOPT_TIMEOUT' => 300, // 5 minutes for file uploads.
-            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
-            'CURLOPT_RETURNTRANSFER' => true,
-            'CURLOPT_FOLLOWLOCATION' => true,
-            'CURLOPT_MAXREDIRS' => 3,
-        ]);
 
         // Headers for multipart upload - Content-Type set automatically by curl.
         $curl->setHeader([
@@ -367,7 +380,7 @@ class client {
      * @throws api_exception If the request fails.
      */
     public function get_files_status(string $courseid, ?string $namespace = null): array {
-        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+        $namespace = $this->resolve_namespace($namespace);
 
         return $this->get('/v1/files/status', [
             'courseId' => $courseid,
@@ -384,7 +397,7 @@ class client {
      * @throws api_exception If the request fails.
      */
     public function list_files(string $courseid, ?string $namespace = null): array {
-        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+        $namespace = $this->resolve_namespace($namespace);
 
         return $this->get('/v1/files', [
             'courseId' => $courseid,
@@ -401,7 +414,7 @@ class client {
      * @throws api_exception If the request fails.
      */
     public function delete_files(string $courseid, ?string $namespace = null): array {
-        $namespace = $namespace ?? get_config('local_dixeo', 'namespace') ?: 'default';
+        $namespace = $this->resolve_namespace($namespace);
 
         return $this->delete('/v1/files', [
             'courseId' => $courseid,

@@ -38,6 +38,10 @@ class create_module_from_job extends external_api {
             'courseid' => new external_value(PARAM_INT, 'The course ID'),
             'sectionnumber' => new external_value(PARAM_INT, 'The section number', VALUE_DEFAULT, 0),
             'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, null),
+            // Allow callers (e.g. the course structure flow) to override AI-generated name/intro
+            // with values from the structure definition rather than re-querying the job.
+            'name' => new external_value(PARAM_TEXT, 'Override module name from course structure', VALUE_OPTIONAL),
+            'intro' => new external_value(PARAM_RAW, 'Override module intro from course structure', VALUE_OPTIONAL),
         ]);
     }
 
@@ -45,19 +49,32 @@ class create_module_from_job extends external_api {
      * Create a module from a completed job.
      *
      * Fetches the job result and runs the DSL interpreter to create the module.
+     * Optional name/intro allow the course structure flow to override AI-generated
+     * values with those defined in the structure template.
      *
      * @param string $jobid The completed job UUID.
      * @param int $courseid The course ID.
      * @param int $sectionnumber The section number.
      * @param int|null $beforemod Course module ID to insert before.
+     * @param string|null $name Override module name.
+     * @param string|null $intro Override module intro HTML.
      * @return array Result with cmid on success.
      */
-    public static function execute(string $jobid, int $courseid, int $sectionnumber = 0, ?int $beforemod = null): array {
+    public static function execute(
+        string $jobid,
+        int $courseid,
+        int $sectionnumber = 0,
+        ?int $beforemod = null,
+        ?string $name = null,
+        ?string $intro = null
+    ): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'jobid' => $jobid,
             'courseid' => $courseid,
             'sectionnumber' => $sectionnumber,
             'beforemod' => $beforemod,
+            'name' => $name,
+            'intro' => $intro,
         ]);
 
         self::validate_course_capability($params['courseid'], true);
@@ -98,8 +115,19 @@ class create_module_from_job extends external_api {
                 $params['beforemod']
             );
 
+            // Allow callers to override AI-generated name/intro with structure-defined values.
+            // This lets the course structure flow inject pre-determined titles without
+            // needing a second AI call or a separate job.
+            $data = $result['data'] ?? [];
+            if (!empty($params['name'])) {
+                $data['name'] = $params['name'];
+            }
+            if (!empty($params['intro'])) {
+                $data['intro'] = $params['intro'];
+            }
+
             $interpreter = new interpreter();
-            $cmid = $interpreter->execute($result['creation'], $result['data'] ?? [], $context);
+            $cmid = $interpreter->execute($result['creation'], $data, $context);
 
             // Enable file sync on successful AI module creation.
             self::enable_file_sync_if_needed($params['courseid']);
@@ -157,7 +185,7 @@ class create_module_from_job extends external_api {
         global $USER;
 
         try {
-            $service = new file_sync_service();
+            $service = service_factory::get_file_sync_service();
 
             // Enable sync if not already enabled - this is idempotent.
             $service->enable_sync($courseid, $USER->id);

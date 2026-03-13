@@ -37,6 +37,7 @@ defined('MOODLE_INTERNAL') || die();
  * }
  */
 class create_entries_action {
+    use action_validation;
 
     /**
      * Entity type to database table mapping.
@@ -130,21 +131,7 @@ class create_entries_action {
      * @throws dsl_exception If validation fails.
      */
     protected function validate_action(array $action): void {
-        if (!isset($action['entity'])) {
-            throw new dsl_exception(
-                "create_entries action requires 'entity' field",
-                'create_entries',
-                ['action' => $action]
-            );
-        }
-
-        if (!isset($action['foreach'])) {
-            throw new dsl_exception(
-                "create_entries action requires 'foreach' field",
-                'create_entries',
-                ['action' => $action]
-            );
-        }
+        $this->require_action_fields($action, ['entity', 'foreach'], 'create_entries');
     }
 
     /**

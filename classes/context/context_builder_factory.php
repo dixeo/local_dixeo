@@ -141,6 +141,40 @@ class context_builder_factory {
     }
 
     /**
+     * Build context for structure-based module fill.
+     *
+     * Combines course context with module metadata (title/summary) so the AI
+     * generates content coherent with the planned module identity.
+     * Used when creating modules from a course structure where name/intro
+     * are already defined and only content needs to be generated.
+     *
+     * @param int $courseId The course ID.
+     * @param int|null $targetSection Target section for tiered detail.
+     * @param string $mode Context mode: 'teaching' or 'assessment'.
+     * @param string $title The module title from the course structure.
+     * @param string $summary The module summary from the course structure.
+     * @return string The built markdown context with module metadata prepended.
+     */
+    public static function buildModuleFillContext(
+        int $courseId,
+        ?int $targetSection,
+        string $mode,
+        string $title,
+        string $summary = ''
+    ): string {
+        $coursecontext = self::buildCourseContext($courseId, $targetSection, $mode);
+
+        $lines = ['## Module to Fill'];
+        $lines[] = "- **Title:** {$title}";
+        if (!empty($summary)) {
+            $lines[] = "- **Summary:** {$summary}";
+        }
+        $lines[] = '';
+
+        return implode("\n", $lines) . $coursecontext;
+    }
+
+    /**
      * Get or create shared HTML helper.
      *
      * @return html_helper The shared instance.

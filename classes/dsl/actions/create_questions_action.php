@@ -54,6 +54,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
  * - gapselect: Fill in blanks (questiontext with {{placeholders}}, gaps: array of {answer, distractors})
  */
 class create_questions_action {
+    use action_validation;
 
     /** @var float Default mark for questions. */
     protected const DEFAULT_MARK = 1.0;
@@ -163,21 +164,7 @@ class create_questions_action {
      * @throws dsl_exception If validation fails.
      */
     protected function validate_action(array $action): void {
-        if (!isset($action['module_ref'])) {
-            throw new dsl_exception(
-                "create_questions action requires 'module_ref' field",
-                'create_questions',
-                ['action' => $action]
-            );
-        }
-
-        if (!isset($action['foreach'])) {
-            throw new dsl_exception(
-                "create_questions action requires 'foreach' field",
-                'create_questions',
-                ['action' => $action]
-            );
-        }
+        $this->require_action_fields($action, ['module_ref', 'foreach'], 'create_questions');
     }
 
     /**

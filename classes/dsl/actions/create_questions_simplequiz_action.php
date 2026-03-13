@@ -57,6 +57,7 @@ defined('MOODLE_INTERNAL') || die();
  * }
  */
 class create_questions_simplequiz_action {
+    use action_validation;
 
     /**
      * Execute the create_questions action for simplequiz.
@@ -187,20 +188,6 @@ class create_questions_simplequiz_action {
      * @throws dsl_exception If validation fails.
      */
     protected function validate_action(array $action): void {
-        if (!isset($action['module_ref'])) {
-            throw new dsl_exception(
-                "create_questions action for simplequiz requires 'module_ref' field",
-                'create_questions_simplequiz',
-                ['action' => $action]
-            );
-        }
-
-        if (!isset($action['foreach'])) {
-            throw new dsl_exception(
-                "create_questions action for simplequiz requires 'foreach' field",
-                'create_questions_simplequiz',
-                ['action' => $action]
-            );
-        }
+        $this->require_action_fields($action, ['module_ref', 'foreach'], 'create_questions_simplequiz');
     }
 }

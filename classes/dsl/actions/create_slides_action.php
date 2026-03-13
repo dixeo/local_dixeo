@@ -33,6 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * }
  */
 class create_slides_action {
+    use action_validation;
 
     /**
      * Execute the add_slides action.
@@ -117,20 +118,6 @@ class create_slides_action {
      * @throws dsl_exception If validation fails.
      */
     protected function validate_action(array $action): void {
-        if (!isset($action['module_ref'])) {
-            throw new dsl_exception(
-                "add_slides action requires 'module_ref' field",
-                'add_slides',
-                ['action' => $action]
-            );
-        }
-
-        if (!isset($action['foreach'])) {
-            throw new dsl_exception(
-                "add_slides action requires 'foreach' field",
-                'add_slides',
-                ['action' => $action]
-            );
-        }
+        $this->require_action_fields($action, ['module_ref', 'foreach'], 'add_slides');
     }
 }

@@ -45,7 +45,7 @@ class job_status {
      * Constructor.
      *
      * @param string $jobid The job UUID.
-     * @param string $type The job type (e.g., 'generate_module', 'edit_module').
+     * @param string $type The job type (e.g., 'generate_module', 'fill_module').
      * @param string $status Current status.
      * @param int $progress Progress percentage (0-100).
      * @param int $createdat Unix timestamp when the job was created.

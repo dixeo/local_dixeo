@@ -105,7 +105,8 @@ Different job types have different timing:
 
 | Job Type | Initial Delay | Poll Interval | Timeout |
 |----------|--------------|---------------|---------|
-| edit_module | 2s | 1.5s | 30s |
+| fill_module | 2s | 2s | 2min |
+| edit_module | 2s | 2s | 2min |
 | generate_module | 3s | 2s | 60s |
 | course_gen | 5s | 3s | 5min |
 

@@ -47,7 +47,7 @@ class get_file_sync_status extends external_api {
 
         self::validate_course_capability($params['courseid']);
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         // If currently syncing, poll API for real-time status update.
         $localstatus = $service->get_status($params['courseid']);

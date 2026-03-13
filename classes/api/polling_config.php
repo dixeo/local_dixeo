@@ -18,6 +18,14 @@ namespace local_dixeo\api;
  */
 class polling_config {
 
+    // Fill module timing constants (fast operations, ~2-5 seconds).
+    /** @var int Initial delay for fill operations (ms). */
+    public const FILL_INITIAL_DELAY_MS = 2000;
+    /** @var int Poll interval for fill operations (ms). */
+    public const FILL_POLL_INTERVAL_MS = 2000;
+    /** @var int Timeout for fill operations (ms) - 2 minutes. */
+    public const FILL_TIMEOUT_MS = 120000;
+
     // Edit module timing constants (fast operations, ~2-5 seconds).
     /** @var int Initial delay for edit operations (ms). */
     public const EDIT_INITIAL_DELAY_MS = 2000;
@@ -72,8 +80,9 @@ class polling_config {
      * Get polling configuration for a specific job type.
      *
      * Job types have different expected processing times:
+     * - fill_module: Fill content for existing or structure-based modules (~2-5 seconds)
      * - edit_module: Fast edits to existing content (~2-5 seconds)
-     * - generate_module: Creating new modules (~5-15 seconds)
+     * - generate_module: Creating new modules with name/intro/content (~5-15 seconds)
      * - generate_course_structure: AI-driven course outline generation (~30-120 seconds)
      *
      * @param string $jobtype The job type identifier.
@@ -81,6 +90,11 @@ class polling_config {
      */
     public static function for_job_type(string $jobtype): self {
         return match ($jobtype) {
+            'fill_module' => new self(
+                self::FILL_INITIAL_DELAY_MS,
+                self::FILL_POLL_INTERVAL_MS,
+                self::FILL_TIMEOUT_MS
+            ),
             'edit_module' => new self(
                 self::EDIT_INITIAL_DELAY_MS,
                 self::EDIT_POLL_INTERVAL_MS,

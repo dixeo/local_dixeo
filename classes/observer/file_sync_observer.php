@@ -17,6 +17,7 @@ use core\event\course_module_created;
 use core\event\course_module_updated;
 use core\event\course_module_deleted;
 use core\event\block_created;
+use local_dixeo\external\service_factory;
 use local_dixeo\service\file_sync_service;
 
 /**
@@ -102,7 +103,7 @@ class file_sync_observer {
             return;
         }
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         // Enable sync for this course.
         $service->enable_sync($courseid, $USER->id);
@@ -139,7 +140,7 @@ class file_sync_observer {
             return;
         }
 
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
 
         if (!$service->is_enabled($courseid)) {
             return;

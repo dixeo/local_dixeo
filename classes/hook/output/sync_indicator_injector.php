@@ -14,6 +14,7 @@
 namespace local_dixeo\hook\output;
 
 use core\hook\output\before_standard_top_of_body_html_generation;
+use local_dixeo\external\service_factory;
 use local_dixeo\service\file_sync_service;
 
 /**
@@ -42,7 +43,7 @@ class sync_indicator_injector {
         }
 
         // Get sync status.
-        $service = new file_sync_service();
+        $service = service_factory::get_file_sync_service();
         $status = $service->get_status($COURSE->id);
 
         // Prepare template context.
