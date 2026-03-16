@@ -55,7 +55,6 @@ class course_structure_service {
      * for completion, or call submit_and_wait() when a blocking call is acceptable.
      *
      * @param string $instructions Course description and generation instructions.
-     * @param string $language Language for the generated content (e.g., 'English', 'French').
      * @param string|null $templateid UUID of a course template to constrain the structure.
      * @param string|null $vectorstoreid Vector store ID to ground generation in uploaded files.
      * @param string|null $courseid External course identifier for traceability.
@@ -64,12 +63,11 @@ class course_structure_service {
      */
     public function submit_generate(
         string $instructions,
-        string $language = 'English',
         ?string $templateid = null,
         ?string $vectorstoreid = null,
         ?string $courseid = null
     ): operation_result {
-        $payload = $this->build_payload($instructions, $language, $templateid, $vectorstoreid, $courseid);
+        $payload = $this->build_payload($instructions, $templateid, $vectorstoreid, $courseid);
 
         return $this->jobservice->submit_job(self::ENDPOINT, $payload);
     }
@@ -82,7 +80,6 @@ class course_structure_service {
      * fire-and-forget behaviour in contexts where long blocking is unacceptable.
      *
      * @param string $instructions Course description and generation instructions.
-     * @param string $language Language for the generated content (e.g., 'English', 'French').
      * @param string|null $templateid UUID of a course template to constrain the structure.
      * @param string|null $vectorstoreid Vector store ID to ground generation in uploaded files.
      * @param string|null $courseid External course identifier for traceability.
@@ -91,12 +88,11 @@ class course_structure_service {
      */
     public function submit_and_wait(
         string $instructions,
-        string $language = 'English',
         ?string $templateid = null,
         ?string $vectorstoreid = null,
         ?string $courseid = null
     ): operation_result {
-        $payload = $this->build_payload($instructions, $language, $templateid, $vectorstoreid, $courseid);
+        $payload = $this->build_payload($instructions, $templateid, $vectorstoreid, $courseid);
 
         return $this->jobservice->submit_and_wait(self::ENDPOINT, $payload, self::JOB_TYPE);
     }
@@ -142,7 +138,6 @@ class course_structure_service {
      * generates modules that this Moodle instance can actually create.
      *
      * @param string $instructions Course description and generation instructions.
-     * @param string $language Language for the generated content.
      * @param string|null $templateid Optional template UUID.
      * @param string|null $vectorstoreid Optional vector store ID.
      * @param string|null $courseid Optional external course identifier.
@@ -151,7 +146,6 @@ class course_structure_service {
      */
     private function build_payload(
         string $instructions,
-        string $language,
         ?string $templateid,
         ?string $vectorstoreid,
         ?string $courseid
@@ -159,13 +153,9 @@ class course_structure_service {
         if (empty(trim($instructions))) {
             throw new \invalid_parameter_exception('Instructions are required');
         }
-        if (empty(trim($language))) {
-            throw new \invalid_parameter_exception('Language is required');
-        }
 
         $payload = [
             'instructions' => $instructions,
-            'language' => $language,
             'availableTypes' => $this->get_installed_module_types(),
         ];
 

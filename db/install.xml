@@ -13,6 +13,7 @@
         <FIELD NAME="errormessage" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error message if status is error"/>
         <FIELD NAME="errorcount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of consecutive errors for retry backoff"/>
         <FIELD NAME="lasterrorat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp of last error"/>
+        <FIELD NAME="filehash" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="SHA-256 hash of sorted file manifest (contenthash+filename). Used to skip sync when files have not changed."/>
         <FIELD NAME="lastsyncstarted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync started"/>
         <FIELD NAME="lastsynccompleted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when last sync completed successfully"/>
         <FIELD NAME="enabledby" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User ID who enabled sync"/>

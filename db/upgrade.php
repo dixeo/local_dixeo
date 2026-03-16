@@ -141,5 +141,17 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026022301, 'local', 'dixeo');
     }
 
+    // Add filehash column for manifest-based sync skip.
+    if ($oldversion < 2026031600) {
+        $table = new xmldb_table('local_dixeo_course_ai');
+        $field = new xmldb_field('filehash', XMLDB_TYPE_CHAR, '64', null, null, null, null, 'lasterrorat');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026031600, 'local', 'dixeo');
+    }
+
     return true;
 }

@@ -284,6 +284,29 @@ class course_ai_repository {
     }
 
     /**
+     * Update the file manifest hash for a course.
+     *
+     * @param int $courseid The course ID.
+     * @param string $filehash The SHA-256 hash of the file manifest.
+     * @return void
+     */
+    public function update_filehash(int $courseid, string $filehash): void {
+        global $DB;
+
+        $record = $this->get_by_courseid($courseid);
+        if ($record === null) {
+            return;
+        }
+
+        $update = new \stdClass();
+        $update->id = $record->id;
+        $update->filehash = $filehash;
+        $update->timemodified = time();
+
+        $DB->update_record(self::TABLE, $update);
+    }
+
+    /**
      * Reset the sync state for a course (used when deleting files).
      *
      * @param int $courseid The course ID.
@@ -306,6 +329,7 @@ class course_ai_repository {
         $update->errorcount = 0;
         $update->errormessage = null;
         $update->lasterrorat = null;
+        $update->filehash = null;
         $update->lastsyncstarted = null;
         $update->lastsynccompleted = null;
         $update->timemodified = time();

@@ -179,11 +179,18 @@ class file_sync_service {
             return;
         }
 
+        // Collect files and check if anything changed before hitting the API.
+        $files = $this->collect_course_files($courseid);
+        $filehash = $this->compute_file_manifest_hash($files);
+
+        if ($filehash === ($record->filehash ?? null)) {
+            return;
+        }
+
         // Update status to syncing.
         $this->repository->update_sync_status($courseid, 'syncing');
 
         try {
-            $files = $this->collect_course_files($courseid);
             $filecount = count($files);
 
             // Update progress with file count.
@@ -200,6 +207,7 @@ class file_sync_service {
                     'filescompleted' => 0,
                     'progresspercent' => 100,
                 ]);
+                $this->repository->update_filehash($courseid, $filehash);
                 return;
             }
 
@@ -216,6 +224,7 @@ class file_sync_service {
             ]);
 
             $this->repository->clear_error($courseid);
+            $this->repository->update_filehash($courseid, $filehash);
 
         } catch (api_exception $e) {
             // Include raw response in error message if available (helps debug invalid JSON errors).
@@ -364,6 +373,25 @@ class file_sync_service {
         }
 
         return $this->get_status($courseid);
+    }
+
+    /**
+     * Compute a SHA-256 hash of the file manifest (sorted contenthash + filename pairs).
+     *
+     * Returns a deterministic hash that changes only when files are added, removed,
+     * or modified. Used to skip API calls when nothing has changed.
+     *
+     * @param \stored_file[] $files The collected course files.
+     * @return string SHA-256 hex digest.
+     */
+    private function compute_file_manifest_hash(array $files): string {
+        $entries = [];
+        foreach ($files as $file) {
+            $entries[] = $file->get_contenthash() . '|' . $file->get_filename();
+        }
+        sort($entries);
+
+        return hash('sha256', implode("\n", $entries));
     }
 
     /**
