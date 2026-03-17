@@ -16,6 +16,7 @@
 
 namespace local_dixeo\service;
 
+use cache;
 use local_dixeo\api\client;
 use local_dixeo\api\exception\api_exception;
 
@@ -37,6 +38,9 @@ class course_template_service {
     /** @var string Base API endpoint for course templates. */
     private const ENDPOINT = '/v1/courses/templates';
 
+    /** @var string Cache key for the list of template choices (id => label). */
+    private const CACHE_KEY_CHOICES = 'choices';
+
     /** @var client The API client. */
     protected client $client;
 
@@ -57,6 +61,55 @@ class course_template_service {
      */
     public function list_templates(): array {
         return $this->client->get(self::ENDPOINT);
+    }
+
+    /**
+     * Returns course template choices for UI (id => label), cached.
+     *
+     * @return array Map of template id => display label.
+     */
+    public function get_cached_choices(): array {
+        if (!$this->is_configured()) {
+            return [];
+        }
+
+        $cache = cache::make('local_dixeo', 'coursetemplates');
+        $cached = $cache->get(self::CACHE_KEY_CHOICES);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        try {
+            $templates = $this->list_templates();
+            $choices = $this->normalise_templates_to_choices($templates);
+            $cache->set(self::CACHE_KEY_CHOICES, $choices);
+            return $choices;
+        } catch (api_exception $e) {
+            debugging('Unable to load course templates from Dixeo API: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return [];
+        }
+    }
+
+    /**
+     * Normalises template arrays into id => label map.
+     *
+     * @param array $templates List of template arrays.
+     * @return array Map of template id (string) => name (string).
+     */
+    private function normalise_templates_to_choices(array $templates): array {
+        $result = [];
+        foreach ($templates as $template) {
+            if (!is_array($template)) {
+                continue;
+            }
+            $value = (string) ($template['id'] ?? '');
+            $label = trim((string) ($template['name'] ?? ''));
+            if ($value === '' || $label === '') {
+                continue;
+            }
+            $result[$value] = $label;
+        }
+        return $result;
     }
 
     /**

@@ -12,21 +12,23 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and dependencies.
+ * Cache definitions for local_dixeo.
  *
  * @package    local_dixeo
- * @copyright  2025 Edunao SAS (contact@edunao.com)
- * @author     Pierre FACQ <pierre.facq@edunao.com>
+ * @copyright  2026 Dixeo (contact@dixeo.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026031602;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024100700;        // Requires Moodle 4.5+.
-$plugin->component = 'local_dixeo';     // Full name of the plugin.
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0';
+$definitions = [
+    'coursetemplates' => [
+        'mode' => \cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true,
+        'ttl' => 60 * 60 * 24, // 1 day
+    ],
+];
