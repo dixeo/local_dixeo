@@ -17,7 +17,7 @@ use local_dixeo\dsl\actions\create_module_action;
 use local_dixeo\dsl\actions\create_entries_action;
 use local_dixeo\dsl\actions\create_questions_action;
 use local_dixeo\dsl\actions\create_slides_action;
-use local_dixeo\dsl\actions\create_questions_simplequiz_action;
+use local_dixeo\dsl\actions\create_questions_simplequiz2_action;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -50,8 +50,8 @@ class interpreter {
     /** @var create_slides_action Action handler for add_slides. */
     protected create_slides_action $createslidesaction;
 
-    /** @var create_questions_simplequiz_action Action handler for simplequiz questions. */
-    protected create_questions_simplequiz_action $createquestionssimplequizaction;
+    /** @var create_questions_simplequiz2_action Action handler for simplequiz2 questions. */
+    protected create_questions_simplequiz2_action $createquestionssimplequiz2action;
 
     /**
      * Constructor.
@@ -62,20 +62,20 @@ class interpreter {
      * @param create_entries_action|null $createentriesaction Custom entries action handler.
      * @param create_questions_action|null $createquestionsaction Custom questions action handler.
      * @param create_slides_action|null $createslidesaction Custom slides action handler.
-     * @param create_questions_simplequiz_action|null $createquestionssimplequizaction Custom simplequiz questions action.
+     * @param create_questions_simplequiz2_action|null $createquestionssimplequiz2action Custom simplequiz2 questions action.
      */
     public function __construct(
         ?create_module_action $createmoduleaction = null,
         ?create_entries_action $createentriesaction = null,
         ?create_questions_action $createquestionsaction = null,
         ?create_slides_action $createslidesaction = null,
-        ?create_questions_simplequiz_action $createquestionssimplequizaction = null
+        ?create_questions_simplequiz2_action $createquestionssimplequiz2action = null
     ) {
         $this->createmoduleaction = $createmoduleaction ?? new create_module_action();
         $this->createentriesaction = $createentriesaction ?? new create_entries_action();
         $this->createquestionsaction = $createquestionsaction ?? new create_questions_action();
         $this->createslidesaction = $createslidesaction ?? new create_slides_action();
-        $this->createquestionssimplequizaction = $createquestionssimplequizaction ?? new create_questions_simplequiz_action();
+        $this->createquestionssimplequiz2action = $createquestionssimplequiz2action ?? new create_questions_simplequiz2_action();
     }
 
     /**
@@ -181,8 +181,8 @@ class interpreter {
     protected function dispatch_create_questions(array $action, value_resolver $resolver, array $context): mixed {
         $modulename = $context['modulename'] ?? '';
 
-        if ($modulename === 'simplequiz') {
-            return $this->createquestionssimplequizaction->execute($action, $resolver);
+        if ($modulename === 'simplequiz2') {
+            return $this->createquestionssimplequiz2action->execute($action, $resolver);
         }
 
         // Default to standard quiz question handling.

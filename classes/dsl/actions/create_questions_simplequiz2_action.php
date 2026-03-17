@@ -1,9 +1,9 @@
 <?php
 /**
- * DSL action for creating simplequiz questions.
+ * DSL action for creating simplequiz2 questions.
  *
  * Transforms AI-generated questions into SimpleQuiz JSON format and
- * updates the simplequiz module record. Unlike standard quiz questions,
+ * updates the simplequiz2 module record. Unlike standard quiz questions,
  * SimpleQuiz stores questions as JSON in a single field rather than
  * using Moodle's question bank.
  *
@@ -21,10 +21,10 @@ use local_dixeo\dsl\value_resolver;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Action handler for creating simplequiz questions.
+ * Action handler for creating simplequiz2 questions.
  *
  * SimpleQuiz stores questions differently from standard Moodle quizzes:
- * - Questions are stored as JSON in the 'questions' field of simplequiz table
+ * - Questions are stored as JSON in the 'questions' field of simplequiz2 table
  * - Format: { "0": { "text": "...", "answers": [{ "text": "...", "iscorrect": 0/1 }] } }
  *
  * Expected action format:
@@ -56,11 +56,11 @@ defined('MOODLE_INTERNAL') || die();
  *   ]
  * }
  */
-class create_questions_simplequiz_action {
+class create_questions_simplequiz2_action {
     use action_validation;
 
     /**
-     * Execute the create_questions action for simplequiz.
+     * Execute the create_questions action for simplequiz2.
      *
      * @param array $action The action specification.
      * @param value_resolver $resolver The value resolver.
@@ -72,19 +72,19 @@ class create_questions_simplequiz_action {
 
         $this->validate_action($action);
 
-        // Resolve the module reference to get simplequiz info.
+        // Resolve the module reference to get simplequiz2 info.
         $moduleref = $action['module_ref'];
         $moduledata = $resolver->resolve_source($moduleref, 'module_ref');
 
         if (!is_array($moduledata) || !isset($moduledata['id'])) {
             throw new dsl_exception(
                 "module_ref did not resolve to valid module data",
-                'create_questions_simplequiz',
+                'create_questions_simplequiz2',
                 ['module_ref' => $moduleref]
             );
         }
 
-        $simplequizid = (int) $moduledata['id'];
+        $simplequiz2id = (int) $moduledata['id'];
 
         // Resolve the questions collection.
         $foreachpath = $action['foreach'];
@@ -93,13 +93,13 @@ class create_questions_simplequiz_action {
         if (!is_array($questions)) {
             throw new dsl_exception(
                 "foreach path '$foreachpath' did not resolve to an array",
-                'create_questions_simplequiz',
+                'create_questions_simplequiz2',
                 ['path' => $foreachpath]
             );
         }
 
         $fieldsspec = $action['fields'] ?? [];
-        $simplequizquestions = [];
+        $simplequiz2questions = [];
 
         foreach ($questions as $index => $questionitem) {
             $itemdata = is_object($questionitem) ? (array) $questionitem : $questionitem;
@@ -107,7 +107,7 @@ class create_questions_simplequiz_action {
             if (!is_array($itemdata)) {
                 throw new dsl_exception(
                     "Question at index $index is not an array or object",
-                    'create_questions_simplequiz',
+                    'create_questions_simplequiz2',
                     ['index' => $index]
                 );
             }
@@ -117,20 +117,20 @@ class create_questions_simplequiz_action {
             $resolvedfields = $itemresolver->resolve_fields($fieldsspec);
 
             // Transform API format to SimpleQuiz format.
-            $simplequizquestions[$index] = $this->transform_question($resolvedfields);
+            $simplequiz2questions[$index] = $this->transform_question($resolvedfields);
         }
 
-        // Update the simplequiz record with JSON-encoded questions.
+        // Update the simplequiz2 record with JSON-encoded questions.
         $record = new \stdClass();
-        $record->id = $simplequizid;
-        $record->questions = json_encode($simplequizquestions);
+        $record->id = $simplequiz2id;
+        $record->questions = json_encode($simplequiz2questions);
         $record->timemodified = time();
 
-        $DB->update_record('simplequiz', $record);
+        $DB->update_record('simplequiz2', $record);
 
         return [
             'updated' => true,
-            'question_count' => count($simplequizquestions),
+            'question_count' => count($simplequiz2questions),
         ];
     }
 
@@ -158,7 +158,7 @@ class create_questions_simplequiz_action {
         if (!is_array($options) || count($options) < 2) {
             throw new dsl_exception(
                 'SimpleQuiz question requires at least 2 options',
-                'create_questions_simplequiz',
+                'create_questions_simplequiz2',
                 ['options_count' => is_array($options) ? count($options) : 0]
             );
         }
@@ -188,6 +188,6 @@ class create_questions_simplequiz_action {
      * @throws dsl_exception If validation fails.
      */
     protected function validate_action(array $action): void {
-        $this->require_action_fields($action, ['module_ref', 'foreach'], 'create_questions_simplequiz');
+        $this->require_action_fields($action, ['module_ref', 'foreach'], 'create_questions_simplequiz2');
     }
 }
