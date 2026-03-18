@@ -127,15 +127,7 @@ class tutor_service {
      * @return string The complete instruction string.
      */
     private function build_instructions(int $courseid): string {
-        global $DB;
-
-        $course = $DB->get_record('course', ['id' => $courseid], 'fullname', MUST_EXIST);
-        $context = context_builder_factory::buildCourseContext($courseid, null, 'assessment');
-
-        return get_string('tutorinstructions', 'local_dixeo', (object) [
-            'fullname' => $course->fullname,
-            'context' => $context,
-        ]);
+        return context_builder_factory::buildCourseContext($courseid, null, 'assessment');
     }
 
     /**
