@@ -30,16 +30,42 @@ class get_module_types extends external_api {
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
-        return new external_function_parameters([]);
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'Course id for language/context (0 = system context only)', VALUE_DEFAULT, 0),
+        ]);
+    }
+
+    /**
+     * Require course access and set page context so get_string matches course language (e.g. forced lang).
+     *
+     * @param int $courseid Course id.
+     */
+    private static function validate_course_for_module_types(int $courseid): void {
+        global $PAGE;
+        require_course_login($courseid);
+        $context = \context_course::instance($courseid);
+        $PAGE->set_context($context);
+        require_capability('local/dixeo:generate', $context);
+        require_capability('moodle/course:manageactivities', $context);
     }
 
     /**
      * Get available module types.
      *
+     * @param int $courseid Course id for UI language alignment with queue (0 = legacy system context).
      * @return array The list of available module types.
      */
-    public static function execute(): array {
-        self::validate_system_capability();
+    public static function execute(int $courseid = 0): array {
+        $params = self::validate_parameters(self::execute_parameters(), [
+            'courseid' => $courseid,
+        ]);
+        $courseid = (int) $params['courseid'];
+
+        if ($courseid > 0) {
+            self::validate_course_for_module_types($courseid);
+        } else {
+            self::validate_system_capability();
+        }
 
         try {
             $types = service_factory::get_module_types_service()->get_module_types_cached();
