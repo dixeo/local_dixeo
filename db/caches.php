@@ -31,4 +31,10 @@ $definitions = [
         'simpledata' => true,
         'ttl' => 60 * 60 * 24, // 1 day
     ],
+    'moduletypes' => [
+        'mode' => \cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true,
+        'ttl' => 60 * 60 * 24, // 1 day
+    ],
 ];

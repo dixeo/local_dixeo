@@ -18,6 +18,7 @@ use local_dixeo\service\course_structure_service;
 use local_dixeo\service\course_template_service;
 use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
+use local_dixeo\service\module_types_service;
 use local_dixeo\service\file_sync_service;
 use local_dixeo\service\tutor_service;
 
@@ -43,6 +44,9 @@ class service_factory {
 
     /** @var course_template_service|null Mock course template service for unit testing. */
     private static ?course_template_service $testcoursetemplateservice = null;
+
+    /** @var module_types_service|null Mock module types service for unit testing. */
+    private static ?module_types_service $testmoduletypesservice = null;
 
     /** @var file_sync_service|null Mock file sync service for unit testing. */
     private static ?file_sync_service $testfilesyncservice = null;
@@ -126,6 +130,19 @@ class service_factory {
     }
 
     /**
+     * Get a module_types_service instance.
+     *
+     * @return module_types_service The service instance.
+     */
+    public static function get_module_types_service(): module_types_service {
+        if (self::$testmoduletypesservice !== null) {
+            return self::$testmoduletypesservice;
+        }
+
+        return new module_types_service(self::get_client());
+    }
+
+    /**
      * Get a file_sync_service instance.
      *
      * Returns a fresh instance unless a test instance has been set.
@@ -144,7 +161,7 @@ class service_factory {
      * Get a client instance.
      *
      * Returns a fresh instance unless a test instance has been set.
-     * Use for direct API calls like get_module_types().
+     * Use for direct API calls not covered by a dedicated service.
      *
      * @return client The client instance.
      */
@@ -212,6 +229,15 @@ class service_factory {
     }
 
     /**
+     * Set a test module types service instance.
+     *
+     * @param module_types_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_module_types_service(?module_types_service $service): void {
+        self::$testmoduletypesservice = $service;
+    }
+
+    /**
      * Set a test file sync service instance.
      *
      * Use this in unit tests to inject mock services.
@@ -244,6 +270,7 @@ class service_factory {
         self::$testtutorservice = null;
         self::$testcoursestructureservice = null;
         self::$testcoursetemplateservice = null;
+        self::$testmoduletypesservice = null;
         self::$testfilesyncservice = null;
         self::$testclient = null;
     }

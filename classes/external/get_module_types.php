@@ -42,8 +42,7 @@ class get_module_types extends external_api {
         self::validate_system_capability();
 
         try {
-            $client = service_factory::get_client();
-            $types = $client->get('/v1/modules/types');
+            $types = service_factory::get_module_types_service()->get_module_types_cached();
 
             // Check which modules are installed in Moodle.
             $pluginmanager = \core_plugin_manager::instance();
