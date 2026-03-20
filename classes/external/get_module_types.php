@@ -49,9 +49,24 @@ class get_module_types extends external_api {
             $pluginmanager = \core_plugin_manager::instance();
             $installedmods = $pluginmanager->get_plugins_of_type('mod');
 
+            $stringmanager = get_string_manager();
             foreach ($types as &$type) {
                 $modname = $type['type'];
                 $type['installed'] = isset($installedmods[$modname]);
+
+                // Use Moodle's translated activity name when the module is installed (same as queue UI).
+                // Fall back to the API label when not installed or when no mod string exists.
+                if (!empty($type['installed'])) {
+                    $component = $type['component'] ?? '';
+                    if ($component === '' || strpos($component, 'mod_') !== 0) {
+                        $component = 'mod_' . $modname;
+                    }
+                    if ($stringmanager->string_exists('modulename', $component)) {
+                        $type['label'] = get_string('modulename', $component);
+                    } else if ($stringmanager->string_exists('pluginname', $component)) {
+                        $type['label'] = get_string('pluginname', $component);
+                    }
+                }
             }
             unset($type);
 
