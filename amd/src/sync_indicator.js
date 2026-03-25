@@ -9,10 +9,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import Ajax from 'core/ajax';
-import Notification from 'core/notification';
-import {get_strings as getStrings} from 'core/str';
-import CourseEvents from 'core_course/events';
+define(['core/ajax', 'core/notification', 'core/str', 'core_course/events'], function(Ajax, Notification, Str, CourseEvents) {
+    const getStrings = Str.get_strings;
 
 /** @type {number|null} Scheduled poll timer ID. */
 let pollTimer = null;
@@ -43,7 +41,7 @@ let isEnabled = true;
  * @param {boolean} enabled Whether sync is enabled.
  * @param {number} filesTotal Total number of files.
  */
-export const init = async(courseid, status, enabled, filesTotal) => {
+const init = async(courseid, status, enabled, filesTotal) => {
     courseId = courseid;
     currentStatus = status;
     isEnabled = enabled;
@@ -612,3 +610,6 @@ const getStatusMessage = (status) => {
     const stringKey = `filesync_status_${status.status}`;
     return strings[stringKey] || status.status;
 };
+
+return {init: init};
+});
