@@ -296,10 +296,17 @@ class client {
      * @param string $courseid The course ID (used for identification).
      * @param array $files Array of stored_file objects to upload.
      * @param string|null $namespace Optional namespace override.
+     * @param callable|null $uploadprogress Optional callback (float $percent0to100, int $uploadedbytes, int $uploadtotalbytes)
+     *     for outbound upload progress (throttled). Extra args are 0 when unknown.
      * @return array The API response data.
      * @throws api_exception If the upload fails.
      */
-    public function upload_files(string $courseid, array $files, ?string $namespace = null): array {
+    public function upload_files(
+        string $courseid,
+        array $files,
+        ?string $namespace = null,
+        ?callable $uploadprogress = null
+    ): array {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
 
@@ -329,6 +336,7 @@ class client {
 
         // Add files to the request.
         $tempfiles = [];
+        $payloadbytes = 0;
         foreach ($files as $index => $file) {
             if (!($file instanceof \stored_file)) {
                 continue;
@@ -344,10 +352,58 @@ class client {
                 $file->get_mimetype(),
                 $file->get_filename()
             );
+            $payloadbytes += (int) $file->get_filesize();
+        }
+
+        // Estimated multipart body size when libcurl does not report upload total.
+        $estimateduploadtotal = $payloadbytes + max(4096, (int) round($payloadbytes * 0.08));
+
+        $curlextra = [];
+        if ($uploadprogress !== null && defined('CURLOPT_XFERINFOFUNCTION')) {
+            $throttle = (object) [
+                'lastemit' => microtime(true),
+                'lastpct' => -1.0,
+            ];
+            $curlextra['CURLOPT_NOPROGRESS'] = false;
+            $curlextra['CURLOPT_XFERINFOFUNCTION'] = static function ($ch, $dltotal, $dlnow, $ultotal, $ulnow) use (
+                $uploadprogress,
+                $estimateduploadtotal,
+                $throttle
+            ): int {
+                unset($ch, $dltotal, $dlnow);
+                $ulnow = (int) $ulnow;
+                $ultotal = (int) $ultotal;
+
+                if ($ulnow <= 0) {
+                    return 0;
+                }
+
+                if ($ultotal > 0) {
+                    $pct = min(99.0, ($ulnow / $ultotal) * 100.0);
+                } else if ($estimateduploadtotal > 0) {
+                    $pct = min(99.0, ($ulnow / $estimateduploadtotal) * 100.0);
+                } else {
+                    return 0;
+                }
+
+                $now = microtime(true);
+                $delta = abs($pct - $throttle->lastpct);
+                // Emit more often so Moodle file-sync polls can show smoother 0–100% during upload.
+                if ($delta < 0.2 && ($now - $throttle->lastemit) < 0.1 && $pct < 99.0) {
+                    return 0;
+                }
+
+                $throttle->lastemit = $now;
+                $throttle->lastpct = $pct;
+                $totalbytes = $ultotal > 0 ? $ultotal : $estimateduploadtotal;
+                $uploadprogress($pct, $ulnow, $totalbytes);
+
+                return 0;
+            };
         }
 
         try {
-            $response = $curl->post($url, $postdata);
+            $response = $curl->post($url, $postdata, $curlextra);
 
             $errno = $curl->get_errno();
             if ($errno) {
@@ -359,7 +415,12 @@ class client {
                 );
             }
 
-            return $this->parse_response($response, $curl->get_info());
+            $parsed = $this->parse_response($response, $curl->get_info());
+            if ($uploadprogress !== null) {
+                $uploadprogress(100.0, $estimateduploadtotal, $estimateduploadtotal);
+            }
+
+            return $parsed;
 
         } finally {
             // Clean up temp files.

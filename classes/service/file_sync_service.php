@@ -151,6 +151,8 @@ class file_sync_service {
         $status->filestotal = $record->filestotal;
         $status->filescompleted = $record->filescompleted;
         $status->progresspercent = $record->progresspercent;
+        $status->uploadbytes = isset($record->uploadbytes) ? (int) $record->uploadbytes : null;
+        $status->uploadbytestotal = isset($record->uploadbytestotal) ? (int) $record->uploadbytestotal : null;
         $status->errormessage = $record->errormessage;
         $status->lastsyncstarted = $record->lastsyncstarted;
         $status->lastsynccompleted = $record->lastsynccompleted;
@@ -187,17 +189,31 @@ class file_sync_service {
             return;
         }
 
+        // Release the session lock for this request so other requests (e.g. file-sync status polls)
+        // can run while the outbound upload updates progress in the database.
+        \core\session\manager::write_close();
+
         // Update status to syncing.
         $this->repository->update_sync_status($courseid, 'syncing');
 
         try {
             $filecount = count($files);
 
-            // Update progress with file count.
+            $payloadbytes = 0;
+            foreach ($files as $f) {
+                if ($f instanceof \stored_file) {
+                    $payloadbytes += (int) $f->get_filesize();
+                }
+            }
+            $estimateduploadtotal = $payloadbytes + max(4096, (int) round($payloadbytes * 0.08));
+
+            // Update progress with file count and byte budget for designer step-1 UI (5% + 15% by bytes).
             $this->repository->update_sync_status($courseid, 'syncing', [
                 'filestotal' => $filecount,
                 'filescompleted' => 0,
                 'progresspercent' => 0,
+                'uploadbytes' => 0,
+                'uploadbytestotal' => $estimateduploadtotal,
             ]);
 
             if ($filecount === 0) {
@@ -206,21 +222,60 @@ class file_sync_service {
                     'filestotal' => 0,
                     'filescompleted' => 0,
                     'progresspercent' => 100,
+                    'uploadbytes' => null,
+                    'uploadbytestotal' => null,
                 ]);
                 $this->repository->update_filehash($courseid, $filehash);
                 return;
             }
 
-            // Upload files to API.
-            $result = $this->client->upload_files((string) $courseid, $files);
+            $uploadprogress = function (float $pct, int $ulnow = 0, int $ultotal = 0) use (
+                $courseid,
+                $filecount,
+                $estimateduploadtotal
+            ): void {
+                $totalbytes = $ultotal > 0 ? $ultotal : $estimateduploadtotal;
+                $uploaded = $ulnow;
+                if ($uploaded <= 0 && $pct >= 100.0) {
+                    $uploaded = $totalbytes;
+                } else if ($uploaded <= 0 && $pct > 0.0 && $totalbytes > 0) {
+                    $uploaded = (int) round($totalbytes * min(99.0, $pct) / 100.0);
+                }
+                $this->repository->update_sync_status($courseid, 'syncing', [
+                    'filestotal' => $filecount,
+                    'filescompleted' => 0,
+                    'progresspercent' => (int) round(max(0, min(100, $pct))),
+                    'uploadbytes' => $uploaded,
+                    'uploadbytestotal' => $totalbytes,
+                ]);
+            };
+
+            // Upload files to API (progress callback updates DB for UI polling).
+            $result = $this->client->upload_files((string) $courseid, $files, null, $uploadprogress);
 
             // API returns 'syncing' status - indexing happens asynchronously.
             // Don't mark as 'synchronized' until API confirms indexing is complete.
             $apistatus = $result['status'] ?? 'syncing';
+            $record = $this->repository->get_by_courseid($courseid);
+            $uploadwatermark = (float) ($record->progresspercent ?? 0);
+            $apipct = $result['progress']['percent'] ?? null;
+            $mergedpct = $apipct !== null
+                ? max($uploadwatermark, (float) $apipct)
+                : max($uploadwatermark, 99.0);
+
+            $syncedcount = (int) ($result['syncedCount'] ?? 0);
+            $apitotal = (int) ($result['fileCount'] ?? $filecount);
+            if ($apitotal > 0 && $syncedcount < $apitotal && $mergedpct >= 100.0) {
+                $mergedpct = 99.0;
+            }
+
+            $bytetotal = (int) ($record->uploadbytestotal ?? $estimateduploadtotal);
             $this->repository->update_sync_status($courseid, $apistatus, [
                 'filestotal' => $result['fileCount'] ?? $filecount,
                 'filescompleted' => $result['syncedCount'] ?? 0,
-                'progresspercent' => 0,
+                'progresspercent' => (int) round(max(0, min(100, $mergedpct))),
+                'uploadbytes' => $bytetotal,
+                'uploadbytestotal' => $bytetotal,
             ]);
 
             $this->repository->clear_error($courseid);
@@ -355,14 +410,48 @@ class file_sync_service {
      * @return \stdClass Updated status object.
      */
     public function poll_status(int $courseid): \stdClass {
+        // While Moodle is still sending the multipart upload, the remote API often
+        // returns none/empty counts. Merging that would clobber local syncing + byte progress.
+        $record = $this->repository->get_by_courseid($courseid);
+        if ($record && $record->syncstatus === 'syncing') {
+            $ubtotal = (int) ($record->uploadbytestotal ?? 0);
+            $ubnow = (int) ($record->uploadbytes ?? 0);
+            if ($ubtotal > 0 && $ubnow < $ubtotal) {
+                return $this->get_status($courseid);
+            }
+        }
+
         try {
             $apiStatus = $this->client->get_files_status((string) $courseid);
+
+            $record = $this->repository->get_by_courseid($courseid);
+            $localpct = ($record && isset($record->progresspercent) && $record->progresspercent !== null)
+                ? (float) $record->progresspercent
+                : null;
+            $apipct = null;
+            if (isset($apiStatus['progress']['percent'])) {
+                $apipct = (float) $apiStatus['progress']['percent'];
+            }
+
+            $apifiles = isset($apiStatus['fileCount']) ? (int) $apiStatus['fileCount'] : 0;
+            $apisynced = isset($apiStatus['syncedCount']) ? (int) $apiStatus['syncedCount'] : 0;
+            if ($apifiles > 0 && $apisynced < $apifiles && $apipct !== null && $apipct >= 100.0) {
+                $apipct = 99.0;
+            }
 
             $progress = [
                 'filestotal' => $apiStatus['fileCount'] ?? null,
                 'filescompleted' => $apiStatus['syncedCount'] ?? null,
-                'progresspercent' => $apiStatus['progress']['percent'] ?? null,
             ];
+
+            // Never regress below local upload/indexing watermark (API may lag behind HTTP upload progress).
+            if ($localpct !== null || $apipct !== null) {
+                $merged = max($localpct ?? 0, $apipct ?? 0);
+                if ($apifiles > 0 && $apisynced < $apifiles && $merged >= 100.0) {
+                    $merged = 99.0;
+                }
+                $progress['progresspercent'] = (int) round($merged);
+            }
 
             $status = $apiStatus['status'] ?? 'none';
             $this->repository->update_sync_status($courseid, $status, $progress);

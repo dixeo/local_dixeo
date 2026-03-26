@@ -10,6 +10,8 @@
         <FIELD NAME="filestotal" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of files to sync"/>
         <FIELD NAME="filescompleted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Number of files successfully synced"/>
         <FIELD NAME="progresspercent" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="Sync progress percentage 0-100"/>
+        <FIELD NAME="uploadbytes" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Bytes uploaded in current outbound HTTP sync (multipart body)"/>
+        <FIELD NAME="uploadbytestotal" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Estimated total bytes for current outbound HTTP sync"/>
         <FIELD NAME="errormessage" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Last error message if status is error"/>
         <FIELD NAME="errorcount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of consecutive errors for retry backoff"/>
         <FIELD NAME="lasterrorat" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp of last error"/>

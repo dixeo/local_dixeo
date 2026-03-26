@@ -153,5 +153,21 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026031600, 'local', 'dixeo');
     }
 
+    if ($oldversion < 2026032100) {
+        $table = new xmldb_table('local_dixeo_course_ai');
+
+        $field = new xmldb_field('uploadbytes', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'progresspercent');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('uploadbytestotal', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'uploadbytes');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026032100, 'local', 'dixeo');
+    }
+
     return true;
 }
