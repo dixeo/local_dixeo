@@ -177,6 +177,40 @@ abstract class abstract_context_builder implements context_builder_interface {
     }
 
     /**
+     * Get file annotation for resource/folder modules.
+     *
+     * Returns a parenthesized list of filenames contained in the module,
+     * helping the AI map activity names to actual filenames in the vector store.
+     *
+     * @param \cm_info $cm The course module info.
+     * @return string File annotation (e.g., " (files: doc.pdf, notes.docx)") or empty string.
+     */
+    protected function get_file_annotation(\cm_info $cm): string {
+        if (!in_array($cm->modname, ['resource', 'folder'], true)) {
+            return '';
+        }
+
+        $fs = get_file_storage();
+        $context = \context_module::instance($cm->id);
+        $component = 'mod_' . $cm->modname;
+        $areafiles = $fs->get_area_files($context->id, $component, 'content', 0, 'sortorder', false);
+
+        $filenames = [];
+        foreach ($areafiles as $file) {
+            if ($file->is_directory()) {
+                continue;
+            }
+            $filenames[] = $file->get_filename();
+        }
+
+        if (empty($filenames)) {
+            return '';
+        }
+
+        return ' (files: ' . implode(', ', $filenames) . ')';
+    }
+
+    /**
      * Build adjacent sections context lines.
      *
      * @param \course_modinfo $modinfo The course module info.

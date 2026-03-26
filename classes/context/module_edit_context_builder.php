@@ -167,8 +167,9 @@ class module_edit_context_builder extends abstract_context_builder {
     private function buildModuleDetailBlock(string $label, \cm_info $cm): array {
         $lines = [];
         $lines[] = "### {$label}";
+        $fileannotation = $this->get_file_annotation($cm);
         $lines[] = "- **Type:** {$cm->modname}";
-        $lines[] = "- **Name:** {$cm->name}";
+        $lines[] = "- **Name:** {$cm->name}{$fileannotation}";
 
         $excerpt = $this->contentExtractor->get_excerpt($cm);
 

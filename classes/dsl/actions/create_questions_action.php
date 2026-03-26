@@ -1004,9 +1004,11 @@ class create_questions_action {
                 $choiceindex++;
             }
 
-            // Replace {{answer}} placeholder with [[n]] where n is the correct choice position.
+            // Replace the next {{...}} placeholder with [[n]] where n is the correct choice position.
+            // Uses positional replacement (first gap = first placeholder) instead of string
+            // matching, which is more robust when answers contain special characters.
             if ($correctposition !== null) {
-                $processedtext = str_replace('{{' . $answer . '}}', '[[' . $correctposition . ']]', $processedtext);
+                $processedtext = preg_replace('/\{\{[^}]+\}\}/', '[[' . $correctposition . ']]', $processedtext, 1);
             }
         }
 

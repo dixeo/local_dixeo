@@ -118,11 +118,13 @@ class create_module_from_job extends external_api {
             // Allow callers to override AI-generated name/intro with structure-defined values.
             // This lets the course structure flow inject pre-determined titles without
             // needing a second AI call or a separate job.
+            // Skip intro override for labels — intro IS the content, not a description.
             $data = $result['data'] ?? [];
+            $moduletype = $result['moduleType'] ?? 'page';
             if (!empty($params['name'])) {
                 $data['name'] = $params['name'];
             }
-            if (!empty($params['intro'])) {
+            if (!empty($params['intro']) && $moduletype !== 'label') {
                 $data['intro'] = $params['intro'];
             }
 

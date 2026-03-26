@@ -99,12 +99,14 @@ class module_generation_context_builder extends abstract_context_builder {
 
         if ($adjacent['prev'] !== null) {
             $prev = $adjacent['prev'];
-            $lines[] = "- Previous: [{$prev->modname}] {$prev->name}";
+            $fileannotation = $this->get_file_annotation($prev);
+            $lines[] = "- Previous: [{$prev->modname}] {$prev->name}{$fileannotation}";
         }
 
         if ($adjacent['next'] !== null) {
             $next = $adjacent['next'];
-            $lines[] = "- Next: [{$next->modname}] {$next->name}";
+            $fileannotation = $this->get_file_annotation($next);
+            $lines[] = "- Next: [{$next->modname}] {$next->name}{$fileannotation}";
         }
 
         return $lines;

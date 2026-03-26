@@ -238,13 +238,15 @@ class course_context_builder extends abstract_context_builder {
                 continue;
             }
 
+            $fileannotation = $this->get_file_annotation($cm);
+
             if ($detailLevel === 'titles') {
-                $lines[] = "- [{$cm->modname}] {$cm->name}";
+                $lines[] = "- [{$cm->modname}] {$cm->name}{$fileannotation}";
                 continue;
             }
 
             // Full or preview: include content.
-            $lines[] = "**[{$cm->modname}] {$cm->name}**";
+            $lines[] = "**[{$cm->modname}] {$cm->name}**{$fileannotation}";
 
             $length = ($detailLevel === 'full')
                 ? self::CONTENT_LENGTH_FULL
