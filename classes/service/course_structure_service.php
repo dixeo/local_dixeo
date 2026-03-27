@@ -178,15 +178,12 @@ class course_structure_service {
     /**
      * Get module type identifiers for all installed activity modules.
      *
-     * Uses the same core_plugin_manager pattern as get_module_types web service.
+     * Uses the same cached registry as {@see plugin_installation_service} / get_module_types.
      *
      * @return string[] List of installed module type names (e.g. ['page', 'quiz', 'label']).
      */
     private function get_installed_module_types(): array {
-        $pluginmanager = \core_plugin_manager::instance();
-        $installedmods = $pluginmanager->get_plugins_of_type('mod');
-
-        return array_keys($installedmods);
+        return plugin_installation_service::get_installed_plugin_names('mod');
     }
 
     /**

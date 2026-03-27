@@ -17,6 +17,7 @@ use core_external\external_multiple_structure;
 use core_external\external_value;
 use local_dixeo\external\traits\capability_check;
 use local_dixeo\api\exception\api_exception;
+use local_dixeo\service\plugin_installation_service;
 
 /**
  * External function to get available module types.
@@ -70,9 +71,7 @@ class get_module_types extends external_api {
         try {
             $types = service_factory::get_module_types_service()->get_module_types_cached();
 
-            // Check which modules are installed in Moodle.
-            $pluginmanager = \core_plugin_manager::instance();
-            $installedmods = $pluginmanager->get_plugins_of_type('mod');
+            $installedmods = plugin_installation_service::get_installed_plugin_map('mod');
 
             $stringmanager = get_string_manager();
             foreach ($types as &$type) {
