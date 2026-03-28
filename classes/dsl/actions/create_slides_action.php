@@ -60,7 +60,16 @@ class create_slides_action {
             );
         }
 
-        $slideshowid = (int) $moduledata['cmid'];
+        $cmid = (int) $moduledata['cmid'];
+        $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
+        if ($cm->modname !== 'slideshow') {
+            throw new dsl_exception(
+                'module_ref must resolve to a slideshow activity',
+                'add_slides',
+                ['cmid' => $cmid]
+            );
+        }
+        $slideshowinstanceid = (int) $cm->instance;        
 
         // Resolve the slides collection.
         $foreachpath = $action['foreach'];
@@ -95,7 +104,7 @@ class create_slides_action {
 
             // Build the slide record.
             $record = new \stdClass();
-            $record->slideshow = $slideshowid;
+            $record->slideshow = $slideshowinstanceid;
             $record->name = $resolvedfields['title'] ?? '';
             $record->content = $resolvedfields['content'] ?? '';
             $record->contentformat = FORMAT_HTML;
