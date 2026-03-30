@@ -56,7 +56,6 @@ class course_structure_service {
      *
      * @param string $instructions Course description and generation instructions.
      * @param string|null $templateid UUID of a course template to constrain the structure.
-     * @param string|null $vectorstoreid Vector store ID to ground generation in uploaded files.
      * @param string|null $courseid External course identifier for traceability.
      * @return operation_result Pending operation result containing the jobid.
      * @throws api_exception If the API request fails.
@@ -64,10 +63,9 @@ class course_structure_service {
     public function submit_generate(
         string $instructions,
         ?string $templateid = null,
-        ?string $vectorstoreid = null,
         ?string $courseid = null
     ): operation_result {
-        $payload = $this->build_payload($instructions, $templateid, $vectorstoreid, $courseid);
+        $payload = $this->build_payload($instructions, $templateid, $courseid);
 
         return $this->jobservice->submit_job(self::ENDPOINT, $payload);
     }
@@ -81,7 +79,6 @@ class course_structure_service {
      *
      * @param string $instructions Course description and generation instructions.
      * @param string|null $templateid UUID of a course template to constrain the structure.
-     * @param string|null $vectorstoreid Vector store ID to ground generation in uploaded files.
      * @param string|null $courseid External course identifier for traceability.
      * @return operation_result Completed operation result containing the course structure.
      * @throws api_exception If the API request fails or polling times out.
@@ -89,10 +86,9 @@ class course_structure_service {
     public function submit_and_wait(
         string $instructions,
         ?string $templateid = null,
-        ?string $vectorstoreid = null,
         ?string $courseid = null
     ): operation_result {
-        $payload = $this->build_payload($instructions, $templateid, $vectorstoreid, $courseid);
+        $payload = $this->build_payload($instructions, $templateid, $courseid);
 
         return $this->jobservice->submit_and_wait(self::ENDPOINT, $payload, self::JOB_TYPE);
     }
@@ -147,7 +143,6 @@ class course_structure_service {
     private function build_payload(
         string $instructions,
         ?string $templateid,
-        ?string $vectorstoreid,
         ?string $courseid
     ): array {
         if (empty(trim($instructions))) {
@@ -161,9 +156,6 @@ class course_structure_service {
 
         if ($templateid !== null) {
             $payload['templateId'] = $templateid;
-        }
-        if ($vectorstoreid !== null) {
-            $payload['vectorStoreId'] = $vectorstoreid;
         }
         if ($courseid !== null) {
             $payload['courseId'] = $courseid;
