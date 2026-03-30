@@ -89,4 +89,17 @@ if ($hassiteconfig) {
 
     // Add to admin tree.
     $ADMIN->add('localplugins', $settings);
+
+    // Conditionally add the Dixeo Course Designer link if the block is installed.
+    if (\local_dixeo\service\plugin_installation_service::is_component_installed('block_dixeo_designer')) {
+        $ADMIN->add('courses',
+            new admin_externalpage(
+                'block_dixeo_designer_designacourse',
+                get_string('designacourse', 'block_dixeo_designer'),
+                new moodle_url('/blocks/dixeo_designer/designer.php'),
+                array('block/dixeo_designer:create')
+            ),
+            'restorecourse'
+        );
+    }
 }
