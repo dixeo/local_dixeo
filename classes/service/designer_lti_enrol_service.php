@@ -19,7 +19,7 @@ namespace local_dixeo\service;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Adds an enrol_lti tool instance for designer-created courses (orchestration only).
+ * Adds an enrol_lti tool instance for designer-created courses.
  *
  * Callers (e.g. block_dixeo_designer) supply field values from their own settings.
  *
@@ -29,19 +29,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 class designer_lti_enrol_service {
 
-    /** Config value meaning: use the course's language for LTI user defaults. */
-    public const LANG_SAME_AS_COURSE = 'sameascourse';
-
     /**
      * Create one LTI 1.3 enrol instance for the course.
      *
      * @param int $courseid
-     * @param array $fields Must include: maxenrolled (int), maildisplay (int 0–2), lang (lang code),
-     *                      city (string), country (string ISO or '').
+     * @param array $fields Optional keys: maxenrolled (int), membersync (0|1), membersyncmode (1|2|3).
      * @return string|false Tool UUID for LTI Advantage, or false if enrol_lti disabled or failure.
      */
     public function add_lti_enrol_instance(int $courseid, array $fields): string|false {
-        global $DB;
+        global $CFG, $DB;
 
         if (!enrol_is_enabled('lti')) {
             return false;
@@ -53,34 +49,59 @@ class designer_lti_enrol_service {
             $maxenrolled = 0;
         }
 
-        $maildisplay = (int) ($fields['maildisplay'] ?? 0);
+        $membersync = (int) ($fields['membersync'] ?? 0);
+        if (!in_array($membersync, [0, 1], true)) {
+            $membersync = 0;
+        }
+        $membersyncmode = (int) ($fields['membersyncmode'] ?? \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL);
+        if (!in_array($membersyncmode, [
+            \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL,
+            \enrol_lti\helper::MEMBER_SYNC_ENROL_NEW,
+            \enrol_lti\helper::MEMBER_SYNC_UNENROL_MISSING,
+        ], true)) {
+            $membersyncmode = \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL;
+        }
+
+        $maildisplay = (int) get_config('enrol_lti', 'emaildisplay');
         if (!in_array($maildisplay, [0, 1, 2], true)) {
-            $maildisplay = 0;
+            $maildisplay = isset($CFG->defaultpreference_maildisplay) ? (int) $CFG->defaultpreference_maildisplay : 0;
         }
 
-        $lang = clean_param($fields['lang'] ?? '', PARAM_LANG);
+        // Language follows the course when available; otherwise fallback to enrol_lti default.
+        $lang = !empty($course->lang) ? clean_param((string) $course->lang, PARAM_LANG) : '';
         if ($lang === '') {
-            global $CFG;
-            $lang = $CFG->lang;
+            $lang = clean_param((string) get_config('enrol_lti', 'lang'), PARAM_LANG);
+        }
+        if ($lang === '') {
+            $lang = (string) $CFG->lang;
         }
 
-        $city = clean_param($fields['city'] ?? '', PARAM_TEXT);
-        $country = clean_param($fields['country'] ?? '', PARAM_ALPHA);
+        $timezone = get_config('enrol_lti', 'timezone');
+        $timezone = ($timezone === false || $timezone === null || $timezone === '') ? 99 : $timezone;
+        $institution = clean_param((string) get_config('enrol_lti', 'institution'), PARAM_TEXT);
+        $city = clean_param((string) get_config('enrol_lti', 'city'), PARAM_TEXT);
+        if ($city === '' && !empty($CFG->defaultcity)) {
+            $city = clean_param((string) $CFG->defaultcity, PARAM_TEXT);
+        }
+        $country = clean_param((string) get_config('enrol_lti', 'country'), PARAM_ALPHA);
+        if ($country === '' && !empty($CFG->country)) {
+            $country = clean_param((string) $CFG->country, PARAM_ALPHA);
+        }
 
         $ltitool = (object) [
             'contextid' => \context_course::instance($course->id)->id,
             'ltiversion' => 'LTI-1p3',
-            'institution' => '',
+            'institution' => $institution,
             'lang' => $lang,
-            'timezone' => 99,
+            'timezone' => $timezone,
             'maxenrolled' => $maxenrolled,
             'maildisplay' => $maildisplay,
             'city' => $city,
             'country' => $country,
             'gradesync' => 1,
             'gradesynccompletion' => 0,
-            'membersync' => 0,
-            'membersyncmode' => 1,
+            'membersync' => $membersync,
+            'membersyncmode' => $membersyncmode,
             'roleinstructor' => 3,
             'rolelearner' => 5,
             'secret' => random_string(32),
