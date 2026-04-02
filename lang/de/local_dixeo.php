@@ -96,6 +96,7 @@ $string['period_month'] = 'Monatlich';
 $string['transaction_type_purchase'] = 'Kauf';
 $string['transaction_type_deduction'] = 'Nutzung';
 $string['transaction_type_refund'] = 'Rückerstattung';
+$string['transaction_type_reset'] = 'Erneuerung';
 
 // Table headers.
 $string['date'] = 'Datum';

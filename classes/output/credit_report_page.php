@@ -351,7 +351,7 @@ class credit_report_page implements renderable, templatable {
      */
     protected function get_transaction_type_class(string $type): string {
         return match ($type) {
-            'purchase' => 'success',
+            'purchase', 'reset' => 'success',
             'deduction' => 'danger',
             'refund' => 'info',
             default => 'secondary',
