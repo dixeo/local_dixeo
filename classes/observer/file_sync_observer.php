@@ -29,7 +29,7 @@ class file_sync_observer {
     private const FILE_MODULE_TYPES = ['resource', 'folder'];
 
     /** @var array Block types that trigger auto-enable of sync. */
-    private const SYNC_TRIGGER_BLOCKS = ['dixeo_tutor', 'dixeo_generator'];
+    private const SYNC_TRIGGER_BLOCKS = ['dixeo_tutor', 'dixeo_modulegen'];
 
     /**
      * Handle course module created event.
