@@ -29,20 +29,26 @@ use local_dixeo\service\module_content_extractor;
 class module_edit_context_builder extends abstract_context_builder {
     use module_data_loader;
 
+    /** @var string|null Trimmed HTML from tiny_autosave, or null to use DB-only content. */
+    private ?string $autosaveDraftHtml;
+
     /**
      * Constructor.
      *
      * @param int $cmid The course module ID.
      * @param html_helper|null $htmlHelper Optional HTML helper.
      * @param module_content_extractor|null $contentExtractor Optional content extractor.
+     * @param string|null $autosaveDraftHtml Optional draft HTML resolved server-side from tiny_autosave.
      */
     public function __construct(
         int $cmid,
         ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null
+        ?module_content_extractor $contentExtractor = null,
+        ?string $autosaveDraftHtml = null
     ) {
         parent::__construct($htmlHelper, $contentExtractor);
         $this->cmid = $cmid;
+        $this->autosaveDraftHtml = $autosaveDraftHtml;
     }
 
     /**
@@ -125,7 +131,7 @@ class module_edit_context_builder extends abstract_context_builder {
         $lines[] = '## CURRENT_CONTENT';
         $lines[] = '>>> MODULE TO EDIT <<<';
 
-        $content = $this->contentExtractor->get_full_content_for_edit($this->cminfo);
+        $content = $this->contentExtractor->get_full_content_for_edit($this->cminfo, $this->autosaveDraftHtml);
 
         if (!empty($content)) {
             $lines[] = $content;

@@ -84,13 +84,15 @@ class context_builder_factory {
      * Create a module edit context builder.
      *
      * @param int $cmid The course module ID.
+     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (null = use saved module content only).
      * @return module_edit_context_builder The configured builder.
      */
-    public static function moduleEdit(int $cmid): module_edit_context_builder {
+    public static function moduleEdit(int $cmid, ?string $autosaveDraftHtml = null): module_edit_context_builder {
         return new module_edit_context_builder(
             $cmid,
             self::getHtmlHelper(),
-            self::getContentExtractor()
+            self::getContentExtractor(),
+            $autosaveDraftHtml
         );
     }
 
@@ -134,10 +136,11 @@ class context_builder_factory {
      * Build module edit context directly (convenience method).
      *
      * @param int $cmid The course module ID.
+     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (null = use saved module content only).
      * @return string The built markdown context.
      */
-    public static function buildModuleEditContext(int $cmid): string {
-        return self::moduleEdit($cmid)->build();
+    public static function buildModuleEditContext(int $cmid, ?string $autosaveDraftHtml = null): string {
+        return self::moduleEdit($cmid, $autosaveDraftHtml)->build();
     }
 
     /**

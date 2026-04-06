@@ -115,14 +115,25 @@ class module_content_extractor {
      * Get full module content for edit operations.
      *
      * Preserves HTML structure for editing, with special handling for page modules.
+     * When $autosaveDraftHtml is non-empty after trim, it replaces the in-editor body from Tiny autosave;
+     * for page modules the introduction stays loaded from the database and only the main content uses the draft.
      *
      * @param \cm_info $cm The course module info.
+     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (already validated server-side).
      * @return string|null The full content for editing, or null if not available.
      */
-    public function get_full_content_for_edit(\cm_info $cm): ?string {
-        // Page modules include both intro and content with labels.
+    public function get_full_content_for_edit(\cm_info $cm, ?string $autosaveDraftHtml = null): ?string {
+        $draft = $autosaveDraftHtml !== null ? trim($autosaveDraftHtml) : '';
+        $usedraft = $draft !== '';
+
         if ($cm->modname === 'page') {
-            return $this->get_page_full_content($cm->instance);
+            return $usedraft
+                ? $this->get_page_full_content_with_content_override($cm->instance, $draft)
+                : $this->get_page_full_content($cm->instance);
+        }
+
+        if ($usedraft) {
+            return $draft;
         }
 
         return $this->get_raw_content($cm);
@@ -157,6 +168,32 @@ class module_content_extractor {
         }
 
         return !empty($result) ? $result : null;
+    }
+
+    /**
+     * Page intro from DB plus content body from autosave draft (Dixeo editor edits content only).
+     *
+     * @param int $pageid Page instance id.
+     * @param string $contentdraft HTML for the content field.
+     * @return string|null
+     */
+    private function get_page_full_content_with_content_override(int $pageid, string $contentdraft): ?string {
+        global $DB;
+
+        $page = $DB->get_record('page', ['id' => $pageid], 'intro, content', IGNORE_MISSING);
+        if (!$page) {
+            return null;
+        }
+
+        $result = '';
+        if (!empty($page->intro)) {
+            $result .= "**Introduction:**\n" . $page->intro . "\n\n";
+        }
+        if ($contentdraft !== '') {
+            $result .= "**Content:**\n" . $contentdraft;
+        }
+
+        return $result !== '' ? $result : null;
     }
 
     /**
