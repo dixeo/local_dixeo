@@ -14,19 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_dixeo\dto;
+
 /**
- * Plugin version and dependencies.
+ * A local filesystem path to upload as one multipart file (e.g. SCORM text extract).
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
  * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class file_upload_part {
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2026040800;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2024100700;        // Requires Moodle 4.5+.
-$plugin->component = 'local_dixeo';     // Full name of the plugin.
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0';
+    /**
+     * @param string $path Absolute path readable by curl (temp file).
+     * @param string $filename Logical filename sent to the API (stable per activity).
+     * @param string $mimetype MIME type for the part.
+     * @param bool $deleteafterupload If true, the API client unlinks $path after POST.
+     */
+    public function __construct(
+        public readonly string $path,
+        public readonly string $filename,
+        public readonly string $mimetype = 'text/plain',
+        public readonly bool $deleteafterupload = true,
+    ) {
+    }
+}

@@ -16,6 +16,7 @@
 
 namespace local_dixeo\api;
 
+use local_dixeo\dto\file_upload_part;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\api\exception\authentication_exception;
 use local_dixeo\api\exception\rate_limit_exception;
@@ -294,7 +295,7 @@ class client {
      * Upload files to the Dixeo VectorStore.
      *
      * @param string $courseid The course ID (used for identification).
-     * @param array $files Array of stored_file objects to upload.
+     * @param array $files Array of stored_file and/or {@see file_upload_part} items to upload.
      * @param string|null $namespace Optional namespace override.
      * @param callable|null $uploadprogress Optional callback (float $percent0to100, int $uploadedbytes, int $uploadtotalbytes)
      *     for outbound upload progress (throttled). Extra args are 0 when unknown.
@@ -334,25 +335,45 @@ class client {
             'namespace' => $namespace,
         ];
 
-        // Add files to the request.
+        // Add files to the request (sequential multipart field names).
         $tempfiles = [];
         $payloadbytes = 0;
-        foreach ($files as $index => $file) {
-            if (!($file instanceof \stored_file)) {
-                continue;
+        $partindex = 0;
+        foreach ($files as $file) {
+            if ($file instanceof \stored_file) {
+                // Create temp file for upload since curl needs a file path.
+                $temppath = $CFG->tempdir . '/dixeo_upload_' . uniqid() . '_' . $file->get_filename();
+                $file->copy_content_to($temppath);
+                $tempfiles[] = $temppath;
+
+                $postdata["files[$partindex]"] = new \CURLFile(
+                    $temppath,
+                    $file->get_mimetype(),
+                    $file->get_filename()
+                );
+                $payloadbytes += (int) $file->get_filesize();
+                $partindex++;
+            } else if ($file instanceof file_upload_part) {
+                $temppath = $file->path;
+                if (!is_readable($temppath)) {
+                    continue;
+                }
+                $postdata["files[$partindex]"] = new \CURLFile(
+                    $temppath,
+                    $file->mimetype,
+                    $file->filename
+                );
+                $size = filesize($temppath);
+                $payloadbytes += $size !== false ? (int) $size : 0;
+                if ($file->deleteafterupload) {
+                    $tempfiles[] = $temppath;
+                }
+                $partindex++;
             }
+        }
 
-            // Create temp file for upload since curl needs a file path.
-            $temppath = $CFG->tempdir . '/dixeo_upload_' . uniqid() . '_' . $file->get_filename();
-            $file->copy_content_to($temppath);
-            $tempfiles[] = $temppath;
-
-            $postdata["files[$index]"] = new \CURLFile(
-                $temppath,
-                $file->get_mimetype(),
-                $file->get_filename()
-            );
-            $payloadbytes += (int) $file->get_filesize();
+        if ($partindex === 0) {
+            return ['uploaded' => 0, 'files' => []];
         }
 
         // Estimated multipart body size when libcurl does not report upload total.

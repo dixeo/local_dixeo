@@ -1,0 +1,102 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Tests for SCORM vector text extraction.
+ *
+ * @package    local_dixeo
+ * @category   test
+ * @copyright  2026 Edunao SAS
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace local_dixeo;
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * @covers \local_dixeo\service\scorm_vector_extract_service
+ */
+final class scorm_vector_extract_service_test extends \advanced_testcase {
+
+    public function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest(true);
+    }
+
+    public function test_extract_sco_text_from_minimal_zip(): void {
+        global $CFG;
+
+        $manifest = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+    xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+    identifier="M">
+  <organizations default="O1">
+    <organization identifier="O1">
+      <item identifier="I1" identifierref="R1"><title>T</title></item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="R1" type="webcontent" adlcp:scormtype="sco" href="sco1.html"/>
+  </resources>
+</manifest>
+XML;
+
+        $html = '<html><body><p>Hello SCORM</p></body></html>';
+
+        $path = $CFG->tempdir . '/dixeo_test_scorm_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('imsmanifest.xml', $manifest);
+        $zip->addFromString('sco1.html', $html);
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $text = $service->extract_sco_text_from_zip_path($path);
+        @unlink($path);
+
+        $this->assertStringContainsString('Hello SCORM', $text);
+    }
+
+    public function test_extract_skips_non_sco_resources(): void {
+        global $CFG;
+
+        $manifest = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+    xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+    identifier="M">
+  <resources>
+    <resource identifier="R1" type="webcontent" adlcp:scormtype="asset" href="a.html"/>
+  </resources>
+</manifest>
+XML;
+
+        $path = $CFG->tempdir . '/dixeo_test_scorm_asset_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('imsmanifest.xml', $manifest);
+        $zip->addFromString('a.html', '<html><body>Asset</body></html>');
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $text = $service->extract_sco_text_from_zip_path($path);
+        @unlink($path);
+
+        $this->assertSame('', $text);
+    }
+}

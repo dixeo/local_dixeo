@@ -4,6 +4,7 @@
  *
  * Orchestrates file collection from course modules, uploading to the API,
  * and tracking sync status. Supports debounced sync via adhoc tasks.
+ * Local SCORM packages contribute a generated plain-text extract per activity (SCO-only).
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -15,6 +16,7 @@ namespace local_dixeo\service;
 
 use local_dixeo\api\client;
 use local_dixeo\api\exception\api_exception;
+use local_dixeo\dto\file_upload_part;
 use local_dixeo\repository\course_ai_repository;
 
 /**
@@ -37,18 +39,24 @@ class file_sync_service {
     /** @var client API client for Dixeo communication. */
     private client $client;
 
+    /** @var scorm_vector_extract_service SCORM package text extraction for sync. */
+    private scorm_vector_extract_service $scormextract;
+
     /**
      * Constructor.
      *
      * @param course_ai_repository|null $repository Optional repository instance.
      * @param client|null $client Optional API client instance.
+     * @param scorm_vector_extract_service|null $scormextract Optional SCORM extract service.
      */
     public function __construct(
         ?course_ai_repository $repository = null,
-        ?client $client = null
+        ?client $client = null,
+        ?scorm_vector_extract_service $scormextract = null
     ) {
         $this->repository = $repository ?? new course_ai_repository();
         $this->client = $client ?? new client();
+        $this->scormextract = $scormextract ?? new scorm_vector_extract_service();
     }
 
     /**
@@ -181,13 +189,14 @@ class file_sync_service {
             return;
         }
 
-        // Collect files and check if anything changed before hitting the API.
-        $files = $this->collect_course_files($courseid);
-        $filehash = $this->compute_file_manifest_hash($files);
+        // Hash from stored packages only (no SCORM temp extraction until we know sync is needed).
+        $filehash = $this->compute_sync_manifest_hash($courseid);
 
         if ($filehash === ($record->filehash ?? null)) {
             return;
         }
+
+        $uploaditems = $this->collect_upload_payload($courseid);
 
         // Release the session lock for this request so other requests (e.g. file-sync status polls)
         // can run while the outbound upload updates progress in the database.
@@ -197,12 +206,15 @@ class file_sync_service {
         $this->repository->update_sync_status($courseid, 'syncing');
 
         try {
-            $filecount = count($files);
+            $filecount = count($uploaditems);
 
             $payloadbytes = 0;
-            foreach ($files as $f) {
-                if ($f instanceof \stored_file) {
-                    $payloadbytes += (int) $f->get_filesize();
+            foreach ($uploaditems as $item) {
+                if ($item instanceof \stored_file) {
+                    $payloadbytes += (int) $item->get_filesize();
+                } else if ($item instanceof file_upload_part) {
+                    $sz = @filesize($item->path);
+                    $payloadbytes += $sz !== false ? (int) $sz : 0;
                 }
             }
             $estimateduploadtotal = $payloadbytes + max(4096, (int) round($payloadbytes * 0.08));
@@ -251,7 +263,7 @@ class file_sync_service {
             };
 
             // Upload files to API (progress callback updates DB for UI polling).
-            $result = $this->client->upload_files((string) $courseid, $files, null, $uploadprogress);
+            $result = $this->client->upload_files((string) $courseid, $uploaditems, null, $uploadprogress);
 
             // API returns 'syncing' status - indexing happens asynchronously.
             // Don't mark as 'synchronized' until API confirms indexing is complete.
@@ -366,7 +378,8 @@ class file_sync_service {
      * Collect all syncable files from a course.
      *
      * Iterates through resource and folder modules, extracting files
-     * with supported extensions.
+     * with supported extensions. SCORM extracts are not included here
+     * (they are built during {@see trigger_sync()} when the manifest hash changes).
      *
      * @param int $courseid The course ID.
      * @return array Array of stored_file objects.
@@ -391,6 +404,91 @@ class file_sync_service {
         }
 
         return $files;
+    }
+
+    /**
+     * Compute manifest hash from resource/folder files and SCORM package content hashes (no extraction).
+     *
+     * @param int $courseid The course ID.
+     * @return string SHA-256 hex digest.
+     */
+    private function compute_sync_manifest_hash(int $courseid): string {
+        $lines = $this->collect_sync_manifest_lines($courseid);
+        sort($lines, SORT_STRING);
+
+        return hash('sha256', implode("\n", $lines));
+    }
+
+    /**
+     * Sorted manifest lines for hashing.
+     *
+     * @param int $courseid The course ID.
+     * @return string[]
+     */
+    private function collect_sync_manifest_lines(int $courseid): array {
+        $modinfo = get_fast_modinfo($courseid);
+        $fs = get_file_storage();
+        $lines = [];
+
+        foreach ($modinfo->get_cms() as $cm) {
+            if (in_array($cm->modname, self::FILE_MODULE_TYPES, true)) {
+                if (!$cm->visible) {
+                    continue;
+                }
+                $context = \context_module::instance($cm->id);
+                $modulefiles = $this->get_module_files($cm->modname, $context, $fs);
+                foreach ($modulefiles as $file) {
+                    $lines[] = $file->get_contenthash() . '|' . $file->get_filename();
+                }
+            } else if ($cm->modname === 'scorm') {
+                if (!$cm->visible) {
+                    continue;
+                }
+                $package = $this->scormextract->get_package_file($cm);
+                if ($package) {
+                    $lines[] = 'scorm_cm' . $cm->id . '|' . $package->get_contenthash();
+                }
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Build upload payload: resource/folder stored_files plus SCORM text extracts.
+     *
+     * Empty SCORM extracts are omitted; debugging() records the skip (see scorm_vector_extract_service).
+     *
+     * @param int $courseid The course ID.
+     * @return array Array of \stored_file|file_upload_part.
+     */
+    private function collect_upload_payload(int $courseid): array {
+        $modinfo = get_fast_modinfo($courseid);
+        $fs = get_file_storage();
+        $payload = [];
+
+        foreach ($modinfo->get_cms() as $cm) {
+            if (in_array($cm->modname, self::FILE_MODULE_TYPES, true)) {
+                if (!$cm->visible) {
+                    continue;
+                }
+                $context = \context_module::instance($cm->id);
+                $modulefiles = $this->get_module_files($cm->modname, $context, $fs);
+                foreach ($modulefiles as $file) {
+                    $payload[] = $file;
+                }
+            } else if ($cm->modname === 'scorm') {
+                if (!$cm->visible) {
+                    continue;
+                }
+                $part = $this->scormextract->try_build_upload_part($cm);
+                if ($part !== null) {
+                    $payload[] = $part;
+                }
+            }
+        }
+
+        return $payload;
     }
 
     /**
@@ -462,25 +560,6 @@ class file_sync_service {
         }
 
         return $this->get_status($courseid);
-    }
-
-    /**
-     * Compute a SHA-256 hash of the file manifest (sorted contenthash + filename pairs).
-     *
-     * Returns a deterministic hash that changes only when files are added, removed,
-     * or modified. Used to skip API calls when nothing has changed.
-     *
-     * @param \stored_file[] $files The collected course files.
-     * @return string SHA-256 hex digest.
-     */
-    private function compute_file_manifest_hash(array $files): string {
-        $entries = [];
-        foreach ($files as $file) {
-            $entries[] = $file->get_contenthash() . '|' . $file->get_filename();
-        }
-        sort($entries);
-
-        return hash('sha256', implode("\n", $entries));
     }
 
     /**

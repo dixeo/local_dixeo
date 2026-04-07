@@ -25,8 +25,8 @@ use local_dixeo\service\file_sync_service;
  */
 class file_sync_observer {
 
-    /** @var array Module types that contain syncable files. */
-    private const FILE_MODULE_TYPES = ['resource', 'folder'];
+    /** @var array Module types that contain syncable files or SCORM extracts. */
+    private const FILE_MODULE_TYPES = ['resource', 'folder', 'scorm'];
 
     /** @var array Block types that trigger auto-enable of sync. */
     private const SYNC_TRIGGER_BLOCKS = ['dixeo_tutor', 'dixeo_modulegen'];
