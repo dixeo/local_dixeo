@@ -37,9 +37,6 @@ class course_context_builder extends abstract_context_builder {
      */
     public const MODE_ASSESSMENT = 'assessment';
 
-    /** @var int Full content length for target section modules. */
-    private const CONTENT_LENGTH_FULL = 1000;
-
     /** @var int Preview length for adjacent section modules. */
     private const CONTENT_LENGTH_PREVIEW = 500;
 
@@ -248,11 +245,12 @@ class course_context_builder extends abstract_context_builder {
             // Full or preview: include content.
             $lines[] = "**[{$cm->modname}] {$cm->name}**{$fileannotation}";
 
-            $length = ($detailLevel === 'full')
-                ? self::CONTENT_LENGTH_FULL
-                : self::CONTENT_LENGTH_PREVIEW;
-
-            $content = $this->contentExtractor->get_preview($cm, $length);
+            // Full level: untruncated content so the tutor and assessment generators
+            // see the entire module. Preview level: short excerpt for adjacent sections
+            // in teaching mode.
+            $content = ($detailLevel === 'full')
+                ? $this->contentExtractor->get_full_content($cm)
+                : $this->contentExtractor->get_preview($cm, self::CONTENT_LENGTH_PREVIEW);
 
             if (!empty($content)) {
                 $lines[] = $content;
