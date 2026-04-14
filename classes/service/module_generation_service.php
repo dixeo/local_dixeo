@@ -248,7 +248,7 @@ class module_generation_service {
      * Submits an edit request to the dedicated edit endpoint and polls for completion.
      * Unlike fill, this uses a specialized prompt for surgical, minimal edits.
      *
-     * @param string $moduletype The module type (page, label).
+     * @param string $moduletype The module type (page, label, slideshow).
      * @param string $instructions Instructions for the AI.
      * @param string $context Course/section context including current content.
      * @param int|null $courseid Optional course ID for RAG file search.
@@ -263,6 +263,41 @@ class module_generation_service {
             $payload,
             self::JOB_TYPE_EDIT
         );
+    }
+
+    /**
+     * Edit a single slide of a slideshow using AI (blocking).
+     *
+     * Builds slide-specific context (slideshow meta, sibling slide titles,
+     * current slide HTML) and submits to the edit endpoint. The API returns
+     * {content: string} which the caller persists to slideshow_slide.content.
+     *
+     * @param int $cmid The slideshow course module ID.
+     * @param int $slideid The slideshow_slide row ID being edited.
+     * @param string $instructions Instructions for the AI.
+     * @return operation_result The operation result (completed, pending, or failed).
+     */
+    public function edit_slide(int $cmid, int $slideid, string $instructions): operation_result {
+        try {
+            $cm = get_coursemodule_from_id('slideshow', $cmid, 0, false, MUST_EXIST);
+            $courseid = (int) $cm->course;
+            $context = context_builder_factory::build_slide_edit_context($cmid, $slideid);
+
+            return $this->edit_module_content('slideshow', $instructions, $context, $courseid);
+
+        } catch (api_exception $e) {
+            return operation_result::failed($e->getMessage(), 'api_error');
+        } catch (\dml_exception $e) {
+            return operation_result::failed(
+                'Slide not found or database error: ' . $e->getMessage(),
+                'slide_not_found'
+            );
+        } catch (\Throwable $e) {
+            return operation_result::failed(
+                'Unexpected error: ' . $e->getMessage(),
+                'unexpected_error'
+            );
+        }
     }
 
     /**

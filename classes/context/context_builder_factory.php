@@ -97,6 +97,22 @@ class context_builder_factory {
     }
 
     /**
+     * Create a slide edit context builder.
+     *
+     * @param int $cmid The slideshow course module ID.
+     * @param int $slideid The slideshow_slide row ID being edited.
+     * @return slide_edit_context_builder The configured builder.
+     */
+    public static function slide_edit(int $cmid, int $slideid): slide_edit_context_builder {
+        return new slide_edit_context_builder(
+            $cmid,
+            $slideid,
+            self::getHtmlHelper(),
+            self::getContentExtractor()
+        );
+    }
+
+    /**
      * Build course context directly (convenience method).
      *
      * @param int $courseId The course ID.
@@ -141,6 +157,17 @@ class context_builder_factory {
      */
     public static function buildModuleEditContext(int $cmid, ?string $autosaveDraftHtml = null): string {
         return self::moduleEdit($cmid, $autosaveDraftHtml)->build();
+    }
+
+    /**
+     * Build slide edit context directly (convenience method).
+     *
+     * @param int $cmid The slideshow course module ID.
+     * @param int $slideid The slideshow_slide row ID being edited.
+     * @return string The built markdown context.
+     */
+    public static function build_slide_edit_context(int $cmid, int $slideid): string {
+        return self::slide_edit($cmid, $slideid)->build();
     }
 
     /**

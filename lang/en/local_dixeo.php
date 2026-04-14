@@ -135,6 +135,8 @@ $string['error:upstream_ai'] = 'AI service error. Please try again later.';
 $string['error:job_failed'] = 'Job processing failed: {$a}';
 $string['error:connection'] = 'Failed to connect to the Dixeo API. Please check your network connection.';
 $string['error:timeout'] = 'The operation timed out. You can check the job status later.';
+$string['error:notslideshow'] = 'The course module is not a slideshow activity.';
+$string['error:slidenotinslideshow'] = 'The requested slide does not belong to this slideshow.';
 
 // Overview page.
 $string['overview'] = 'Dixeo Overview';
