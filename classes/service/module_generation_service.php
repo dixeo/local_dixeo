@@ -266,58 +266,32 @@ class module_generation_service {
     }
 
     /**
-     * Edit a single slide of a slideshow using AI (blocking).
+     * Edit a module (or one sub-record of a composite module) using AI (blocking).
      *
-     * Builds slide-specific context (slideshow meta, sibling slide titles,
-     * current slide HTML) and submits to the edit endpoint. The API returns
-     * {content: string} which the caller persists to slideshow_slide.content.
+     * Unified entry point: page/label pass $subid = null, slideshow passes the
+     * slide id. Context construction and module type resolution are handled
+     * internally via context_builder_factory — callers do not branch on
+     * modname.
      *
-     * @param int $cmid The slideshow course module ID.
-     * @param int $slideid The slideshow_slide row ID being edited.
-     * @param string $instructions Instructions for the AI.
-     * @return operation_result The operation result (completed, pending, or failed).
-     */
-    public function edit_slide(int $cmid, int $slideid, string $instructions): operation_result {
-        try {
-            $cm = get_coursemodule_from_id('slideshow', $cmid, 0, false, MUST_EXIST);
-            $courseid = (int) $cm->course;
-            $context = context_builder_factory::build_slide_edit_context($cmid, $slideid);
-
-            return $this->edit_module_content('slideshow', $instructions, $context, $courseid);
-
-        } catch (api_exception $e) {
-            return operation_result::failed($e->getMessage(), 'api_error');
-        } catch (\dml_exception $e) {
-            return operation_result::failed(
-                'Slide not found or database error: ' . $e->getMessage(),
-                'slide_not_found'
-            );
-        } catch (\Throwable $e) {
-            return operation_result::failed(
-                'Unexpected error: ' . $e->getMessage(),
-                'unexpected_error'
-            );
-        }
-    }
-
-    /**
-     * Edit a module by course module ID.
-     *
-     * Simplified interface that resolves module type and context internally.
-     * Catches exceptions and returns failed operation_result instead of throwing.
+     * Catches exceptions and returns a failed operation_result instead of
+     * throwing.
      *
      * @param int $cmid The course module ID.
+     * @param int|null $subid Optional sub-record ID for composite modules (slideshow slide id).
      * @param string $instructions Instructions for the AI.
      * @return operation_result The operation result (completed, pending, or failed).
      */
-    public function edit_module(int $cmid, string $instructions): operation_result {
+    public function edit(int $cmid, ?int $subid, string $instructions): operation_result {
         try {
             $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
-            $moduletype = $cm->modname;
-            $courseid = (int) $cm->course;
-            $context = context_builder_factory::buildModuleEditContext($cmid);
+            $context = context_builder_factory::build_edit_context($cmid, $subid);
 
-            return $this->edit_module_content($moduletype, $instructions, $context, $courseid);
+            return $this->edit_module_content(
+                $cm->modname,
+                $instructions,
+                $context,
+                (int) $cm->course
+            );
 
         } catch (api_exception $e) {
             return operation_result::failed($e->getMessage(), 'api_error');

@@ -171,6 +171,38 @@ class context_builder_factory {
     }
 
     /**
+     * Build an edit context for any supported module, dispatching to the
+     * appropriate specialised builder based on the module type.
+     *
+     * This is the single entry point that callers (AJAX endpoints, services)
+     * should use — they pass the cmid and optional sub-id and do not need to
+     * know whether the target is a simple module or a composite (slideshow).
+     *
+     * @param int $cmid The course module ID.
+     * @param int|null $subid Optional child record ID for composite modules.
+     * @param string|null $autosavedrafthtml Optional draft HTML from tiny_autosave.
+     * @return string The built markdown context.
+     *
+     * @throws \coding_exception If a composite module is targeted without a subid.
+     */
+    public static function build_edit_context(
+        int $cmid,
+        ?int $subid = null,
+        ?string $autosavedrafthtml = null
+    ): string {
+        $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
+
+        if ($cm->modname === 'slideshow') {
+            if ($subid === null || $subid <= 0) {
+                throw new \coding_exception('subid (slideid) is required when building a slideshow edit context');
+            }
+            return self::build_slide_edit_context($cmid, $subid);
+        }
+
+        return self::buildModuleEditContext($cmid, $autosavedrafthtml);
+    }
+
+    /**
      * Build context for structure-based module fill.
      *
      * Combines course context with module metadata (title/summary) so the AI
