@@ -142,6 +142,12 @@ $string['feedback_correct'] = 'Correct!';
 // Tasks.
 $string['task_cleanup_jobs'] = 'Clean up old job records';
 $string['task_process_file_sync'] = 'Process Dixeo file synchronization';
+$string['task_poll_image_generation'] = 'Poll Dixeo image generation job';
+
+// Async course / chapter images.
+$string['dixeo_course_image_unsupported_type'] = 'Unsupported generated image type.';
+$string['dixeo_image_job_empty_result'] = 'The image job returned no image data.';
+$string['dixeo_pluginfile_not_found'] = 'Could not read the image file from storage.';
 
 // File sync.
 $string['filesync_title'] = 'Dixeo File Sync';
