@@ -76,6 +76,8 @@ class image_generation_service {
      * @param int $courseid The course ID.
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (low/medium/high, default medium).
+     * @param string|null $title When non-null, sent as payload title instead of course.fullname (e.g. draft before DB update).
+     * @param string|null $summary When non-null, sent instead of course.summary (same use-case).
      * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
@@ -83,16 +85,21 @@ class image_generation_service {
     public function submit_course_image_job(
         int $courseid,
         string $size = self::DEFAULT_SIZE,
-        string $quality = self::DEFAULT_QUALITY
+        string $quality = self::DEFAULT_QUALITY,
+        ?string $title = null,
+        ?string $summary = null
     ): operation_result {
         global $DB;
 
         $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
 
+        $resolvedtitle = $title !== null ? $title : $course->fullname;
+        $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
+
         $payload = $this->build_payload(
             scope: 'course',
-            title: $course->fullname,
-            summary: $course->summary ?? null,
+            title: $resolvedtitle,
+            summary: $resolvedsummary,
             size: $size,
             quality: $quality,
             courseid: (string) $courseid,
@@ -147,6 +154,8 @@ class image_generation_service {
      * @param string $instructions Description of the change to apply.
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (default medium).
+     * @param string|null $title When non-null, sent as payload title instead of course.fullname.
+     * @param string|null $summary When non-null, sent instead of course.summary.
      * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
@@ -156,7 +165,9 @@ class image_generation_service {
         array $imagesbase64,
         string $instructions,
         string $size = self::DEFAULT_SIZE,
-        string $quality = self::DEFAULT_QUALITY
+        string $quality = self::DEFAULT_QUALITY,
+        ?string $title = null,
+        ?string $summary = null
     ): operation_result {
         global $DB;
 
@@ -166,10 +177,13 @@ class image_generation_service {
 
         $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
 
+        $resolvedtitle = $title !== null ? $title : $course->fullname;
+        $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
+
         $payload = $this->build_payload(
             scope: 'course',
-            title: $course->fullname,
-            summary: $course->summary ?? null,
+            title: $resolvedtitle,
+            summary: $resolvedsummary,
             size: $size,
             quality: $quality,
             courseid: (string) $courseid,
