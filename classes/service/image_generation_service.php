@@ -79,6 +79,7 @@ class image_generation_service {
      * @param string|null $title When non-null, sent as payload title instead of course.fullname (e.g. draft before DB update).
      * @param string|null $summary When non-null, sent instead of course.summary (same use-case).
      * @return operation_result Pending operation result with jobid.
+     * @throws \moodle_exception If image generation is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
      */
@@ -92,6 +93,11 @@ class image_generation_service {
         global $DB;
 
         $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
+
+        image_generation_policy::assert_enabled(
+            image_generation_policy::ENTITY_COURSE,
+            image_generation_policy::ACTION_GENERATE
+        );
 
         $resolvedtitle = $title !== null ? $title : $course->fullname;
         $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
@@ -118,6 +124,7 @@ class image_generation_service {
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (low/medium/high, default medium).
      * @return operation_result Pending operation result with jobid.
+     * @throws \moodle_exception If section image generation is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the section is not found.
      */
@@ -129,6 +136,12 @@ class image_generation_service {
         global $DB;
 
         $section = $DB->get_record('course_sections', ['id' => $sectionid], 'id, course, section, name, summary', MUST_EXIST);
+
+        image_generation_policy::assert_enabled(
+            image_generation_policy::ENTITY_SECTION,
+            image_generation_policy::ACTION_GENERATE
+        );
+
         $title = $this->resolve_section_title($section);
 
         $payload = $this->build_payload(
@@ -157,6 +170,7 @@ class image_generation_service {
      * @param string|null $title When non-null, sent as payload title instead of course.fullname.
      * @param string|null $summary When non-null, sent instead of course.summary.
      * @return operation_result Pending operation result with jobid.
+     * @throws \moodle_exception If course image editing is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
      */
@@ -176,6 +190,11 @@ class image_generation_service {
         }
 
         $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
+
+        image_generation_policy::assert_enabled(
+            image_generation_policy::ENTITY_COURSE,
+            image_generation_policy::ACTION_EDIT
+        );
 
         $resolvedtitle = $title !== null ? $title : $course->fullname;
         $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
@@ -203,6 +222,7 @@ class image_generation_service {
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (default medium).
      * @return operation_result Pending operation result with jobid.
+     * @throws \moodle_exception If section image editing is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the section is not found.
      */
@@ -220,6 +240,12 @@ class image_generation_service {
         }
 
         $section = $DB->get_record('course_sections', ['id' => $sectionid], 'id, course, section, name, summary', MUST_EXIST);
+
+        image_generation_policy::assert_enabled(
+            image_generation_policy::ENTITY_SECTION,
+            image_generation_policy::ACTION_EDIT
+        );
+
         $title = $this->resolve_section_title($section);
 
         $payload = $this->build_payload(

@@ -62,6 +62,42 @@ if ($hassiteconfig) {
         PARAM_ALPHANUMEXT
     ));
 
+    // Image generation section.
+    $settings->add(new admin_setting_heading(
+        'local_dixeo/image_generation',
+        get_string('image_generation', 'local_dixeo'),
+        get_string('image_generation_desc', 'local_dixeo')
+    ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_dixeo/image_generation_enabled',
+        get_string('image_generation_enabled', 'local_dixeo'),
+        get_string('image_generation_enabled_desc', 'local_dixeo'),
+        1
+    ));
+
+    $imagemodechoices = [
+        'disabled' => get_string('image_generation_mode_disabled', 'local_dixeo'),
+        'generate' => get_string('image_generation_mode_generate', 'local_dixeo'),
+        'generate_edit' => get_string('image_generation_mode_generate_edit', 'local_dixeo'),
+    ];
+
+    $settings->add(new admin_setting_configselect(
+        'local_dixeo/image_generation_course_mode',
+        get_string('image_generation_course_mode', 'local_dixeo'),
+        get_string('image_generation_course_mode_desc', 'local_dixeo'),
+        'generate_edit',
+        $imagemodechoices
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'local_dixeo/image_generation_section_mode',
+        get_string('image_generation_section_mode', 'local_dixeo'),
+        get_string('image_generation_section_mode_desc', 'local_dixeo'),
+        'generate_edit',
+        $imagemodechoices
+    ));
+
     // Credit Balance Display section.
     $settings->add(new admin_setting_heading(
         'local_dixeo/credit_info',

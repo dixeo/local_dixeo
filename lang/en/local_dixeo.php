@@ -44,6 +44,17 @@ $string['api_key'] = 'API Key';
 $string['api_key_desc'] = 'Your Dixeo API key. Get one from the Dixeo dashboard.';
 $string['namespace'] = 'Namespace';
 $string['namespace_desc'] = 'Only needed when multiple Moodle sites share the same API key. Each site should use a different namespace (e.g., "production", "staging", "site1") to keep their data separate. Leave as "default" if this is the only site using this API key.';
+$string['image_generation'] = 'Image generation';
+$string['image_generation_desc'] = 'Control image generation and image editing availability for course and section images.';
+$string['image_generation_enabled'] = 'Enable image generation';
+$string['image_generation_enabled_desc'] = 'When disabled, all generate/edit image requests are blocked.';
+$string['image_generation_course_mode'] = 'Course images';
+$string['image_generation_course_mode_desc'] = 'Controls AI image actions for the course overview image.';
+$string['image_generation_section_mode'] = 'Section images';
+$string['image_generation_section_mode_desc'] = 'Controls AI image actions for chapter/section images.';
+$string['image_generation_mode_disabled'] = 'Disabled';
+$string['image_generation_mode_generate'] = 'Generate';
+$string['image_generation_mode_generate_edit'] = 'Generate and Edit';
 $string['credit_information'] = 'Credit Information';
 $string['current_balance'] = 'Current Balance';
 $string['current_balance_desc'] = 'Your current Dixeo credit balance. Credits are used for AI operations.';
@@ -147,6 +158,7 @@ $string['task_poll_image_generation'] = 'Poll Dixeo image generation job';
 // Async course / chapter images.
 $string['dixeo_course_image_unsupported_type'] = 'Unsupported generated image type.';
 $string['dixeo_image_job_empty_result'] = 'The image job returned no image data.';
+$string['dixeo_image_generation_disabled'] = 'Image generation is disabled by site settings.';
 $string['dixeo_pluginfile_not_found'] = 'Could not read the image file from storage.';
 
 // File sync.
