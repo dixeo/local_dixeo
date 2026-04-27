@@ -60,12 +60,12 @@ class get_file_sync_status extends external_api {
         return [
             'enabled' => $status->enabled,
             'status' => $status->status,
-            'filestotal' => $status->filestotal,
-            'filescompleted' => $status->filescompleted,
-            'progresspercent' => $status->progresspercent,
-            'errormessage' => $status->errormessage,
-            'lastsyncstarted' => $status->lastsyncstarted,
-            'lastsynccompleted' => $status->lastsynccompleted,
+            'filestotal' => $status->filestotal ?? 0,
+            'filescompleted' => $status->filescompleted ?? 0,
+            'progresspercent' => $status->progresspercent ?? 0,
+            'errormessage' => $status->errormessage ?? '',
+            'lastsyncstarted' => $status->lastsyncstarted ?? 0,
+            'lastsynccompleted' => $status->lastsynccompleted ?? 0,
         ];
     }
 

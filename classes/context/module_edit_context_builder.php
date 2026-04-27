@@ -38,7 +38,7 @@ class module_edit_context_builder extends abstract_context_builder {
      * @param int $cmid The course module ID.
      * @param html_helper|null $htmlHelper Optional HTML helper.
      * @param module_content_extractor|null $contentExtractor Optional content extractor.
-     * @param string|null $autosaveDraftHtml Optional draft HTML resolved server-side from tiny_autosave.
+     * @param string|null $autosaveDraftHtml Optional draft HTML from tiny_autosave.
      */
     public function __construct(
         int $cmid,

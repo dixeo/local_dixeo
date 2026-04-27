@@ -17,16 +17,17 @@
 namespace local_dixeo\api\exception;
 
 /**
- * Exception for OpenAI service errors (HTTP 502).
+ * Exception for upstream AI service errors (HTTP 502).
  *
- * Thrown when the OpenAI service encounters an error while processing.
+ * Thrown when the Dixeo API signals that the AI service backing the request
+ * failed to process it.
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
  * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class openai_exception extends api_exception {
+class upstream_ai_exception extends api_exception {
 
     /**
      * Constructor.
@@ -34,7 +35,7 @@ class openai_exception extends api_exception {
      * @param string $message Human-readable error message.
      * @param array $details Additional error details.
      */
-    public function __construct(string $message = 'OpenAI service error', array $details = []) {
-        parent::__construct('open_ai_exception', $message, 502, $details);
+    public function __construct(string $message = 'AI service error', array $details = []) {
+        parent::__construct('upstream_ai_exception', $message, 502, $details);
     }
 }

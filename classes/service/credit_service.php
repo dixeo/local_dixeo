@@ -59,8 +59,7 @@ class credit_service {
     /**
      * Get transaction history with optional filters.
      *
-     * The API returns a flat array of transactions (API Platform format).
-     * This method wraps it with pagination metadata for backward compatibility.
+     * Wraps the flat transactions response with pagination metadata for backward compatibility.
      *
      * @param string|null $type Filter by transaction type (deduction, purchase, refund).
      * @param int $limit Maximum number of results.
@@ -80,7 +79,6 @@ class credit_service {
 
         $response = $this->client->get('/v1/credits/transactions', $params);
 
-        // API returns a flat array of transactions (API Platform format).
         $transactions = is_array($response) ? array_values($response) : [];
         $count = count($transactions);
 

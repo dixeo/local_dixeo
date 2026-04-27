@@ -119,7 +119,7 @@ class module_content_extractor {
      * for page modules the introduction stays loaded from the database and only the main content uses the draft.
      *
      * @param \cm_info $cm The course module info.
-     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (already validated server-side).
+     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave.
      * @return string|null The full content for editing, or null if not available.
      */
     public function get_full_content_for_edit(\cm_info $cm, ?string $autosaveDraftHtml = null): ?string {

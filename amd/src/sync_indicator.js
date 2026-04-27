@@ -40,8 +40,9 @@ let isEnabled = true;
  * @param {string} status Initial status.
  * @param {boolean} enabled Whether sync is enabled.
  * @param {number} filesTotal Total number of files.
+ * @param {number} filesCompleted Files synced so far.
  */
-const init = async(courseid, status, enabled, filesTotal) => {
+const init = async(courseid, status, enabled, filesTotal, filesCompleted) => {
     courseId = courseid;
     currentStatus = status;
     isEnabled = enabled;
@@ -52,8 +53,7 @@ const init = async(courseid, status, enabled, filesTotal) => {
     // Load language strings.
     await loadStrings();
 
-    // Update badge count on init.
-    updateBadgeCount(filesTotal);
+    updateBadgeCount(filesCompleted, filesTotal);
 
     setupEventListeners();
 
@@ -111,21 +111,28 @@ const relocateToTitle = () => {
 /**
  * Update the file count display.
  *
- * @param {number|null} count The file count to display.
+ * Hidden when synchronized — the count is shown inside the dropdown.
+ *
+ * @param {number|null} filesCompleted Files synced so far.
+ * @param {number|null} filesTotal Total files expected.
  */
-const updateBadgeCount = (count) => {
+const updateBadgeCount = (filesCompleted, filesTotal) => {
     const countEl = document.querySelector('[data-region="sync-badge-count"]');
     if (!countEl) {
         return;
     }
 
-    if (count !== null && count > 0) {
-        countEl.textContent = count;
-        countEl.classList.remove('d-none');
-    } else {
+    const total = (filesTotal === null || filesTotal === undefined) ? 0 : Number(filesTotal);
+    const done = (filesCompleted === null || filesCompleted === undefined) ? 0 : Number(filesCompleted);
+
+    if (currentStatus === 'synchronized' || total <= 0) {
         countEl.textContent = '0';
         countEl.classList.add('d-none');
+        return;
     }
+
+    countEl.textContent = done >= total ? String(total) : `${done} / ${total}`;
+    countEl.classList.remove('d-none');
 };
 
 /**
@@ -343,7 +350,7 @@ const handleDisable = async() => {
             isEnabled = false;
             currentStatus = 'none';
             updateIndicatorUI();
-            updateBadgeCount(0);
+            updateBadgeCount(0, 0);
         } else {
             // Revert on failure.
             isEnabled = previousEnabled;
@@ -582,7 +589,7 @@ const updateIndicatorUI = (status = null) => {
 
     // Update badge count.
     if (status) {
-        updateBadgeCount(status.filestotal);
+        updateBadgeCount(status.filescompleted, status.filestotal);
     }
 };
 

@@ -208,12 +208,12 @@ class client {
             );
         }
 
-        // Handle successful responses — unwrap the API envelope { success, data, metadata }.
+        // Successful responses: unwrap the optional 'data' key when present.
         if ($httpcode >= 200 && $httpcode < 300) {
             return $data['data'] ?? $data;
         }
 
-        // Handle error responses — API returns RFC 7807 directly (no envelope wrapper).
+        // Error responses follow RFC 7807 (Problem Details).
         debugging('Dixeo API Error - Code: ' . $httpcode . ', Error data: ' . json_encode($data), DEBUG_DEVELOPER);
         throw api_exception::from_response($data, $httpcode);
     }
@@ -292,13 +292,20 @@ class client {
     }
 
     /**
-     * Upload files to the Dixeo VectorStore.
+     * Upload files to Dixeo.
      *
      * @param string $courseid The course ID (used for identification).
      * @param array $files Array of stored_file and/or {@see file_upload_part} items to upload.
      * @param string|null $namespace Optional namespace override.
      * @param callable|null $uploadprogress Optional callback (float $percent0to100, int $uploadedbytes, int $uploadtotalbytes)
      *     for outbound upload progress (throttled). Extra args are 0 when unknown.
+     * @param bool $finalchunk When false, the server treats this upload as an intermediate chunk
+     *     of a multi-part sync and only appends the supplied files without pruning anything that
+     *     is no longer part of the course. Defaults to true (single-call behaviour).
+     * @param list<array{hash: string, filename: string}>|null $expectedfiles When $finalchunk is true and the sync
+     *     was split across several chunks, this should be the full manifest of expected files for the course.
+     *     Supplied to the server so it knows which older files to drop and which prior chunk uploads to index.
+     *     Ignored when $finalchunk is false, and unnecessary on a single-call sync.
      * @return array The API response data.
      * @throws api_exception If the upload fails.
      */
@@ -306,7 +313,9 @@ class client {
         string $courseid,
         array $files,
         ?string $namespace = null,
-        ?callable $uploadprogress = null
+        ?callable $uploadprogress = null,
+        bool $finalchunk = true,
+        ?array $expectedfiles = null
     ): array {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
@@ -333,7 +342,20 @@ class client {
         $postdata = [
             'courseId' => $courseid,
             'namespace' => $namespace,
+            'finalChunk' => $finalchunk ? 'true' : 'false',
         ];
+
+        if ($finalchunk && $expectedfiles !== null && $expectedfiles !== []) {
+            $encoded = json_encode($expectedfiles);
+            if ($encoded === false) {
+                throw new api_exception(
+                    'invalid_payload',
+                    'Failed to encode expected file manifest as JSON: ' . json_last_error_msg(),
+                    0
+                );
+            }
+            $postdata['expectedFiles'] = $encoded;
+        }
 
         // Add files to the request (sequential multipart field names).
         $tempfiles = [];
@@ -471,7 +493,7 @@ class client {
     }
 
     /**
-     * List files for a course in the VectorStore.
+     * List files for a course stored in Dixeo.
      *
      * @param string $courseid The course ID.
      * @param string|null $namespace Optional namespace override.
@@ -488,7 +510,7 @@ class client {
     }
 
     /**
-     * Delete all files for a course from the VectorStore.
+     * Delete all files for a course from Dixeo.
      *
      * @param string $courseid The course ID.
      * @param string|null $namespace Optional namespace override.

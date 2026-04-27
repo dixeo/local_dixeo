@@ -100,20 +100,20 @@ class api_exception extends \moodle_exception {
         $message = $errordata['detail'] ?? $errordata['title'] ?? 'Unknown API error';
         $details = $errordata;
 
-        // API merges extensions at root level (not in 'extensions' sub-object).
-        // Map error types from API exception class names to our exception classes.
+        // Map RFC 7807 error type identifiers to our exception classes.
+        // Extensions (violations, currentBalance, retryAfter, ...) are merged at root level.
         return match ($type) {
-            // Authentication errors - API uses 'authentication_error' from ApiKeyAuthenticator.
+            // Authentication errors.
             'authentication', 'authentication_error' => new authentication_exception($message, $details),
 
-            // Payment/credit errors - API uses 'insufficient_credits' or 'payment_required'.
+            // Payment/credit errors.
             'payment_required', 'insufficient_credits' => new payment_required_exception(
                 $message,
                 $errordata['currentBalance'] ?? $errordata['current_balance'] ?? null,
                 $details
             ),
 
-            // Rate limiting - API uses 'too_many_requests_http' from TooManyRequestsHttpException.
+            // Rate limiting.
             'too_many_requests', 'too_many_requests_http' => new rate_limit_exception(
                 $message,
                 $errordata['retryAfter'] ?? $errordata['retry_after'] ?? null,
@@ -130,8 +130,8 @@ class api_exception extends \moodle_exception {
             // Job not found.
             'job_not_found' => new job_not_found_exception($message, $details),
 
-            // OpenAI errors - API converts 'OpenAIException' to 'open_a_i'.
-            'open_ai', 'open_a_i' => new openai_exception($message, $details),
+            // AI service errors.
+            'upstream_ai' => new upstream_ai_exception($message, $details),
 
             // Default fallback for unknown error types.
             default => new self($type, $message, $httpstatus, $details),

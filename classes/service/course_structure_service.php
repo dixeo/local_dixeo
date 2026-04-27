@@ -135,7 +135,6 @@ class course_structure_service {
      *
      * @param string $instructions Course description and generation instructions.
      * @param string|null $templateid Optional template UUID.
-     * @param string|null $vectorstoreid Optional vector store ID.
      * @param string|null $courseid Optional external course identifier.
      * @return array The request payload.
      * @throws \invalid_parameter_exception If required parameters are empty.

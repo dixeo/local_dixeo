@@ -1,6 +1,6 @@
 <?php
 /**
- * Service for managing AI file synchronization with the Dixeo VectorStore.
+ * Service for managing AI file synchronization with Dixeo.
  *
  * Orchestrates file collection from course modules, uploading to the API,
  * and tracking sync status. Supports debounced sync via adhoc tasks.
@@ -20,7 +20,7 @@ use local_dixeo\dto\file_upload_part;
 use local_dixeo\repository\course_ai_repository;
 
 /**
- * Service for file synchronization with Dixeo VectorStore.
+ * Service for file synchronization with Dixeo.
  */
 class file_sync_service {
 
@@ -32,6 +32,12 @@ class file_sync_service {
 
     /** @var array Module types that contain syncable files. */
     private const FILE_MODULE_TYPES = ['resource', 'folder'];
+
+    /** @var int Max files per outbound HTTP chunk. */
+    private const CHUNK_MAX_FILES = 10;
+
+    /** @var int Max total bytes per outbound HTTP chunk (8 MB). */
+    private const CHUNK_MAX_BYTES = 8388608;
 
     /** @var course_ai_repository Repository for course AI records. */
     private course_ai_repository $repository;
@@ -84,11 +90,11 @@ class file_sync_service {
     /**
      * Disable file sync for a course.
      *
-     * Optionally removes all files from the VectorStore.
+     * Optionally removes all files from Dixeo.
      *
      * @param int $courseid The course ID.
      * @param int $userid The user disabling sync.
-     * @param bool $removefiles Whether to delete files from VectorStore.
+     * @param bool $removefiles Whether to delete files from Dixeo.
      * @return void
      */
     public function disable_sync(int $courseid, int $userid, bool $removefiles = false): void {
@@ -102,7 +108,7 @@ class file_sync_service {
             } catch (api_exception $e) {
                 // Log but don't fail - user wants to disable regardless.
                 // Local state is already reset, API files will be orphaned but harmless.
-                debugging('Failed to delete files from VectorStore: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                debugging('Failed to delete files from Dixeo: ' . $e->getMessage(), DEBUG_DEVELOPER);
             }
         }
 
@@ -171,7 +177,13 @@ class file_sync_service {
     /**
      * Trigger an immediate file sync for a course.
      *
-     * Collects all syncable files from the course and uploads them to the API.
+     * Collects all syncable files from the course and uploads them to the API
+     * in chunks of at most {@see self::CHUNK_MAX_FILES} files or
+     * {@see self::CHUNK_MAX_BYTES} bytes (first limit reached closes the chunk).
+     *
+     * All chunks but the last are sent as append-only (finalChunk=false).
+     * The last chunk carries the full manifest of expected file hashes and
+     * filenames so the remote store knows which older files to drop.
      *
      * @param int $courseid The course ID.
      * @return void
@@ -192,7 +204,10 @@ class file_sync_service {
         // Hash from stored packages only (no SCORM temp extraction until we know sync is needed).
         $filehash = $this->compute_sync_manifest_hash($courseid);
 
-        if ($filehash === ($record->filehash ?? null)) {
+        if (
+            $filehash === ($record->filehash ?? null)
+            && ($record->syncstatus ?? null) === 'synchronized'
+        ) {
             return;
         }
 
@@ -208,87 +223,75 @@ class file_sync_service {
         try {
             $filecount = count($uploaditems);
 
-            $payloadbytes = 0;
-            foreach ($uploaditems as $item) {
-                if ($item instanceof \stored_file) {
-                    $payloadbytes += (int) $item->get_filesize();
-                } else if ($item instanceof file_upload_part) {
-                    $sz = @filesize($item->path);
-                    $payloadbytes += $sz !== false ? (int) $sz : 0;
-                }
-            }
-            $estimateduploadtotal = $payloadbytes + max(4096, (int) round($payloadbytes * 0.08));
-
-            // Update progress with file count and byte budget for designer step-1 UI (5% + 15% by bytes).
+            // Initial progress.
             $this->repository->update_sync_status($courseid, 'syncing', [
                 'filestotal' => $filecount,
                 'filescompleted' => 0,
                 'progresspercent' => 0,
-                'uploadbytes' => 0,
-                'uploadbytestotal' => $estimateduploadtotal,
             ]);
 
             if ($filecount === 0) {
-                // No files to sync - mark as synchronized.
+                // No files remain in Moodle. Clear the remote store as well;
+                // POST /v1/files intentionally rejects empty multipart payloads.
+                $this->client->delete_files((string) $courseid);
                 $this->repository->update_sync_status($courseid, 'synchronized', [
                     'filestotal' => 0,
                     'filescompleted' => 0,
                     'progresspercent' => 100,
-                    'uploadbytes' => null,
-                    'uploadbytestotal' => null,
                 ]);
                 $this->repository->update_filehash($courseid, $filehash);
                 return;
             }
 
-            $uploadprogress = function (float $pct, int $ulnow = 0, int $ultotal = 0) use (
-                $courseid,
-                $filecount,
-                $estimateduploadtotal
-            ): void {
-                $totalbytes = $ultotal > 0 ? $ultotal : $estimateduploadtotal;
-                $uploaded = $ulnow;
-                if ($uploaded <= 0 && $pct >= 100.0) {
-                    $uploaded = $totalbytes;
-                } else if ($uploaded <= 0 && $pct > 0.0 && $totalbytes > 0) {
-                    $uploaded = (int) round($totalbytes * min(99.0, $pct) / 100.0);
+            // Pre-compute the full manifest. It is only needed on the final
+            // chunk (so the API knows what to keep) but we build it up front
+            // so any hashing error fails the whole sync before we start
+            // sending partial data over the wire.
+            $expectedfiles = $this->compute_expected_files($uploaditems);
+
+            $chunks = $this->build_chunks($uploaditems);
+            $totalchunks = count($chunks);
+
+            $completedfiles = 0;
+            $lastresult = null;
+            $failedfiles = [];
+            foreach ($chunks as $idx => $chunk) {
+                $isfinal = ($idx === $totalchunks - 1);
+                $chunkmanifest = $isfinal ? $expectedfiles : null;
+
+                $lastresult = $this->client->upload_files(
+                    (string) $courseid,
+                    $chunk,
+                    null,
+                    null,
+                    $isfinal,
+                    $chunkmanifest
+                );
+                $this->log_api_rejections($lastresult);
+                $failedfiles = array_merge($failedfiles, $this->extract_api_rejections($lastresult));
+
+                $completedfiles += count($chunk);
+                $progresspct = (int) round((($idx + 1) / $totalchunks) * 100);
+                // Cap at 99% until the async API indexing completes on the
+                // final chunk — the 100% transition comes from the API's
+                // response, not from "we sent the last chunk".
+                if (!$isfinal) {
+                    $progresspct = min($progresspct, 95);
                 }
+
                 $this->repository->update_sync_status($courseid, 'syncing', [
                     'filestotal' => $filecount,
-                    'filescompleted' => 0,
-                    'progresspercent' => (int) round(max(0, min(100, $pct))),
-                    'uploadbytes' => $uploaded,
-                    'uploadbytestotal' => $totalbytes,
+                    'filescompleted' => $completedfiles,
+                    'progresspercent' => $progresspct,
                 ]);
-            };
-
-            // Upload files to API (progress callback updates DB for UI polling).
-            $result = $this->client->upload_files((string) $courseid, $uploaditems, null, $uploadprogress);
-
-            // API returns 'syncing' status - indexing happens asynchronously.
-            // Don't mark as 'synchronized' until API confirms indexing is complete.
-            $apistatus = $result['status'] ?? 'syncing';
-            $record = $this->repository->get_by_courseid($courseid);
-            $uploadwatermark = (float) ($record->progresspercent ?? 0);
-            $apipct = $result['progress']['percent'] ?? null;
-            $mergedpct = $apipct !== null
-                ? max($uploadwatermark, (float) $apipct)
-                : max($uploadwatermark, 99.0);
-
-            $syncedcount = (int) ($result['syncedCount'] ?? 0);
-            $apitotal = (int) ($result['fileCount'] ?? $filecount);
-            if ($apitotal > 0 && $syncedcount < $apitotal && $mergedpct >= 100.0) {
-                $mergedpct = 99.0;
             }
 
-            $bytetotal = (int) ($record->uploadbytestotal ?? $estimateduploadtotal);
-            $this->repository->update_sync_status($courseid, $apistatus, [
-                'filestotal' => $result['fileCount'] ?? $filecount,
-                'filescompleted' => $result['syncedCount'] ?? 0,
-                'progresspercent' => (int) round(max(0, min(100, $mergedpct))),
-                'uploadbytes' => $bytetotal,
-                'uploadbytestotal' => $bytetotal,
-            ]);
+            if ($failedfiles !== []) {
+                $message = count($failedfiles) . ' file(s) were rejected by the Dixeo API';
+                throw new api_exception('file_sync_rejections', $message, 422, ['failedFiles' => $failedfiles]);
+            }
+
+            $this->poll_status($courseid);
 
             $this->repository->clear_error($courseid);
             $this->repository->update_filehash($courseid, $filehash);
@@ -303,6 +306,164 @@ class file_sync_service {
             $this->repository->record_error($courseid, $errormessage);
             throw $e;
         }
+    }
+
+    /**
+     * Split the upload payload into HTTP-friendly batches.
+     *
+     * A batch is closed as soon as adding the next item would exceed either
+     * {@see self::CHUNK_MAX_FILES} files or {@see self::CHUNK_MAX_BYTES}
+     * bytes. A single oversized file always gets its own batch — the byte
+     * budget is an upper bound per item, not a hard rejection.
+     *
+     * @param array $items Upload items (\stored_file|file_upload_part).
+     * @return array[] Array of batches, each a subset of $items preserving order.
+     */
+    public function build_chunks(array $items): array {
+        $chunks = [];
+        $current = [];
+        $currentbytes = 0;
+
+        foreach ($items as $item) {
+            $size = $this->item_size($item);
+            $currentcount = count($current);
+            $wouldexceedcount = $currentcount >= self::CHUNK_MAX_FILES;
+            $wouldexceedbytes = $currentcount > 0
+                && ($currentbytes + $size) > self::CHUNK_MAX_BYTES;
+
+            if ($wouldexceedcount || $wouldexceedbytes) {
+                $chunks[] = $current;
+                $current = [];
+                $currentbytes = 0;
+            }
+
+            $current[] = $item;
+            $currentbytes += $size;
+        }
+
+        if ($current !== []) {
+            $chunks[] = $current;
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * Compute the SHA-256 content hash of every upload item.
+     *
+     * Stored files are hashed via a streaming handle to keep memory bounded;
+     * local upload parts are hashed directly from their on-disk path.
+     *
+     * @param array $items Upload items.
+     * @return array[] File manifest entries in the same order as $items.
+     */
+    public function compute_expected_files(array $items): array {
+        $files = [];
+        foreach ($items as $item) {
+            $files[] = [
+                'hash' => $this->hash_item($item),
+                'filename' => $this->item_filename($item),
+            ];
+        }
+        return $files;
+    }
+
+    /**
+     * Byte size of a single upload item.
+     *
+     * @param \stored_file|file_upload_part $item
+     * @return int
+     */
+    private function item_size($item): int {
+        if ($item instanceof \stored_file) {
+            return (int) $item->get_filesize();
+        }
+        if ($item instanceof file_upload_part) {
+            $size = @filesize($item->path);
+            return $size !== false ? (int) $size : 0;
+        }
+        return 0;
+    }
+
+    /**
+     * Logical filename sent to the API for a single upload item.
+     *
+     * @param \stored_file|file_upload_part $item
+     * @return string
+     */
+    private function item_filename($item): string {
+        if ($item instanceof \stored_file) {
+            return $item->get_filename();
+        }
+        if ($item instanceof file_upload_part) {
+            return $item->filename;
+        }
+        throw new \RuntimeException('Unsupported upload item type: ' . get_debug_type($item));
+    }
+
+    /**
+     * Streaming SHA-256 of a single upload item.
+     *
+     * @param \stored_file|file_upload_part $item
+     * @return string
+     */
+    private function hash_item($item): string {
+        if ($item instanceof \stored_file) {
+            $fh = $item->get_content_file_handle();
+            if ($fh === false) {
+                throw new \RuntimeException('Failed to open stored_file for hashing');
+            }
+            $ctx = hash_init('sha256');
+            hash_update_stream($ctx, $fh);
+            fclose($fh);
+            return hash_final($ctx);
+        }
+        if ($item instanceof file_upload_part) {
+            $hash = hash_file('sha256', $item->path);
+            if ($hash === false) {
+                throw new \RuntimeException('Failed to hash file_upload_part: ' . $item->path);
+            }
+            return $hash;
+        }
+        throw new \RuntimeException('Unsupported upload item type: ' . get_debug_type($item));
+    }
+
+    /**
+     * Log one debug line per file the API rejected in the given response.
+     *
+     * @param array $response Decoded API response for a chunk upload.
+     * @return void
+     */
+    private function log_api_rejections(array $response): void {
+        $failed = $this->extract_api_rejections($response);
+        if ($failed === []) {
+            return;
+        }
+
+        foreach ($failed as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            debugging(sprintf(
+                'local_dixeo: API rejected "%s" [%s]: %s',
+                (string) ($entry['filename'] ?? '(unknown)'),
+                (string) ($entry['code'] ?? 'UNKNOWN'),
+                (string) ($entry['reason'] ?? '')
+            ), DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
+     * @param array $response Decoded API response for a chunk upload.
+     * @return array[]
+     */
+    private function extract_api_rejections(array $response): array {
+        $failed = $response['failedFiles'] ?? null;
+        if (!is_array($failed) || $failed === []) {
+            return [];
+        }
+
+        return array_values(array_filter($failed, 'is_array'));
     }
 
     /**
@@ -508,8 +669,8 @@ class file_sync_service {
      * @return \stdClass Updated status object.
      */
     public function poll_status(int $courseid): \stdClass {
-        // While Moodle is still sending the multipart upload, the remote API often
-        // returns none/empty counts. Merging that would clobber local syncing + byte progress.
+        // Skip the poll while the local upload is still streaming; the server
+        // can't report a complete view until Moodle has finished sending.
         $record = $this->repository->get_by_courseid($courseid);
         if ($record && $record->syncstatus === 'syncing') {
             $ubtotal = (int) ($record->uploadbytestotal ?? 0);
@@ -520,42 +681,25 @@ class file_sync_service {
         }
 
         try {
-            $apiStatus = $this->client->get_files_status((string) $courseid);
-
-            $record = $this->repository->get_by_courseid($courseid);
-            $localpct = ($record && isset($record->progresspercent) && $record->progresspercent !== null)
-                ? (float) $record->progresspercent
-                : null;
-            $apipct = null;
-            if (isset($apiStatus['progress']['percent'])) {
-                $apipct = (float) $apiStatus['progress']['percent'];
-            }
-
-            $apifiles = isset($apiStatus['fileCount']) ? (int) $apiStatus['fileCount'] : 0;
-            $apisynced = isset($apiStatus['syncedCount']) ? (int) $apiStatus['syncedCount'] : 0;
-            if ($apifiles > 0 && $apisynced < $apifiles && $apipct !== null && $apipct >= 100.0) {
-                $apipct = 99.0;
-            }
+            $apistatus = $this->client->get_files_status((string) $courseid);
+            $apiprogress = $apistatus['progress'] ?? null;
 
             $progress = [
-                'filestotal' => $apiStatus['fileCount'] ?? null,
-                'filescompleted' => $apiStatus['syncedCount'] ?? null,
+                'filestotal' => is_array($apiprogress) && isset($apiprogress['filesTotal'])
+                    ? (int) $apiprogress['filesTotal']
+                    : (int) ($apistatus['fileCount'] ?? 0),
+                'filescompleted' => is_array($apiprogress) && isset($apiprogress['filesCompleted'])
+                    ? (int) $apiprogress['filesCompleted']
+                    : (int) ($apistatus['syncedCount'] ?? 0),
+                'progresspercent' => is_array($apiprogress) && isset($apiprogress['percent'])
+                    ? (int) $apiprogress['percent']
+                    : 0,
             ];
 
-            // Never regress below local upload/indexing watermark (API may lag behind HTTP upload progress).
-            if ($localpct !== null || $apipct !== null) {
-                $merged = max($localpct ?? 0, $apipct ?? 0);
-                if ($apifiles > 0 && $apisynced < $apifiles && $merged >= 100.0) {
-                    $merged = 99.0;
-                }
-                $progress['progresspercent'] = (int) round($merged);
-            }
-
-            $status = $apiStatus['status'] ?? 'none';
+            $status = $apistatus['status'] ?? 'none';
             $this->repository->update_sync_status($courseid, $status, $progress);
 
         } catch (api_exception $e) {
-            // Don't update status on poll failure - just return current state.
             debugging('Failed to poll sync status: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
 

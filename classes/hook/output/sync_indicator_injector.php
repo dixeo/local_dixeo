@@ -61,6 +61,7 @@ class sync_indicator_injector {
             $status->status,
             $status->enabled,
             $status->filestotal,
+            $status->filescompleted,
         ]);
     }
 
@@ -85,6 +86,7 @@ class sync_indicator_injector {
             'progresspercent' => $status->progresspercent,
             'filestotal' => $status->filestotal,
             'filescompleted' => $status->filescompleted,
+            'badgelabel' => self::format_badge_label($status->status, $status->filescompleted, $status->filestotal),
         ];
 
         if ($status->lastsynccompleted) {
@@ -96,6 +98,33 @@ class sync_indicator_injector {
         }
 
         return $context;
+    }
+
+    /**
+     * Format the badge label shown on the closed pill.
+     *
+     * Hidden when synchronized — the count is shown inside the dropdown.
+     *
+     * @param string|null $statusvalue Current sync status.
+     * @param int|null $filescompleted Files synced so far.
+     * @param int|null $filestotal Total files expected.
+     * @return string|null Label, or null when the badge should be hidden.
+     */
+    private static function format_badge_label(?string $statusvalue, ?int $filescompleted, ?int $filestotal): ?string {
+        if ($statusvalue === 'synchronized') {
+            return null;
+        }
+
+        if ($filestotal === null || $filestotal <= 0) {
+            return null;
+        }
+
+        $done = (int) ($filescompleted ?? 0);
+        if ($done >= $filestotal) {
+            return (string) $filestotal;
+        }
+
+        return $done . ' / ' . $filestotal;
     }
 
     /**

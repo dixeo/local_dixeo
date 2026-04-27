@@ -50,12 +50,12 @@
             id="dixeo-sync-dropdown-toggle">
         <span class="dixeo-sync-btn__brand">Dixeo</span>
         <span class="dixeo-sync-btn__dot" aria-hidden="true"></span>
-        {{#filestotal}}
-        <span class="dixeo-sync-btn__count" data-region="sync-badge-count">{{filestotal}}</span>
-        {{/filestotal}}
-        {{^filestotal}}
+        {{#badgelabel}}
+        <span class="dixeo-sync-btn__count" data-region="sync-badge-count">{{badgelabel}}</span>
+        {{/badgelabel}}
+        {{^badgelabel}}
         <span class="dixeo-sync-btn__count d-none" data-region="sync-badge-count">0</span>
-        {{/filestotal}}
+        {{/badgelabel}}
     </button>
 
     {{! Dropdown panel - opens downward }}

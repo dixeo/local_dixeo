@@ -83,7 +83,10 @@ if (!empty($options['wipe'])) {
     $fs = get_file_storage();
     $wiped = 0;
 
-    foreach (get_course_mods($courseid, 'resource') as $cm) {
+    foreach (get_course_mods($courseid) as $cm) {
+        if ($cm->modname !== 'resource') {
+            continue;
+        }
         $resource = $DB->get_record('resource', ['id' => $cm->instance], 'id, name');
         if ($resource && preg_match('/^Test File \d+$/i', $resource->name)) {
             $ctxid = context_module::instance($cm->id)->id;

@@ -32,7 +32,7 @@ class image_generation_service {
     /** @var string Default image size (landscape, suitable for banners). */
     public const DEFAULT_SIZE = '1536x1024';
 
-    /** @var array Supported image dimensions (must mirror the API DTO). */
+    /** @var array Supported image dimensions, validated client-side before submission. */
     public const SUPPORTED_SIZES = ['1024x1024', '1024x1536', '1536x1024'];
 
     /** @var string Default quality level. */

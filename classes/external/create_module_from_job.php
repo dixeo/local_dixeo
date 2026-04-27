@@ -178,7 +178,7 @@ class create_module_from_job extends external_api {
      * Enable file sync for a course if not already enabled.
      *
      * Called after successful AI module creation to ensure the course
-     * files are synced to the VectorStore.
+     * files are synced to Dixeo.
      *
      * @param int $courseid The course ID.
      * @return void
