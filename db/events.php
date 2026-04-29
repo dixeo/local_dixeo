@@ -2,8 +2,8 @@
 /**
  * Event observers for the Dixeo plugin.
  *
- * Defines event handlers for file sync triggers based on course module
- * and block events.
+ * Defines event handlers for file sync triggers based on course module events.
+ * Sync activation itself is a manual action by an admin or teacher.
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -34,14 +34,6 @@ $observers = [
     [
         'eventname' => '\core\event\course_module_deleted',
         'callback' => '\local_dixeo\observer\file_sync_observer::course_module_deleted',
-        'internal' => false,
-        'priority' => 0,
-    ],
-
-    // Auto-enable sync when Dixeo blocks are added.
-    [
-        'eventname' => '\core\event\block_created',
-        'callback' => '\local_dixeo\observer\file_sync_observer::block_created',
         'internal' => false,
         'priority' => 0,
     ],
