@@ -130,7 +130,9 @@ class client {
             'User-Agent: local_dixeo/1.0 (Moodle Plugin)',
         ];
 
-        if ($idempotencykey !== null) {
+        if ($method === 'POST') {
+            $headers[] = 'X-Idempotency-Key: ' . ($idempotencykey ?? \core\uuid::generate());
+        } else if ($idempotencykey !== null) {
             $headers[] = 'X-Idempotency-Key: ' . $idempotencykey;
         }
 

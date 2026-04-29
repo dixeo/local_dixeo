@@ -76,36 +76,23 @@ class image_generation_service {
      * @param int $courseid The course ID.
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (low/medium/high, default medium).
-     * @param string|null $title When non-null, sent as payload title instead of course.fullname (e.g. draft before DB update).
-     * @param string|null $summary When non-null, sent instead of course.summary (same use-case).
      * @return operation_result Pending operation result with jobid.
-     * @throws \moodle_exception If image generation is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
      */
     public function submit_course_image_job(
         int $courseid,
         string $size = self::DEFAULT_SIZE,
-        string $quality = self::DEFAULT_QUALITY,
-        ?string $title = null,
-        ?string $summary = null
+        string $quality = self::DEFAULT_QUALITY
     ): operation_result {
         global $DB;
 
         $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
 
-        image_generation_policy::assert_enabled(
-            image_generation_policy::ENTITY_COURSE,
-            image_generation_policy::ACTION_GENERATE
-        );
-
-        $resolvedtitle = $title !== null ? $title : $course->fullname;
-        $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
-
         $payload = $this->build_payload(
             scope: 'course',
-            title: $resolvedtitle,
-            summary: $resolvedsummary,
+            title: $course->fullname,
+            summary: $course->summary ?? null,
             size: $size,
             quality: $quality,
             courseid: (string) $courseid,
@@ -124,7 +111,6 @@ class image_generation_service {
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (low/medium/high, default medium).
      * @return operation_result Pending operation result with jobid.
-     * @throws \moodle_exception If section image generation is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the section is not found.
      */
@@ -136,12 +122,6 @@ class image_generation_service {
         global $DB;
 
         $section = $DB->get_record('course_sections', ['id' => $sectionid], 'id, course, section, name, summary', MUST_EXIST);
-
-        image_generation_policy::assert_enabled(
-            image_generation_policy::ENTITY_SECTION,
-            image_generation_policy::ACTION_GENERATE
-        );
-
         $title = $this->resolve_section_title($section);
 
         $payload = $this->build_payload(
@@ -159,18 +139,12 @@ class image_generation_service {
     /**
      * Submit an image edit job for a course (async, non-blocking).
      *
-     * Tweaks existing image(s) while preserving composition. Caller provides
-     * the current image(s) as raw base64 and describes the change to apply.
-     *
      * @param int $courseid The course ID.
      * @param array $imagesbase64 List of raw base64-encoded source images (1-16).
      * @param string $instructions Description of the change to apply.
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (default medium).
-     * @param string|null $title When non-null, sent as payload title instead of course.fullname.
-     * @param string|null $summary When non-null, sent instead of course.summary.
      * @return operation_result Pending operation result with jobid.
-     * @throws \moodle_exception If course image editing is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the course is not found.
      */
@@ -179,9 +153,7 @@ class image_generation_service {
         array $imagesbase64,
         string $instructions,
         string $size = self::DEFAULT_SIZE,
-        string $quality = self::DEFAULT_QUALITY,
-        ?string $title = null,
-        ?string $summary = null
+        string $quality = self::DEFAULT_QUALITY
     ): operation_result {
         global $DB;
 
@@ -189,26 +161,15 @@ class image_generation_service {
             throw new \invalid_parameter_exception('At least one source image is required for editing');
         }
 
-        $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname, summary', MUST_EXIST);
+        $DB->get_record('course', ['id' => $courseid], 'id', MUST_EXIST);
 
-        image_generation_policy::assert_enabled(
-            image_generation_policy::ENTITY_COURSE,
-            image_generation_policy::ACTION_EDIT
+        $payload = $this->build_edit_payload(
+            $imagesbase64,
+            $instructions,
+            $size,
+            $quality,
+            (string) $courseid,
         );
-
-        $resolvedtitle = $title !== null ? $title : $course->fullname;
-        $resolvedsummary = $summary !== null ? $summary : ($course->summary ?? null);
-
-        $payload = $this->build_payload(
-            scope: 'course',
-            title: $resolvedtitle,
-            summary: $resolvedsummary,
-            size: $size,
-            quality: $quality,
-            courseid: (string) $courseid,
-        );
-        $payload['images'] = array_values($imagesbase64);
-        $payload['instructions'] = trim($instructions);
 
         return $this->jobservice->submit_job(self::EDIT_ENDPOINT, $payload);
     }
@@ -222,7 +183,6 @@ class image_generation_service {
      * @param string $size Image dimensions (default 1536x1024 landscape).
      * @param string $quality Quality level (default medium).
      * @return operation_result Pending operation result with jobid.
-     * @throws \moodle_exception If section image editing is disabled by {@see image_generation_policy}.
      * @throws api_exception If the API request fails.
      * @throws \dml_exception If the section is not found.
      */
@@ -239,31 +199,59 @@ class image_generation_service {
             throw new \invalid_parameter_exception('At least one source image is required for editing');
         }
 
-        $section = $DB->get_record('course_sections', ['id' => $sectionid], 'id, course, section, name, summary', MUST_EXIST);
+        $section = $DB->get_record('course_sections', ['id' => $sectionid], 'id, course', MUST_EXIST);
 
-        image_generation_policy::assert_enabled(
-            image_generation_policy::ENTITY_SECTION,
-            image_generation_policy::ACTION_EDIT
+        $payload = $this->build_edit_payload(
+            $imagesbase64,
+            $instructions,
+            $size,
+            $quality,
+            (string) $section->course,
         );
-
-        $title = $this->resolve_section_title($section);
-
-        $payload = $this->build_payload(
-            scope: 'section',
-            title: $title,
-            summary: $section->summary ?? null,
-            size: $size,
-            quality: $quality,
-            courseid: (string) $section->course,
-        );
-        $payload['images'] = array_values($imagesbase64);
-        $payload['instructions'] = trim($instructions);
 
         return $this->jobservice->submit_job(self::EDIT_ENDPOINT, $payload);
     }
 
     /**
-     * Build the API request payload.
+     * Build the API request payload for image editing.
+     *
+     * @param array $imagesbase64 Raw base64-encoded source images.
+     * @param string $instructions Change to apply.
+     * @param string $size Image dimensions.
+     * @param string $quality Quality level.
+     * @param string $courseid Course identifier for tracking.
+     * @return array The request payload.
+     */
+    private function build_edit_payload(
+        array $imagesbase64,
+        string $instructions,
+        string $size,
+        string $quality,
+        string $courseid
+    ): array {
+        if (!in_array($size, self::SUPPORTED_SIZES, true)) {
+            throw new \invalid_parameter_exception(
+                'Unsupported image size "' . $size . '". Supported: ' . implode(', ', self::SUPPORTED_SIZES)
+            );
+        }
+
+        $payload = [
+            'images' => array_values($imagesbase64),
+            'instructions' => trim($instructions),
+            'size' => $size,
+            'quality' => $quality,
+            'courseId' => $courseid,
+        ];
+
+        if ($this->namespace !== null) {
+            $payload['namespace'] = $this->namespace;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Build the API request payload for image generation.
      *
      * @param string $scope 'course' or 'section'.
      * @param string $title Human-readable title.
