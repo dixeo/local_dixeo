@@ -165,8 +165,6 @@ class file_sync_service {
         $status->filestotal = $record->filestotal;
         $status->filescompleted = $record->filescompleted;
         $status->progresspercent = $record->progresspercent;
-        $status->uploadbytes = isset($record->uploadbytes) ? (int) $record->uploadbytes : null;
-        $status->uploadbytestotal = isset($record->uploadbytestotal) ? (int) $record->uploadbytestotal : null;
         $status->errormessage = $record->errormessage;
         $status->lastsyncstarted = $record->lastsyncstarted;
         $status->lastsynccompleted = $record->lastsynccompleted;
@@ -214,21 +212,15 @@ class file_sync_service {
         $uploaditems = $this->collect_upload_payload($courseid);
 
         // Release the session lock for this request so other requests (e.g. file-sync status polls)
-        // can run while the outbound upload updates progress in the database.
+        // can run while the outbound upload is in flight.
         \core\session\manager::write_close();
 
-        // Update status to syncing.
+        // Flip the local sync status; per-chunk progress counters are not
+        // tracked locally — poll_status() refreshes them from the server.
         $this->repository->update_sync_status($courseid, 'syncing');
 
         try {
             $filecount = count($uploaditems);
-
-            // Initial progress.
-            $this->repository->update_sync_status($courseid, 'syncing', [
-                'filestotal' => $filecount,
-                'filescompleted' => 0,
-                'progresspercent' => 0,
-            ]);
 
             if ($filecount === 0) {
                 // No files remain in Moodle. Clear the remote store as well;
@@ -252,7 +244,6 @@ class file_sync_service {
             $chunks = $this->build_chunks($uploaditems);
             $totalchunks = count($chunks);
 
-            $completedfiles = 0;
             $lastresult = null;
             $failedfiles = [];
             foreach ($chunks as $idx => $chunk) {
@@ -265,25 +256,11 @@ class file_sync_service {
                     null,
                     null,
                     $isfinal,
-                    $chunkmanifest
+                    $chunkmanifest,
+                    $filecount
                 );
                 $this->log_api_rejections($lastresult);
                 $failedfiles = array_merge($failedfiles, $this->extract_api_rejections($lastresult));
-
-                $completedfiles += count($chunk);
-                $progresspct = (int) round((($idx + 1) / $totalchunks) * 100);
-                // Cap at 99% until the async API indexing completes on the
-                // final chunk — the 100% transition comes from the API's
-                // response, not from "we sent the last chunk".
-                if (!$isfinal) {
-                    $progresspct = min($progresspct, 95);
-                }
-
-                $this->repository->update_sync_status($courseid, 'syncing', [
-                    'filestotal' => $filecount,
-                    'filescompleted' => $completedfiles,
-                    'progresspercent' => $progresspct,
-                ]);
             }
 
             if ($failedfiles !== []) {
@@ -669,17 +646,6 @@ class file_sync_service {
      * @return \stdClass Updated status object.
      */
     public function poll_status(int $courseid): \stdClass {
-        // Skip the poll while the local upload is still streaming; the server
-        // can't report a complete view until Moodle has finished sending.
-        $record = $this->repository->get_by_courseid($courseid);
-        if ($record && $record->syncstatus === 'syncing') {
-            $ubtotal = (int) ($record->uploadbytestotal ?? 0);
-            $ubnow = (int) ($record->uploadbytes ?? 0);
-            if ($ubtotal > 0 && $ubnow < $ubtotal) {
-                return $this->get_status($courseid);
-            }
-        }
-
         try {
             $apistatus = $this->client->get_files_status((string) $courseid);
             $apiprogress = $apistatus['progress'] ?? null;

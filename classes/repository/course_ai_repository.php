@@ -93,8 +93,7 @@ class course_ai_repository {
      *
      * @param int $courseid The course ID.
      * @param string $status The new status (none, syncing, synchronized, error, paused).
-     * @param array|null $progress Optional progress data with keys: filestotal, filescompleted, progresspercent,
-     *     uploadbytes, uploadbytestotal.
+     * @param array|null $progress Optional progress data with keys: filestotal, filescompleted, progresspercent.
      * @return void
      */
     public function update_sync_status(int $courseid, string $status, ?array $progress = null): void {
@@ -119,12 +118,6 @@ class course_ai_repository {
             }
             if (isset($progress['progresspercent'])) {
                 $update->progresspercent = $progress['progresspercent'];
-            }
-            if (array_key_exists('uploadbytes', $progress)) {
-                $update->uploadbytes = $progress['uploadbytes'];
-            }
-            if (array_key_exists('uploadbytestotal', $progress)) {
-                $update->uploadbytestotal = $progress['uploadbytestotal'];
             }
         }
 

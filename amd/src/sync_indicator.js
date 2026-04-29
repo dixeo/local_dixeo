@@ -34,6 +34,23 @@ let currentStatus = 'none';
 let isEnabled = true;
 
 /**
+ * Check whether a value can be rendered as a number.
+ *
+ * @param {*} value The value to test.
+ * @returns {boolean}
+ */
+const hasNumber = (value) => value !== null && value !== undefined && !Number.isNaN(Number(value));
+
+/**
+ * Normalise optional numeric API/webservice fields.
+ *
+ * @param {*} value The raw value.
+ * @param {number} fallback Value to use when raw value is absent or invalid.
+ * @returns {number}
+ */
+const toNumber = (value, fallback = 0) => hasNumber(value) ? Number(value) : fallback;
+
+/**
  * Initialize the sync indicator.
  *
  * @param {number} courseid The course ID.
@@ -122,8 +139,8 @@ const updateBadgeCount = (filesCompleted, filesTotal) => {
         return;
     }
 
-    const total = (filesTotal === null || filesTotal === undefined) ? 0 : Number(filesTotal);
-    const done = (filesCompleted === null || filesCompleted === undefined) ? 0 : Number(filesCompleted);
+    const total = toNumber(filesTotal);
+    const done = toNumber(filesCompleted);
 
     if (currentStatus === 'synchronized' || total <= 0) {
         countEl.textContent = '0';
@@ -547,16 +564,17 @@ const updateIndicatorUI = (status = null) => {
     button.classList.add(`dixeo-sync-btn--${statusClass}`);
 
     // Update progress if available.
-    if (status && status.progresspercent !== null) {
+    if (status && hasNumber(status.progresspercent)) {
+        const progressPercent = toNumber(status.progresspercent);
         const progressBar = container.querySelector('[data-region="progress-bar"]');
         if (progressBar) {
-            progressBar.style.width = `${status.progresspercent}%`;
-            progressBar.setAttribute('aria-valuenow', status.progresspercent);
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.setAttribute('aria-valuenow', progressPercent);
         }
 
         const progressText = container.querySelector('[data-region="progress-text"]');
-        if (progressText && status.filescompleted !== null && status.filestotal !== null) {
-            progressText.textContent = `${status.filescompleted} / ${status.filestotal}`;
+        if (progressText && hasNumber(status.filescompleted) && hasNumber(status.filestotal)) {
+            progressText.textContent = `${toNumber(status.filescompleted)} / ${toNumber(status.filestotal)}`;
         }
     }
 
@@ -604,14 +622,14 @@ const getStatusMessage = (status) => {
         return strings.filesync_status_disabled || 'Sync disabled';
     }
 
-    if (status.status === 'synchronized' && status.filestotal !== null) {
+    if (status.status === 'synchronized' && hasNumber(status.filestotal)) {
         const template = strings.filesync_files_count || '{$a} files';
-        return template.replace('{$a}', status.filestotal);
+        return template.replace('{$a}', toNumber(status.filestotal));
     }
 
-    if (status.status === 'syncing' && status.progresspercent !== null) {
+    if (status.status === 'syncing') {
         const template = strings.filesync_progress || '{$a}% complete';
-        return template.replace('{$a}', status.progresspercent);
+        return template.replace('{$a}', toNumber(status.progresspercent));
     }
 
     const stringKey = `filesync_status_${status.status}`;

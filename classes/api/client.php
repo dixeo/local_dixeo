@@ -306,6 +306,7 @@ class client {
      *     was split across several chunks, this should be the full manifest of expected files for the course.
      *     Supplied to the server so it knows which older files to drop and which prior chunk uploads to index.
      *     Ignored when $finalchunk is false, and unnecessary on a single-call sync.
+     * @param int|null $expectedfilescount Total number of files expected after this sync. Sent on every chunk.
      * @return array The API response data.
      * @throws api_exception If the upload fails.
      */
@@ -315,7 +316,8 @@ class client {
         ?string $namespace = null,
         ?callable $uploadprogress = null,
         bool $finalchunk = true,
-        ?array $expectedfiles = null
+        ?array $expectedfiles = null,
+        ?int $expectedfilescount = null
     ): array {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
@@ -355,6 +357,10 @@ class client {
                 );
             }
             $postdata['expectedFiles'] = $encoded;
+        }
+
+        if ($expectedfilescount !== null && $expectedfilescount >= 0) {
+            $postdata['expectedFilesCount'] = (string) $expectedfilescount;
         }
 
         // Add files to the request (sequential multipart field names).
