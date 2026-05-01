@@ -55,6 +55,9 @@ class course_completion_sync_service {
             if ($cm->modulename === 'label') {
                 continue;
             }
+            if ($cm->modulename === 'url') {
+                continue;
+            }
             $exists = $DB->record_exists('course_completion_criteria', [
                 'course' => $courseid,
                 'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY,

@@ -15,6 +15,7 @@ namespace local_dixeo\dsl\actions;
 
 use local_dixeo\dsl\dsl_exception;
 use local_dixeo\dsl\value_resolver;
+use local_dixeo\service\module_activity_defaults_registry;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -43,13 +44,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * - beforemod: Optional course module ID to insert before
  */
 class create_module_action {
-
-    /** @var array Default module settings applied to all modules. */
-    protected const DEFAULT_MODULE_SETTINGS = [
-        'visible' => 1,
-        'completion' => 2,
-        'completionview' => 1,
-    ];
 
     /**
      * Module-specific field quirks that cannot be handled by platform defaults.
@@ -123,7 +117,7 @@ class create_module_action {
 
         try {
             // Create the course module record.
-            $cmid = $this->create_course_module($courseid, $moduleid, $sectionid);
+            $cmid = $this->create_course_module($courseid, $moduleid, $sectionid, $modulename);
 
             // Add the course module to the section.
             \course_add_cm_to_section($courseid, $cmid, $sectionnum, $beforemod);
@@ -201,17 +195,18 @@ class create_module_action {
      * @param int $courseid The course ID.
      * @param int $moduleid The module type ID.
      * @param int $sectionid The section ID.
+     * @param string $modulename Module plugin name.
      * @return int The new course module ID (cmid).
      * @throws dsl_exception If creation fails.
      */
-    protected function create_course_module(int $courseid, int $moduleid, int $sectionid): int {
+    protected function create_course_module(int $courseid, int $moduleid, int $sectionid, string $modulename): int {
         $cm = new \stdClass();
         $cm->course = $courseid;
         $cm->module = $moduleid;
         $cm->section = $sectionid;
-        $cm->visible = self::DEFAULT_MODULE_SETTINGS['visible'];
-        $cm->completion = self::DEFAULT_MODULE_SETTINGS['completion'];
-        $cm->completionview = self::DEFAULT_MODULE_SETTINGS['completionview'];
+        foreach (module_activity_defaults_registry::get_course_module_defaults($modulename) as $key => $value) {
+            $cm->{$key} = $value;
+        }
 
         $cmid = \add_course_module($cm);
 
@@ -232,7 +227,8 @@ class create_module_action {
      * Merges data in priority order (later overrides earlier):
      * 1. Platform defaults from get_config()
      * 2. Module-specific quirks (field name remappings)
-     * 3. DSL-provided fields
+     * 3. Activity instance completion defaults for the module type
+     * 4. DSL-provided fields
      *
      * @param array $fields The resolved field values.
      * @param int $courseid The course ID.
@@ -247,8 +243,10 @@ class create_module_action {
         // Get module-specific quirks (field name remappings, etc.).
         $quirks = self::MODULE_FIELD_QUIRKS[$modulename] ?? [];
 
-        // Merge in priority order: platform defaults -> quirks -> DSL fields.
-        $mergedfields = array_merge($platformdefaults, $quirks, $fields);
+        $activitydefaults = module_activity_defaults_registry::get_instance_completion_defaults($modulename);
+
+        // Merge in priority order: platform defaults -> quirks -> activity defaults -> DSL fields.
+        $mergedfields = array_merge($platformdefaults, $quirks, $activitydefaults, $fields);
 
         $moduledata = (object) $mergedfields;
         $moduledata->course = $courseid;

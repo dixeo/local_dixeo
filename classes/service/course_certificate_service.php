@@ -41,7 +41,6 @@ class course_certificate_service {
      * @param string $activityname Translated activity name.
      * @param string $sectiontitle Translated section title when $location is last.
      * @param string $sectionintro Section summary HTML when $location is last.
-     * @param string|null $excludeidnumber Skip CMs with this idnumber when building completion gate (e.g. designer uploads).
      * @return string|false 'summary'|'last' if a certificate was added; false if skipped.
      */
     public function try_add_coursecertificate_activity(
@@ -51,8 +50,7 @@ class course_certificate_service {
         string $location,
         string $activityname,
         string $sectiontitle,
-        string $sectionintro,
-        ?string $excludeidnumber = null
+        string $sectionintro
     ) {
         global $DB;
 
@@ -98,7 +96,7 @@ class course_certificate_service {
                 $trailing = 'last';
             }
 
-            $availability = $this->build_completion_gate_availability_json($courseid, $excludeidnumber);
+            $availability = $this->build_course_completed_availability_json();
 
             $instance = (object) [
                 'course' => $courseid,
@@ -124,10 +122,8 @@ class course_certificate_service {
                 'visibleoncoursepage' => 1,
                 'downloadcontent' => 1,
                 'completion' => 0,
+                'availability' => $availability,
             ];
-            if ($availability !== null) {
-                $cm->availability = $availability;
-            }
             $cm->id = $DB->insert_record('course_modules', $cm);
             \course_add_cm_to_section($course, $cm->id, $section->section);
             \rebuild_course_cache($courseid, true);
@@ -141,44 +137,21 @@ class course_certificate_service {
     }
 
     /**
-     * Build availability: student must complete all tracked content modules (core completion condition).
+     * Availability JSON: show when the user has completed the current course (availability_coursecompleted plugin).
      *
-     * @param int $courseid
-     * @param string|null $excludeidnumber
-     * @return string|null JSON or null if no gating modules.
+     * @return string Encoded JSON for course_modules.availability.
      */
-    private function build_completion_gate_availability_json(int $courseid, ?string $excludeidnumber): ?string {
-        global $DB;
-
-        $sql = "SELECT cm.id
-                  FROM {course_modules} cm
-                  JOIN {modules} m ON m.id = cm.module
-                 WHERE cm.course = :courseid
-                   AND cm.completion > 0
-                   AND cm.deletioninprogress = 0
-                   AND m.name NOT IN ('coursecertificate', 'label')";
-        $params = ['courseid' => $courseid];
-        if ($excludeidnumber !== null && $excludeidnumber !== '') {
-            $sql .= " AND (cm.idnumber IS NULL OR cm.idnumber <> :idn)";
-            $params['idn'] = $excludeidnumber;
-        }
-        $cmids = $DB->get_fieldset_sql($sql, $params);
-        if ($cmids === []) {
-            return null;
-        }
-        $conds = [];
-        foreach ($cmids as $cmid) {
-            $conds[] = [
-                'type' => 'completion',
-                'cm' => (int) $cmid,
-                'e' => COMPLETION_COMPLETE,
-            ];
-        }
+    protected function build_course_completed_availability_json(): string {
+        $condition = (object) [
+            'type' => 'coursecompleted',
+            'id' => true,
+            'courseid' => 0,
+        ];
         return json_encode([
             'op' => '&',
             'showc' => [true],
-            'c' => $conds,
-        ]);
+            'c' => [$condition],
+        ], JSON_UNESCAPED_SLASHES);
     }
 
     /**
