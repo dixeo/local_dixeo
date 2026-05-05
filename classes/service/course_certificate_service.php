@@ -32,6 +32,22 @@ require_once($CFG->dirroot . '/course/lib.php');
 class course_certificate_service {
 
     /**
+     * Whether the course-completed availability restriction may be stored on new certificate CMs.
+     *
+     * Requires {@see plugin_installation_service::is_component_installed()} for availability_coursecompleted,
+     * then {@see \core\plugininfo\availability::get_enabled_plugins()} so admin-disabled plugins are excluded.
+     *
+     * @return bool
+     */
+    public static function is_course_completed_availability_plugin_enabled(): bool {
+        if (!plugin_installation_service::is_component_installed('availability_coursecompleted')) {
+            return false;
+        }
+        $enabled = \core\plugininfo\availability::get_enabled_plugins();
+        return isset($enabled['coursecompleted']);
+    }
+
+    /**
      * Try to add a course certificate activity.
      *
      * @param int $courseid
@@ -96,7 +112,9 @@ class course_certificate_service {
                 $trailing = 'last';
             }
 
-            $availability = $this->build_course_completed_availability_json();
+            $availability = self::is_course_completed_availability_plugin_enabled()
+                ? $this->build_course_completed_availability_json()
+                : null;
 
             $instance = (object) [
                 'course' => $courseid,
@@ -137,14 +155,17 @@ class course_certificate_service {
     }
 
     /**
-     * Availability JSON: show when the user has completed the current course (availability_coursecompleted plugin).
+     * Availability JSON: show when the user has completed the current course.
+     *
+     * Only valid when {@see self::is_course_completed_availability_plugin_enabled()} is true
+     * (requires availability_coursecompleted).
      *
      * @return string Encoded JSON for course_modules.availability.
      */
     protected function build_course_completed_availability_json(): string {
         $condition = (object) [
             'type' => 'coursecompleted',
-            'id' => true,
+            'id' => '1',
             'courseid' => 0,
         ];
         return json_encode([

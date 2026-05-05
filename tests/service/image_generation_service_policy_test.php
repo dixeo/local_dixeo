@@ -128,16 +128,18 @@ final class image_generation_service_policy_test extends \advanced_testcase {
         $course = $this->getDataGenerator()->create_course(['fullname' => 'Policy course']);
 
         $jobmock = $this->createMock(job_service::class);
+        $courseid = (int) $course->id;
         $jobmock->expects($this->once())->method('submit_job')->with(
             $this->equalTo('/v1/images/edit'),
-            $this->callback(static function (array $payload): bool {
-                return ($payload['scope'] ?? '') === 'course'
-                    && isset($payload['images'], $payload['instructions']);
+            $this->callback(static function (array $payload) use ($courseid): bool {
+                return ($payload['courseId'] ?? '') === (string) $courseid
+                    && ($payload['instructions'] ?? '') === 'Make it brighter'
+                    && isset($payload['images']) && is_array($payload['images']);
             })
         )->willReturn($this->pending_result('edit-job-1'));
 
         $result = $this->make_service_with_mock_jobs($jobmock)->submit_course_image_edit_job(
-            (int) $course->id,
+            $courseid,
             ['Ym9n'],
             'Make it brighter'
         );
@@ -203,10 +205,13 @@ final class image_generation_service_policy_test extends \advanced_testcase {
         $sectionid = (int) $DB->get_field('course_sections', 'id', ['course' => $course->id, 'section' => 1], MUST_EXIST);
 
         $jobmock = $this->createMock(job_service::class);
+        $expectcourseid = (int) $course->id;
         $jobmock->expects($this->once())->method('submit_job')->with(
             $this->equalTo('/v1/images/edit'),
-            $this->callback(static function (array $payload): bool {
-                return ($payload['scope'] ?? '') === 'section';
+            $this->callback(static function (array $payload) use ($expectcourseid): bool {
+                return ($payload['courseId'] ?? '') === (string) $expectcourseid
+                    && ($payload['instructions'] ?? '') === 'Change background'
+                    && isset($payload['images']) && is_array($payload['images']);
             })
         )->willReturn($this->pending_result('sec-edit-1'));
 

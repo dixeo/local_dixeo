@@ -34,6 +34,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class course_certificate_service_test extends \advanced_testcase {
 
+    public function test_is_course_completed_availability_plugin_enabled_returns_bool(): void {
+        $result = course_certificate_service::is_course_completed_availability_plugin_enabled();
+        $this->assertIsBool($result);
+    }
+
     public function test_course_completed_availability_json_shape(): void {
         $service = new course_certificate_service();
         $method = new \ReflectionMethod(course_certificate_service::class, 'build_course_completed_availability_json');
@@ -45,7 +50,7 @@ final class course_certificate_service_test extends \advanced_testcase {
         $this->assertSame([true], $data['showc']);
         $this->assertCount(1, $data['c']);
         $this->assertSame('coursecompleted', $data['c'][0]['type']);
-        $this->assertTrue($data['c'][0]['id']);
+        $this->assertSame('1', $data['c'][0]['id']);
         $this->assertSame(0, $data['c'][0]['courseid']);
     }
 }
