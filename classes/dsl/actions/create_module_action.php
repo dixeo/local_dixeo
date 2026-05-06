@@ -241,7 +241,7 @@ class create_module_action {
         $platformdefaults = $this->get_platform_defaults($modulename);
 
         // Get module-specific quirks (field name remappings, etc.).
-        $quirks = self::MODULE_FIELD_QUIRKS[$modulename] ?? [];
+        $quirks = $this->get_module_field_quirks($modulename);
 
         $activitydefaults = module_activity_defaults_registry::get_instance_completion_defaults($modulename);
 
@@ -272,6 +272,25 @@ class create_module_action {
         }
 
         return (array) $config;
+    }
+
+    /**
+     * Get module-specific data quirks merged before activity defaults and DSL fields.
+     *
+     * @param string $modulename The module type name.
+     * @return array<string, mixed>
+     */
+    protected function get_module_field_quirks(string $modulename): array {
+        global $CFG;
+
+        $quirks = self::MODULE_FIELD_QUIRKS[$modulename] ?? [];
+
+        if ($modulename === 'glossary') {
+            $edunaoformatfile = $CFG->dirroot . '/mod/glossary/formats/edunao123/edunao123_format.php';
+            $quirks['displayformat'] = file_exists($edunaoformatfile) ? 'edunao123' : 'dictionary';
+        }
+
+        return $quirks;
     }
 
     /**
