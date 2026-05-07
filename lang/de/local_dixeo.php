@@ -44,6 +44,17 @@ $string['api_key'] = 'API-Schlüssel';
 $string['api_key_desc'] = 'Ihr Dixeo-API-Schlüssel. Sie erhalten ihn im Dixeo-Dashboard.';
 $string['namespace'] = 'Namespace';
 $string['namespace_desc'] = 'Nur erforderlich, wenn mehrere Moodle-Sites denselben API-Schlüssel nutzen. Jede Website sollte einen anderen Namespace verwenden (z. B. "production", "staging", "site1"), um Daten getrennt zu halten. Lassen Sie "default", wenn dies die einzige Website ist, die diesen API-Schlüssel verwendet.';
+$string['image_generation'] = 'Bildgenerierung';
+$string['image_generation_desc'] = 'Steuert die Verfügbarkeit von KI-Bildgenerierung und Bildbearbeitung für Kurs- und Abschnittsbilder.';
+$string['image_generation_enabled'] = 'Bildgenerierung aktivieren';
+$string['image_generation_enabled_desc'] = 'Wenn deaktiviert, werden alle Anfragen zum Generieren oder Bearbeiten von Bildern blockiert.';
+$string['image_generation_course_mode'] = 'Kursbilder';
+$string['image_generation_course_mode_desc'] = 'Steuert KI-Bildaktionen für das Kursübersichtsbild.';
+$string['image_generation_section_mode'] = 'Abschnittsbilder';
+$string['image_generation_section_mode_desc'] = 'Steuert KI-Bildaktionen für Kapitel-/Abschnittsbilder.';
+$string['image_generation_mode_disabled'] = 'Deaktiviert';
+$string['image_generation_mode_generate'] = 'Generieren';
+$string['image_generation_mode_generate_edit'] = 'Generieren und Bearbeiten';
 $string['credit_information'] = 'Kreditinformationen';
 $string['current_balance'] = 'Aktueller Kontostand';
 $string['current_balance_desc'] = 'Ihr aktueller Dixeo-Kreditstand. Credits werden für KI-Operationen verwendet.';
@@ -142,6 +153,11 @@ $string['feedback_correct'] = 'Richtig!';
 // Tasks.
 $string['task_cleanup_jobs'] = 'Alte Auftragsdatensätze bereinigen';
 $string['task_process_file_sync'] = 'Dixeo-Dateisynchronisation verarbeiten';
+$string['task_poll_image_generation'] = 'Dixeo-Bildgenerierungsauftrag abfragen';
+$string['dixeo_course_image_unsupported_type'] = 'Nicht unterstützter Typ des generierten Bildes.';
+$string['dixeo_image_job_empty_result'] = 'Der Bildauftrag lieferte keine Bilddaten.';
+$string['dixeo_image_generation_disabled'] = 'Die Bildgenerierung ist in den Website-Einstellungen deaktiviert.';
+$string['dixeo_pluginfile_not_found'] = 'Die Bilddatei konnte nicht aus dem Speicher gelesen werden.';
 
 // File sync.
 $string['filesync_title'] = 'Dixeo-Dateisynchronisation';

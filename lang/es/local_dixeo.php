@@ -44,6 +44,17 @@ $string['api_key'] = 'Clave API';
 $string['api_key_desc'] = 'Su clave API de Dixeo. Obténgala desde el panel de Dixeo.';
 $string['namespace'] = 'Espacio de nombres';
 $string['namespace_desc'] = 'Solo necesario cuando varios sitios Moodle comparten la misma clave API. Cada sitio debe usar un espacio de nombres diferente (ej. "production", "staging", "site1") para mantener sus datos separados. Deje "default" si este es el único sitio que usa esta clave API.';
+$string['image_generation'] = 'Generación de imágenes';
+$string['image_generation_desc'] = 'Controla la disponibilidad de la generación y edición de imágenes por IA para las imágenes del curso y de las secciones.';
+$string['image_generation_enabled'] = 'Activar generación de imágenes';
+$string['image_generation_enabled_desc'] = 'Si está desactivado, se bloquean todas las solicitudes de generar o editar imágenes.';
+$string['image_generation_course_mode'] = 'Imágenes del curso';
+$string['image_generation_course_mode_desc'] = 'Controla las acciones de imagen por IA para la imagen de resumen del curso.';
+$string['image_generation_section_mode'] = 'Imágenes de sección';
+$string['image_generation_section_mode_desc'] = 'Controla las acciones de imagen por IA para las imágenes de capítulo o sección.';
+$string['image_generation_mode_disabled'] = 'Desactivado';
+$string['image_generation_mode_generate'] = 'Generar';
+$string['image_generation_mode_generate_edit'] = 'Generar y editar';
 $string['credit_information'] = 'Información de créditos';
 $string['current_balance'] = 'Saldo actual';
 $string['current_balance_desc'] = 'Su saldo de créditos Dixeo actual. Los créditos se utilizan para operaciones de IA.';
@@ -142,6 +153,11 @@ $string['feedback_correct'] = '¡Correcto!';
 // Tasks.
 $string['task_cleanup_jobs'] = 'Limpiar registros de trabajos antiguos';
 $string['task_process_file_sync'] = 'Procesar sincronización de archivos Dixeo';
+$string['task_poll_image_generation'] = 'Consultar la tarea de generación de imágenes de Dixeo';
+$string['dixeo_course_image_unsupported_type'] = 'Tipo de imagen generada no admitido.';
+$string['dixeo_image_job_empty_result'] = 'La tarea de imagen no devolvió datos de imagen.';
+$string['dixeo_image_generation_disabled'] = 'La generación de imágenes está desactivada en la configuración del sitio.';
+$string['dixeo_pluginfile_not_found'] = 'No se pudo leer el archivo de imagen desde el almacenamiento.';
 
 // File sync.
 $string['filesync_title'] = 'Sincronización de archivos Dixeo';
