@@ -21,6 +21,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->libdir . '/gradelib.php');
 
 /**
  * Action handler for creating Moodle course modules.
@@ -55,6 +56,9 @@ class create_module_action {
      */
     protected const MODULE_FIELD_QUIRKS = [
         'quiz' => [
+            // Quiz should create a grade item.
+            'sumgrades' => 100,
+            'grade' => 100,
             // Moodle expects 'quizpassword' which gets renamed to 'password' in quiz_process_options().
             'quizpassword' => '',
             // Review options: enable showing feedback immediately after attempt and when quiz is closed.
@@ -139,6 +143,10 @@ class create_module_action {
 
             // Store instance ID for after hook.
             $moduledata->id = $instanceid;
+
+            if ($modulename === 'quiz') {
+                $this->set_quiz_pass_grade($courseid, (int) $instanceid);
+            }
 
             // Run module-specific post-creation hooks if available.
             $this->run_after_hook($modulename, $cmid, $moduledata);
@@ -350,5 +358,30 @@ class create_module_action {
         if (class_exists($classname) && method_exists($classname, 'after_module_created')) {
             $classname::after_module_created($cmid, $moduledata);
         }
+    }
+
+    /**
+     * Set the gradebook passing grade for a quiz instance (aligned with local_edai).
+     *
+     * @param int $courseid Course id.
+     * @param int $quizid Quiz instance id.
+     */
+    protected function set_quiz_pass_grade(int $courseid, int $quizid): void {
+        $gradeitem = \grade_item::fetch([
+            'courseid' => $courseid,
+            'itemtype' => 'mod',
+            'itemmodule' => 'quiz',
+            'iteminstance' => $quizid,
+            'itemnumber' => 0,
+        ]);
+        if (!$gradeitem) {
+            throw new dsl_exception(
+                'Grade item not found for quiz after creation',
+                'create_module',
+                ['quizid' => $quizid, 'courseid' => $courseid]
+            );
+        }
+        $gradeitem->gradepass = 50;
+        $gradeitem->update('local_dixeo');
     }
 }
