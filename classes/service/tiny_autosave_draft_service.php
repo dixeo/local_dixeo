@@ -22,7 +22,8 @@ defined('MOODLE_INTERNAL') || die();
  * Reads HTML draft text from core tiny_autosave (TinyMCE autosave plugin).
  *
  * @package    local_dixeo
- * @copyright  2026 Edunao SAS
+ * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tiny_autosave_draft_service {

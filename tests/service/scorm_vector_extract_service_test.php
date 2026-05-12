@@ -19,7 +19,8 @@
  *
  * @package    local_dixeo
  * @category   test
- * @copyright  2026 Edunao SAS
+ * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

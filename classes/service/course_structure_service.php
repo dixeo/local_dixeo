@@ -31,6 +31,9 @@ class course_structure_service {
     /** @var job_service Job management service. */
     private job_service $jobservice;
 
+    /** @var module_types_service Module type catalogue lookup. */
+    private module_types_service $moduletypesservice;
+
     /** @var string|null The namespace for API requests. */
     private ?string $namespace;
 
@@ -38,13 +41,16 @@ class course_structure_service {
      * Constructor.
      *
      * @param job_service|null $jobservice Optional job service instance.
+     * @param module_types_service|null $moduletypesservice Optional module types service.
      * @param string|null $namespace Optional namespace override.
      */
     public function __construct(
         ?job_service $jobservice = null,
+        ?module_types_service $moduletypesservice = null,
         ?string $namespace = null
     ) {
         $this->jobservice = $jobservice ?? new job_service();
+        $this->moduletypesservice = $moduletypesservice ?? new module_types_service();
         $this->namespace = $namespace ?? $this->get_configured_namespace();
     }
 
@@ -167,14 +173,33 @@ class course_structure_service {
     }
 
     /**
-     * Get module type identifiers for all installed activity modules.
+     * Module type identifiers usable on this Moodle instance.
      *
-     * Uses the same cached registry as {@see plugin_installation_service} / get_module_types.
+     * Walks the API type catalogue and keeps every row whose underlying activity
+     * plugin is installed, so several API types can map to a single Moodle plugin
+     * (e.g. all H5P variants → mod_h5pactivity). Falls back to the legacy
+     * "Moodle plugin name == type" convention when the catalogue is unreachable.
      *
-     * @return string[] List of installed module type names (e.g. ['page', 'quiz', 'label']).
+     * @return string[] List of API type identifiers (e.g. ['page', 'quiz', 'h5p_quiz']).
      */
     private function get_installed_module_types(): array {
-        return plugin_installation_service::get_installed_plugin_names('mod');
+        try {
+            $types = $this->moduletypesservice->get_module_types_cached();
+        } catch (api_exception) {
+            return plugin_installation_service::get_installed_plugin_names('mod');
+        }
+
+        $available = [];
+        foreach ($types as $type) {
+            if (!plugin_installation_service::is_module_type_installed($type)) {
+                continue;
+            }
+            $typeid = $type['type'] ?? '';
+            if (is_string($typeid) && $typeid !== '') {
+                $available[] = $typeid;
+            }
+        }
+        return $available;
     }
 
     /**

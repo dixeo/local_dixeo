@@ -23,12 +23,14 @@ use local_dixeo\api\exception\api_exception;
 /**
  * Service for Dixeo module type catalogue (activity chooser / designer).
  *
- * Caches the raw /v1/modules/types API payload in application cache (same pattern
- * as {@see course_template_service::get_cached_choices()}). Installed flags and
- * localized labels are applied per request in {@see \local_dixeo\external\get_module_types}.
+ * Caches the raw /v1/modules/types API payload in application cache. Consumers should
+ * call {@see get_module_types_resolved()} to obtain rows enriched with installation
+ * status and Moodle-localized labels — single source of truth for both the web service
+ * and the block queue presenter.
  *
  * @package    local_dixeo
  * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class module_types_service {
@@ -81,6 +83,64 @@ class module_types_service {
         }
 
         return $this->copy_type_rows($types);
+    }
+
+    /**
+     * Module type rows enriched with installation status and a Moodle-localized label.
+     *
+     * For each row:
+     * - `installed` is set via {@see plugin_installation_service::is_module_type_installed()},
+     *   which validates both the activity plugin and any H5P library requirements.
+     * - `label` is replaced by Moodle's `modulename` / `pluginname` string when the row
+     *   maps 1:1 to a Moodle activity plugin (so the language pack wins over the API label).
+     *   Rows whose plugin is shared by several types (all H5P variants → mod_h5pactivity)
+     *   keep their distinct API labels so variants don't collapse onto a single string.
+     *
+     * @return array Resolved rows.
+     * @throws api_exception
+     */
+    public function get_module_types_resolved(): array {
+        $rows = $this->get_module_types_cached();
+
+        $componentcounts = [];
+        foreach ($rows as $row) {
+            $component = self::string_component_for($row);
+            $componentcounts[$component] = ($componentcounts[$component] ?? 0) + 1;
+        }
+
+        $sm = get_string_manager();
+        foreach ($rows as &$row) {
+            $row['installed'] = plugin_installation_service::is_module_type_installed($row);
+
+            if (!empty($row['installed'])) {
+                $component = self::string_component_for($row);
+                if (($componentcounts[$component] ?? 0) <= 1) {
+                    if ($sm->string_exists('modulename', $component)) {
+                        $row['label'] = get_string('modulename', $component);
+                    } else if ($sm->string_exists('pluginname', $component)) {
+                        $row['label'] = get_string('pluginname', $component);
+                    }
+                }
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * Component identifier used for `modulename` / `pluginname` string lookups.
+     *
+     * Falls back to `mod_<type>` when the row carries no usable `component`.
+     *
+     * @param array $row Row from {@see get_module_types_cached()}.
+     */
+    public static function string_component_for(array $row): string {
+        $component = $row['component'] ?? '';
+        if (is_string($component) && $component !== '' && strpos($component, 'mod_') === 0) {
+            return $component;
+        }
+        return 'mod_' . ($row['type'] ?? '');
     }
 
     /**

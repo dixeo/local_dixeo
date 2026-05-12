@@ -24,7 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  * Course and section each use a mode select: disabled, generate only, or generate+edit.
  *
  * @package    local_dixeo
- * @copyright  2026
+ * @copyright  2026 Dixeo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class image_generation_policy {

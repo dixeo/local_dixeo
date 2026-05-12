@@ -31,6 +31,11 @@ class sync_indicator_injector {
     public static function callback(before_standard_top_of_body_html_generation $hook): void {
         global $COURSE, $PAGE, $OUTPUT;
 
+        // Skip iframe/popup layouts (e.g. H5P embed) — would duplicate the indicator inside the frame.
+        if (in_array($PAGE->pagelayout, ['embedded', 'popup', 'print', 'frametop', 'secure', 'maintenance'], true)) {
+            return;
+        }
+
         // Only show on course pages (not site level).
         if (!isset($COURSE->id) || $COURSE->id <= 1) {
             return;

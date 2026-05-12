@@ -17,7 +17,6 @@ use core_external\external_multiple_structure;
 use core_external\external_value;
 use local_dixeo\external\traits\capability_check;
 use local_dixeo\api\exception\api_exception;
-use local_dixeo\service\plugin_installation_service;
 
 /**
  * External function to get available module types.
@@ -69,30 +68,7 @@ class get_module_types extends external_api {
         }
 
         try {
-            $types = service_factory::get_module_types_service()->get_module_types_cached();
-
-            $installedmods = plugin_installation_service::get_installed_plugin_map('mod');
-
-            $stringmanager = get_string_manager();
-            foreach ($types as &$type) {
-                $modname = $type['type'];
-                $type['installed'] = isset($installedmods[$modname]);
-
-                // Use Moodle's translated activity name when the module is installed (same as queue UI).
-                // Fall back to the API label when not installed or when no mod string exists.
-                if (!empty($type['installed'])) {
-                    $component = $type['component'] ?? '';
-                    if ($component === '' || strpos($component, 'mod_') !== 0) {
-                        $component = 'mod_' . $modname;
-                    }
-                    if ($stringmanager->string_exists('modulename', $component)) {
-                        $type['label'] = get_string('modulename', $component);
-                    } else if ($stringmanager->string_exists('pluginname', $component)) {
-                        $type['label'] = get_string('pluginname', $component);
-                    }
-                }
-            }
-            unset($type);
+            $types = service_factory::get_module_types_service()->get_module_types_resolved();
 
             // Non-admins only see installed module types (no lock icon / "plugin required" options).
             if (!is_siteadmin()) {
@@ -123,7 +99,12 @@ class get_module_types extends external_api {
                     'description' => new external_value(PARAM_RAW, 'Module type description'),
                     'category' => new external_value(PARAM_ALPHANUMEXT, 'Category for grouping'),
                     'component' => new external_value(PARAM_ALPHANUMEXT, 'Moodle component identifier'),
-                    'installed' => new external_value(PARAM_BOOL, 'Whether the module plugin is installed'),
+                    'installed' => new external_value(PARAM_BOOL, 'Whether the module is fully usable on this site'),
+                    'requirements' => new external_multiple_structure(
+                        new external_value(PARAM_RAW, 'Required platform asset identifier (e.g. H5P library)'),
+                        'Platform-specific requirements',
+                        VALUE_OPTIONAL,
+                    ),
                 ]),
                 'List of available module types'
             ),

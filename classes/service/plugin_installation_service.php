@@ -28,6 +28,7 @@ use core_plugin_manager;
  *
  * @package    local_dixeo
  * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @author     Pierre FACQ <pierre.facq@edunao.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class plugin_installation_service {
@@ -82,5 +83,52 @@ class plugin_installation_service {
      */
     public static function get_installed_plugin_names(string $plugintype): array {
         return array_keys(self::get_installed_plugin_map($plugintype));
+    }
+
+    /**
+     * Whether everything needed to use the Dixeo module type is installed.
+     *
+     * Two layers of checks:
+     * - The activity plugin behind the row (e.g. mod_h5pactivity for every H5P
+     *   variant). Uses the row's `component`, falling back to `mod_<type>` when
+     *   absent — matches the legacy 1:1 convention of classic types.
+     * - Every entry in `requirements` (currently H5P library identifiers like
+     *   "H5P.QuestionSet 1.20"). Empty/missing requirements means no extra check.
+     *
+     * @param array $typerow Row as returned by /v1/modules/types.
+     */
+    public static function is_module_type_installed(array $typerow): bool {
+        $modname = self::resolve_module_type_plugin_name($typerow);
+        if ($modname === '') {
+            return false;
+        }
+        if (!isset(self::get_installed_plugin_map('mod')[$modname])) {
+            return false;
+        }
+
+        $requirements = $typerow['requirements'] ?? [];
+        if (!is_array($requirements)) {
+            return false;
+        }
+        foreach ($requirements as $library) {
+            if (!is_string($library) || !h5p_library_service::is_installed($library)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Underlying Moodle activity plugin name for a Dixeo module-type row.
+     *
+     * @param array $typerow Row as returned by /v1/modules/types.
+     * @return string Plugin name (e.g. 'page', 'h5pactivity'), or '' when unresolvable.
+     */
+    public static function resolve_module_type_plugin_name(array $typerow): string {
+        $component = isset($typerow['component']) && is_string($typerow['component']) ? $typerow['component'] : '';
+        if ($component !== '' && strpos($component, 'mod_') === 0) {
+            return substr($component, strlen('mod_'));
+        }
+        return isset($typerow['type']) && is_string($typerow['type']) ? $typerow['type'] : '';
     }
 }

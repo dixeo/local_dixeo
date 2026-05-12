@@ -15,6 +15,7 @@ namespace local_dixeo\dsl;
 
 use local_dixeo\dsl\actions\create_module_action;
 use local_dixeo\dsl\actions\create_entries_action;
+use local_dixeo\dsl\actions\create_h5p_module_action;
 use local_dixeo\dsl\actions\create_questions_action;
 use local_dixeo\dsl\actions\create_slides_action;
 use local_dixeo\dsl\actions\create_questions_simplequiz2_action;
@@ -53,6 +54,9 @@ class interpreter {
     /** @var create_questions_simplequiz2_action Action handler for simplequiz2 questions. */
     protected create_questions_simplequiz2_action $createquestionssimplequiz2action;
 
+    /** @var create_h5p_module_action Action handler for create_h5p_module. */
+    protected create_h5p_module_action $createh5pmoduleaction;
+
     /**
      * Constructor.
      *
@@ -63,19 +67,22 @@ class interpreter {
      * @param create_questions_action|null $createquestionsaction Custom questions action handler.
      * @param create_slides_action|null $createslidesaction Custom slides action handler.
      * @param create_questions_simplequiz2_action|null $createquestionssimplequiz2action Custom simplequiz2 questions action.
+     * @param create_h5p_module_action|null $createh5pmoduleaction Custom H5P module action handler.
      */
     public function __construct(
         ?create_module_action $createmoduleaction = null,
         ?create_entries_action $createentriesaction = null,
         ?create_questions_action $createquestionsaction = null,
         ?create_slides_action $createslidesaction = null,
-        ?create_questions_simplequiz2_action $createquestionssimplequiz2action = null
+        ?create_questions_simplequiz2_action $createquestionssimplequiz2action = null,
+        ?create_h5p_module_action $createh5pmoduleaction = null
     ) {
         $this->createmoduleaction = $createmoduleaction ?? new create_module_action();
         $this->createentriesaction = $createentriesaction ?? new create_entries_action();
         $this->createquestionsaction = $createquestionsaction ?? new create_questions_action();
         $this->createslidesaction = $createslidesaction ?? new create_slides_action();
         $this->createquestionssimplequiz2action = $createquestionssimplequiz2action ?? new create_questions_simplequiz2_action();
+        $this->createh5pmoduleaction = $createh5pmoduleaction ?? new create_h5p_module_action();
     }
 
     /**
@@ -125,7 +132,9 @@ class interpreter {
                 $this->variables[$varname] = $result;
 
                 // Track the cmid from the first module creation.
-                if ($action['action'] === 'create_module' && isset($result['cmid'])) {
+                if (in_array($action['action'], ['create_module', 'create_h5p_module'], true)
+                    && isset($result['cmid'])
+                ) {
                     $cmid = (int) $result['cmid'];
                 }
             }
@@ -160,6 +169,7 @@ class interpreter {
 
         return match ($actiontype) {
             'create_module' => $this->createmoduleaction->execute($action, $resolver),
+            'create_h5p_module' => $this->createh5pmoduleaction->execute($action, $resolver),
             'create_entries' => $this->createentriesaction->execute($action, $resolver),
             'create_questions' => $this->dispatch_create_questions($action, $resolver, $context),
             'add_slides' => $this->createslidesaction->execute($action, $resolver),
