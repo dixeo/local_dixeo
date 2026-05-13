@@ -19,7 +19,7 @@ use core_external\external_value;
 use local_dixeo\external\traits\capability_check;
 use local_dixeo\dsl\interpreter;
 use local_dixeo\api\exception\api_exception;
-use local_dixeo\service\file_sync_service;
+use local_dixeo\service\course_completion_sync_service;
 
 /**
  * External function to create a module from a completed job.
@@ -130,6 +130,10 @@ class create_module_from_job extends external_api {
 
             $interpreter = new interpreter();
             $cmid = $interpreter->execute($result['creation'], $data, $context);
+
+            // Add activity criteria to course completion requirements.
+            $completionsync = new course_completion_sync_service();
+            $completionsync->sync_activity_criteria_from_modules((int) $params['courseid']);
 
             // Enable file sync on successful AI module creation.
             self::enable_file_sync_if_needed($params['courseid']);

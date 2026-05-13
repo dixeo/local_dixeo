@@ -67,6 +67,16 @@ final class module_activity_defaults_registry_test extends \advanced_testcase {
         $this->assertSame(1, $inst['completionpassgrade']);
     }
 
+    public function test_h5pactivity_course_module_matches_edai_pass_grade_completion(): void {
+        $cm = module_activity_defaults_registry::get_course_module_defaults('h5pactivity');
+        $this->assertSame(1, $cm['visible']);
+        $this->assertSame(2, $cm['completion']);
+        $this->assertSame(0, $cm['completiongradeitemnumber']);
+        $this->assertSame(1, $cm['completionpassgrade']);
+        $inst = module_activity_defaults_registry::get_instance_completion_defaults('h5pactivity');
+        $this->assertSame([], $inst);
+    }
+
     public function test_assign_course_module_has_submit_completion(): void {
         $cm = module_activity_defaults_registry::get_course_module_defaults('assign');
         $this->assertSame(1, $cm['visibleoncoursepage']);

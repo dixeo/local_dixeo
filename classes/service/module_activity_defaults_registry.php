@@ -104,7 +104,6 @@ class module_activity_defaults_registry {
             case 'quiz':
             case 'simplequiz':
             case 'simplequiz2':
-            case 'h5pactivity':
                 return [
                     'completion' => COMPLETION_TRACKING_AUTOMATIC,
                     'completiongradeitemnumber' => 0,
@@ -121,6 +120,7 @@ class module_activity_defaults_registry {
                     'completion' => COMPLETION_TRACKING_AUTOMATIC,
                     'completionview' => COMPLETION_VIEW_REQUIRED,
                 ];
+            case 'h5pactivity':
             case 'slideshow':
                 return [];
             default:

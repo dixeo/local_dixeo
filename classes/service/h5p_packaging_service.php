@@ -48,12 +48,6 @@ class h5p_packaging_service {
     /** @var string Module name for the H5P activity in Moodle's modules table. */
     private const MODULE_NAME = 'h5pactivity';
 
-    /** @var int Default visibility flag (1 = visible). */
-    private const DEFAULT_VISIBLE = 1;
-
-    /** @var int Default completion mode (2 = completion conditions). */
-    private const DEFAULT_COMPLETION = 2;
-
     /** @var int Default grade-to-pass for the activity. */
     private const DEFAULT_GRADEPASS = 50;
 
@@ -165,8 +159,9 @@ class h5p_packaging_service {
             $cm->course = $courseid;
             $cm->module = $moduleid;
             $cm->section = $sectionid;
-            $cm->visible = self::DEFAULT_VISIBLE;
-            $cm->completion = self::DEFAULT_COMPLETION;
+            foreach (module_activity_defaults_registry::get_course_module_defaults(self::MODULE_NAME) as $key => $value) {
+                $cm->{$key} = $value;
+            }
 
             $cmid = add_course_module($cm);
             if (!$cmid) {
@@ -186,6 +181,8 @@ class h5p_packaging_service {
             $this->store_package_file($cmid, $packagepath);
 
             $this->register_h5p_content($cmid);
+
+            $this->apply_default_grade_pass((int) $instanceid);
 
             rebuild_course_cache($courseid);
 
@@ -214,8 +211,14 @@ class h5p_packaging_service {
      */
     private function prepare_instance_data(int $courseid, int $cmid, string $name, string $intro): stdClass {
         $platformdefaults = (array) (get_config(self::MODULE_NAME) ?: []);
+        $activitydefaults = module_activity_defaults_registry::get_instance_completion_defaults(self::MODULE_NAME);
 
-        $data = (object) array_merge($platformdefaults, [
+        $factory = new \core_h5p\factory();
+        $core = $factory->get_core();
+        $h5pdisplayconfig = \core_h5p\helper::decode_display_options($core);
+        $displayoptions = \core_h5p\helper::get_display_options($core, $h5pdisplayconfig);
+
+        $data = (object) array_merge($platformdefaults, $activitydefaults, [
             'course' => $courseid,
             'coursemodule' => $cmid,
             'cmidnumber' => $cmid,
@@ -224,7 +227,7 @@ class h5p_packaging_service {
             'introformat' => FORMAT_HTML,
             'grade' => self::DEFAULT_GRADE,
             'gradepass' => self::DEFAULT_GRADEPASS,
-            'displayoptions' => 0,
+            'displayoptions' => $displayoptions,
         ]);
 
         // h5pactivity_add_instance reads these only when set; let it pick its own defaults otherwise.
@@ -311,5 +314,26 @@ class h5p_packaging_service {
             true,
             true
         );
+    }
+
+    /**
+     * Set the default grade pass for the activity.
+     *
+     * @param int $instanceid h5pactivity.id
+     */
+    private function apply_default_grade_pass(int $instanceid): void {
+        global $DB;
+
+        $gradeitem = $DB->get_record('grade_items', [
+            'itemtype' => 'mod',
+            'itemmodule' => self::MODULE_NAME,
+            'iteminstance' => $instanceid,
+            'itemnumber' => 0,
+        ]);
+        if (!$gradeitem) {
+            return;
+        }
+        $gradeitem->gradepass = (float) self::DEFAULT_GRADEPASS;
+        $DB->update_record('grade_items', $gradeitem);
     }
 }
