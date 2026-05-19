@@ -59,18 +59,29 @@ class create_module_action {
             // Quiz should create a grade item.
             'sumgrades' => 100,
             'grade' => 100,
+            'introformat' => FORMAT_HTML,
+            'questionsperpage' => 1,
+            'timeopen' => 0,
+            'timeclose' => 0,
+            'overduehandling' => 'autosubmit',
+            'preferredbehaviour' => 'deferredfeedback',
+            'shuffleanswers' => 1,
+            'decimalpoints' => 0,
+            'questiondecimalpoints' => -1,
             // Moodle expects 'quizpassword' which gets renamed to 'password' in quiz_process_options().
             'quizpassword' => '',
-            // Review options: enable showing feedback immediately after attempt and when quiz is closed.
-            // quiz_review_option_form_to_db() expects individual form fields: {option}{when}
-            // Options: attempt, correctness, marks, specificfeedback, generalfeedback, rightanswer, overallfeedback
-            // When: during, immediately, open (while open), closed (after close)
+            // Review options: quiz_review_option_form_to_db() expects {option}{when} fields.
+            // When: during, immediately, open (while open), closed (after close).
+            'attemptduring' => 1,
             'attemptimmediately' => 1,
             'attemptopen' => 1,
             'attemptclosed' => 1,
             'correctnessimmediately' => 1,
             'correctnessopen' => 1,
             'correctnessclosed' => 1,
+            // Maximum marks (aligned with local_edai quiz module).
+            'maxmarksimmediately' => 1,
+            'maxmarksopen' => 1,
             'marksimmediately' => 1,
             'marksopen' => 1,
             'marksclosed' => 1,

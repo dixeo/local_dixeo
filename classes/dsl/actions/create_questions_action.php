@@ -56,11 +56,14 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 class create_questions_action {
     use action_validation;
 
-    /** @var float Default mark for questions. */
+    /** @var float Fallback mark when no questions are created. */
     protected const DEFAULT_MARK = 1.0;
 
     /** @var float Penalty for incorrect answers. */
     protected const DEFAULT_PENALTY = 0.3333333;
+
+    /** @var float Per-question mark for the current quiz (100 / question count). */
+    protected float $questiondefaultmark = self::DEFAULT_MARK;
 
     /**
      * Execute the create_questions action.
@@ -122,6 +125,9 @@ class create_questions_action {
         $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
         $quiz->cmid = $cmid;
 
+        $questioncount = count($questions);
+        $this->questiondefaultmark = $questioncount > 0 ? (100.0 / $questioncount) : 100.0;
+
         foreach ($questions as $index => $questionitem) {
             $itemdata = is_object($questionitem) ? (array) $questionitem : $questionitem;
 
@@ -148,8 +154,8 @@ class create_questions_action {
                 $context
             );
 
-            // Add question to quiz.
-            \quiz_add_quiz_question($questionid, $quiz);
+            // Add question to quiz (slot maxmark: 100 / question count).
+            \quiz_add_quiz_question($questionid, $quiz, 0, $this->questiondefaultmark);
 
             $createdids[] = $questionid;
         }
@@ -364,7 +370,7 @@ class create_questions_action {
             'text' => '',
             'format' => FORMAT_HTML,
         ];
-        $form->defaultmark = self::DEFAULT_MARK;
+        $form->defaultmark = $this->questiondefaultmark;
         $form->penalty = self::DEFAULT_PENALTY;
         $form->status = question_version_status::QUESTION_STATUS_READY;
 
@@ -615,7 +621,7 @@ class create_questions_action {
             'text' => '',
             'format' => FORMAT_HTML,
         ];
-        $form->defaultmark = self::DEFAULT_MARK;
+        $form->defaultmark = $this->questiondefaultmark;
         $form->penalty = self::DEFAULT_PENALTY;
         $form->status = question_version_status::QUESTION_STATUS_READY;
 
@@ -731,7 +737,7 @@ class create_questions_action {
             'text' => '',
             'format' => FORMAT_HTML,
         ];
-        $form->defaultmark = self::DEFAULT_MARK;
+        $form->defaultmark = $this->questiondefaultmark;
         $form->penalty = self::DEFAULT_PENALTY;
         $form->status = question_version_status::QUESTION_STATUS_READY;
 
@@ -854,7 +860,7 @@ class create_questions_action {
             'text' => '',
             'format' => FORMAT_HTML,
         ];
-        $form->defaultmark = self::DEFAULT_MARK;
+        $form->defaultmark = $this->questiondefaultmark;
         $form->penalty = self::DEFAULT_PENALTY;
         $form->status = question_version_status::QUESTION_STATUS_READY;
 
@@ -1023,7 +1029,7 @@ class create_questions_action {
             'text' => '',
             'format' => FORMAT_HTML,
         ];
-        $form->defaultmark = self::DEFAULT_MARK;
+        $form->defaultmark = $this->questiondefaultmark;
         $form->penalty = self::DEFAULT_PENALTY;
         $form->status = question_version_status::QUESTION_STATUS_READY;
 
