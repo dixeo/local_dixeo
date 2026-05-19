@@ -135,6 +135,8 @@ $string['error:upstream_ai'] = 'KI-Servicefehler. Bitte versuchen Sie es später
 $string['error:job_failed'] = 'Auftragsverarbeitung fehlgeschlagen: {$a}';
 $string['error:connection'] = 'Verbindung zur Dixeo-API fehlgeschlagen. Bitte überprüfen Sie Ihre Netzwerkverbindung.';
 $string['error:timeout'] = 'Zeitüberschreitung. Sie können den Auftragsstatus später prüfen.';
+$string['error:notslideshow'] = 'Das Kursmodul ist keine Slideshow-Aktivität.';
+$string['error:slidenotinslideshow'] = 'Die angeforderte Folie gehört nicht zu dieser Slideshow.';
 
 // Overview page.
 $string['overview'] = 'Dixeo-Übersicht';
@@ -178,3 +180,31 @@ $string['filesync_progress'] = '{$a}% abgeschlossen';
 $string['last_sync'] = 'Letzte Synchronisation';
 $string['filesync_error_retry'] = 'Wird automatisch erneut versucht';
 $string['files'] = 'Dateien';
+
+// Designer structure validation (finalize / course creation).
+$string['designerstructurevalidate_failed'] = 'Dieser Kurs kann erst erstellt werden, wenn diese Probleme behoben sind:
+
+{$a->details}';
+$string['designerstructurevalidate_invalid_root'] = 'Die Kursstrukturdaten sind ungültig.';
+$string['designerstructurevalidate_sections_not_array'] = 'Die Abschnittsliste der Kursstruktur ist ungültig.';
+$string['designerstructurevalidate_section_invalid'] = 'Abschnitt {$a} in der Struktur ist ungültig.';
+$string['designerstructurevalidate_modules_not_array'] = 'Die Modulliste in Abschnitt {$a} ist ungültig.';
+$string['designerstructurevalidate_module_invalid'] = 'Das Modul an Position {$a->module} in Abschnitt {$a->section} ist ungültig.';
+$string['designerstructurevalidate_aggregate_prefix_section'] = 'Abschnitt {$a->section}, Aktivität {$a->module}:';
+$string['designerstructurevalidate_aggregate_prefix_section_only'] = 'Abschnitt {$a->section}:';
+$string['designerstructurevalidate_course_title_required'] = 'Der Kurstitel ist ein Pflichtfeld.';
+$string['designerstructurevalidate_course_title_too_long'] = 'Der Kurstitel darf höchstens {$a->max} Zeichen lang sein.';
+$string['designerstructurevalidate_course_summary_too_long'] = 'Die Kurszusammenfassung ist zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_section_title_too_long'] = 'Der Abschnittstitel ist zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_section_summary_too_long'] = 'Die Abschnittszusammenfassung ist zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_module_type_required'] = 'Der Aktivitätstyp ist ein Pflichtfeld.';
+$string['designerstructurevalidate_module_type_not_usable'] = 'Der Typ „{$a->type}" kann auf dieser Website nicht verwendet werden (fehlendes Plugin oder erforderliche Inhaltsbibliothek).';
+$string['designerstructurevalidate_module_title_required'] = 'Der Aktivitätstitel ist ein Pflichtfeld.';
+$string['designerstructurevalidate_module_title_placeholder'] = 'Ersetzen Sie den Standardtitel „Neue Seite" durch einen echten Aktivitätsnamen.';
+$string['designerstructurevalidate_module_title_too_long'] = 'Der Aktivitätstitel ist zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_module_summary_placeholder'] = 'Ersetzen Sie die Standardzusammenfassung durch eine echte Beschreibung dessen, was diese Aktivität abdeckt.';
+$string['designerstructurevalidate_module_summary_too_long'] = 'Die Aktivitätszusammenfassung ist zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_module_instructions_required'] = 'Anweisungen für die KI sind erforderlich (mindestens {$a->min} Zeichen).';
+$string['designerstructurevalidate_module_instructions_too_long'] = 'Die Anweisungen sind zu lang (maximal {$a->max} Zeichen).';
+$string['designerstructurevalidate_instructions_api_min'] = 'Anweisungen müssen mindestens {$a->min} Zeichen lang sein.';
+$string['designerstructurevalidate_fill_instructions_too_long'] = 'Die an die KI gesendeten Anweisungen sind zu lang (maximal {$a->max} Zeichen).';

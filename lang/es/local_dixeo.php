@@ -135,6 +135,8 @@ $string['error:upstream_ai'] = 'Error del servicio de IA. Inténtelo de nuevo m�
 $string['error:job_failed'] = 'Error al procesar el trabajo: {$a}';
 $string['error:connection'] = 'Error de conexión con la API Dixeo. Compruebe su conexión de red.';
 $string['error:timeout'] = 'La operación ha caducado. Puede comprobar el estado del trabajo más tarde.';
+$string['error:notslideshow'] = 'El módulo del curso no es una actividad de presentación.';
+$string['error:slidenotinslideshow'] = 'La diapositiva solicitada no pertenece a esta presentación.';
 
 // Overview page.
 $string['overview'] = 'Resumen de Dixeo';
@@ -178,3 +180,31 @@ $string['filesync_progress'] = '{$a}% completado';
 $string['last_sync'] = 'Última sincronización';
 $string['filesync_error_retry'] = 'Se reintentará automáticamente';
 $string['files'] = 'archivos';
+
+// Designer structure validation (finalize / course creation).
+$string['designerstructurevalidate_failed'] = 'Este curso no puede crearse hasta que se resuelvan estos problemas:
+
+{$a->details}';
+$string['designerstructurevalidate_invalid_root'] = 'Los datos de la estructura del curso no son válidos.';
+$string['designerstructurevalidate_sections_not_array'] = 'La lista de secciones de la estructura del curso no es válida.';
+$string['designerstructurevalidate_section_invalid'] = 'La sección {$a} de la estructura no es válida.';
+$string['designerstructurevalidate_modules_not_array'] = 'La lista de módulos de la sección {$a} no es válida.';
+$string['designerstructurevalidate_module_invalid'] = 'El módulo en la posición {$a->module} de la sección {$a->section} no es válido.';
+$string['designerstructurevalidate_aggregate_prefix_section'] = 'Sección {$a->section}, actividad {$a->module}:';
+$string['designerstructurevalidate_aggregate_prefix_section_only'] = 'Sección {$a->section}:';
+$string['designerstructurevalidate_course_title_required'] = 'El título del curso es un campo obligatorio.';
+$string['designerstructurevalidate_course_title_too_long'] = 'El título del curso debe tener como máximo {$a->max} caracteres.';
+$string['designerstructurevalidate_course_summary_too_long'] = 'El resumen del curso es demasiado largo (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_section_title_too_long'] = 'El título de la sección es demasiado largo (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_section_summary_too_long'] = 'El resumen de la sección es demasiado largo (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_module_type_required'] = 'El tipo de actividad es un campo obligatorio.';
+$string['designerstructurevalidate_module_type_not_usable'] = 'El tipo «{$a->type}» no puede usarse en este sitio (falta el complemento o la biblioteca de contenido requerida).';
+$string['designerstructurevalidate_module_title_required'] = 'El título de la actividad es un campo obligatorio.';
+$string['designerstructurevalidate_module_title_placeholder'] = 'Sustituya el título predeterminado «Nueva página» por un nombre de actividad real.';
+$string['designerstructurevalidate_module_title_too_long'] = 'El título de la actividad es demasiado largo (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_module_summary_placeholder'] = 'Sustituya el resumen predeterminado por una descripción real de lo que cubre esta actividad.';
+$string['designerstructurevalidate_module_summary_too_long'] = 'El resumen de la actividad es demasiado largo (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_module_instructions_required'] = 'Las instrucciones para la IA son obligatorias (al menos {$a->min} caracteres).';
+$string['designerstructurevalidate_module_instructions_too_long'] = 'Las instrucciones son demasiado largas (máximo {$a->max} caracteres).';
+$string['designerstructurevalidate_instructions_api_min'] = 'Las instrucciones deben tener al menos {$a->min} caracteres.';
+$string['designerstructurevalidate_fill_instructions_too_long'] = 'Las instrucciones enviadas a la IA son demasiado largas (máximo {$a->max} caracteres).';
