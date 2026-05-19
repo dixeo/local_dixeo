@@ -84,10 +84,11 @@ class create_h5p_module_action {
             );
         }
 
-        $fields = $resolver->resolve_fields($action['fields'] ?? []);
+        // Fill jobs often omit intro in data; resolve missing paths as null (empty intro).
+        $fields = $resolver->resolve_fields($action['fields'] ?? [], true);
 
         $name = isset($fields['name']) ? (string) $fields['name'] : '';
-        $intro = isset($fields['intro']) ? (string) $fields['intro'] : '';
+        $intro = isset($fields['intro']) && $fields['intro'] !== null ? (string) $fields['intro'] : '';
         $language = isset($fields['language']) ? (string) $fields['language'] : '';
         $content = $fields['content'] ?? null;
         if (!is_array($content)) {

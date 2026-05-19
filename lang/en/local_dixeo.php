@@ -182,3 +182,31 @@ $string['filesync_progress'] = '{$a}% complete';
 $string['last_sync'] = 'Last sync';
 $string['filesync_error_retry'] = 'Will retry automatically';
 $string['files'] = 'files';
+
+// Designer structure validation (finalize / course creation).
+$string['designerstructurevalidate_failed'] = 'This course cannot be created until these issues are resolved:
+
+{$a->details}';
+$string['designerstructurevalidate_invalid_root'] = 'The course structure data is invalid.';
+$string['designerstructurevalidate_sections_not_array'] = 'The course structure sections list is invalid.';
+$string['designerstructurevalidate_section_invalid'] = 'Section {$a} in the structure is invalid.';
+$string['designerstructurevalidate_modules_not_array'] = 'The modules list in section {$a} is invalid.';
+$string['designerstructurevalidate_module_invalid'] = 'The module at position {$a->module} in section {$a->section} is invalid.';
+$string['designerstructurevalidate_aggregate_prefix_section'] = 'Section {$a->section}, activity {$a->module}:';
+$string['designerstructurevalidate_aggregate_prefix_section_only'] = 'Section {$a->section}:';
+$string['designerstructurevalidate_course_title_required'] = 'The course title is a required field.';
+$string['designerstructurevalidate_course_title_too_long'] = 'The course title must be at most {$a->max} characters.';
+$string['designerstructurevalidate_course_summary_too_long'] = 'The course summary is too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_section_title_too_long'] = 'The section title is too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_section_summary_too_long'] = 'The section summary is too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_module_type_required'] = 'The activity type is a required field.';
+$string['designerstructurevalidate_module_type_not_usable'] = 'The type "{$a->type}" cannot be used on this site (missing plugin or required content library).';
+$string['designerstructurevalidate_module_title_required'] = 'The activity title is a required field.';
+$string['designerstructurevalidate_module_title_placeholder'] = 'Replace the default title "New page" with a real activity name.';
+$string['designerstructurevalidate_module_title_too_long'] = 'The activity title is too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_module_summary_placeholder'] = 'Replace the default summary with a real description of what this activity covers.';
+$string['designerstructurevalidate_module_summary_too_long'] = 'The activity summary is too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_module_instructions_required'] = 'Instructions for the AI are required (at least {$a->min} characters).';
+$string['designerstructurevalidate_module_instructions_too_long'] = 'The instructions are too long (maximum {$a->max} characters).';
+$string['designerstructurevalidate_instructions_api_min'] = 'Instructions must be at least {$a->min} characters.';
+$string['designerstructurevalidate_fill_instructions_too_long'] = 'The instructions sent to the AI are too long (maximum {$a->max} characters).';
