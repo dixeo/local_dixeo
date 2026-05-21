@@ -108,7 +108,7 @@ class tutor_service {
             foreach ($rawmessages as $msg) {
                 $messages[] = [
                     'id' => $msg['id'] ?? '',
-                    'role' => $msg['role'] ?? 'user',
+                    'role' => strtolower((string) ($msg['role'] ?? 'user')),
                     'content' => $msg['content'] ?? '',
                     'time' => isset($msg['createdAt']) ? self::parse_iso_timestamp($msg['createdAt']) : 0,
                 ];
@@ -138,6 +138,10 @@ class tutor_service {
      */
     private static function parse_iso_timestamp(string|int $timestamp): int {
         if (is_int($timestamp)) {
+            // Values above ~year 2286 in seconds are likely milliseconds.
+            if ($timestamp > 9999999999) {
+                return (int) floor($timestamp / 1000);
+            }
             return $timestamp;
         }
 
