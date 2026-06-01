@@ -38,8 +38,8 @@ class course_template_service {
     /** @var string Base API endpoint for course templates. */
     private const ENDPOINT = '/v1/courses/templates';
 
-    /** @var string Cache key for the list of template choices (id => label). */
-    private const CACHE_KEY_CHOICES = 'choices';
+    /** @var string Cache key for normalised template records (id, name, description). */
+    private const CACHE_KEY_TEMPLATES = 'templates';
 
     /** @var client The API client. */
     protected client $client;
@@ -64,26 +64,26 @@ class course_template_service {
     }
 
     /**
-     * Returns course template choices for UI (id => label), cached.
+     * Returns normalised course templates for UI (id, name, description), cached.
      *
-     * @return array Map of template id => display label.
+     * @return array List of template records with keys id, name, description.
      */
-    public function get_cached_choices(): array {
+    public function get_cached_templates(): array {
         if (!$this->is_configured()) {
             return [];
         }
 
         $cache = cache::make('local_dixeo', 'coursetemplates');
-        $cached = $cache->get(self::CACHE_KEY_CHOICES);
+        $cached = $cache->get(self::CACHE_KEY_TEMPLATES);
         if ($cached !== false) {
             return $cached;
         }
 
         try {
             $templates = $this->list_templates();
-            $choices = $this->normalise_templates_to_choices($templates);
-            $cache->set(self::CACHE_KEY_CHOICES, $choices);
-            return $choices;
+            $normalised = $this->normalise_templates($templates);
+            $cache->set(self::CACHE_KEY_TEMPLATES, $normalised);
+            return $normalised;
         } catch (api_exception $e) {
             debugging('Unable to load course templates from Dixeo API: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return [];
@@ -91,23 +91,41 @@ class course_template_service {
     }
 
     /**
-     * Normalises template arrays into id => label map.
+     * Returns course template choices for UI (id => label), cached.
      *
-     * @param array $templates List of template arrays.
-     * @return array Map of template id (string) => name (string).
+     * @return array Map of template id => display label.
      */
-    private function normalise_templates_to_choices(array $templates): array {
+    public function get_cached_choices(): array {
+        $choices = [];
+        foreach ($this->get_cached_templates() as $template) {
+            $choices[$template['id']] = $template['name'];
+        }
+        return $choices;
+    }
+
+    /**
+     * Normalises template arrays into UI records.
+     *
+     * @param array $templates List of template arrays from the API.
+     * @return array List of records with id, name, and description.
+     */
+    private function normalise_templates(array $templates): array {
         $result = [];
         foreach ($templates as $template) {
             if (!is_array($template)) {
                 continue;
             }
-            $value = (string) ($template['id'] ?? '');
-            $label = trim((string) ($template['name'] ?? ''));
-            if ($value === '' || $label === '') {
+            $id = (string) ($template['id'] ?? '');
+            $name = trim((string) ($template['name'] ?? ''));
+            if ($id === '' || $name === '') {
                 continue;
             }
-            $result[$value] = $label;
+            $description = trim((string) ($template['description'] ?? ''));
+            $result[] = [
+                'id' => $id,
+                'name' => $name,
+                'description' => $description !== '' ? s($description) : '',
+            ];
         }
         return $result;
     }

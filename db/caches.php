@@ -28,7 +28,7 @@ $definitions = [
     'coursetemplates' => [
         'mode' => \cache_store::MODE_APPLICATION,
         'simplekeys' => true,
-        'simpledata' => true,
+        'simpledata' => false,
         'ttl' => 60 * 60 * 24, // 1 day
     ],
     'moduletypes' => [
