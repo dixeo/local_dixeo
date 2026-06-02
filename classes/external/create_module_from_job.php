@@ -20,6 +20,7 @@ use local_dixeo\external\traits\capability_check;
 use local_dixeo\dsl\interpreter;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\service\course_completion_sync_service;
+use local_dixeo\external\service_factory;
 
 /**
  * External function to create a module from a completed job.
@@ -136,7 +137,8 @@ class create_module_from_job extends external_api {
             $completionsync->sync_activity_criteria_from_modules((int) $params['courseid']);
 
             // Enable file sync on successful AI module creation.
-            self::enable_file_sync_if_needed($params['courseid']);
+            service_factory::get_file_sync_service()
+                ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
 
             return response_factory::module_creation_result(true, $cmid);
 
@@ -178,30 +180,4 @@ class create_module_from_job extends external_api {
         ]);
     }
 
-    /**
-     * Enable file sync for a course if not already enabled.
-     *
-     * Called after successful AI module creation to ensure the course
-     * files are synced to Dixeo.
-     *
-     * @param int $courseid The course ID.
-     * @return void
-     */
-    private static function enable_file_sync_if_needed(int $courseid): void {
-        global $USER;
-
-        try {
-            $service = service_factory::get_file_sync_service();
-
-            // Enable sync if not already enabled - this is idempotent.
-            $service->enable_sync($courseid, $USER->id);
-
-            // Queue a sync to pick up any new files.
-            $service->queue_sync($courseid);
-
-        } catch (\Throwable $e) {
-            // Don't fail the module creation if sync setup fails.
-            debugging('Failed to enable file sync after module creation: ' . $e->getMessage(), DEBUG_DEVELOPER);
-        }
-    }
 }

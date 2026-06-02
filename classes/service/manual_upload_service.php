@@ -28,6 +28,7 @@ use coding_exception;
 use context_course;
 use context_user;
 use local_dixeo\dsl\interpreter;
+use local_dixeo\external\service_factory;
 use moodle_exception;
 
 defined('MOODLE_INTERNAL') || die();
@@ -99,7 +100,16 @@ class manual_upload_service {
         $resolvedbeforemod = !empty($context['beforemod']) ? (int) $context['beforemod'] : null;
 
         if ($modtype === 'scorm') {
-            return $this->scormservice->create_from_draft(
+            $result = $this->scormservice->create_from_draft(
+                $courseid,
+                $sectionid,
+                $resolvedsectionnum,
+                $resolvedbeforemod,
+                $name,
+                $draftitemid
+            );
+        } else {
+            $result = $this->resourceservice->create_from_draft(
                 $courseid,
                 $sectionid,
                 $resolvedsectionnum,
@@ -109,14 +119,10 @@ class manual_upload_service {
             );
         }
 
-        return $this->resourceservice->create_from_draft(
-            $courseid,
-            $sectionid,
-            $resolvedsectionnum,
-            $resolvedbeforemod,
-            $name,
-            $draftitemid
-        );
+        service_factory::get_file_sync_service()
+            ->enable_and_queue_sync_after_module_creation($courseid);
+
+        return $result;
     }
 
     /**

@@ -97,6 +97,35 @@ class file_sync_service {
     }
 
     /**
+     * Enable file sync for a course and queue a debounced sync after module creation.
+     *
+     * Used after AI-generated and manual-upload activities so new resources/SCORM
+     * are picked up for the tutor and content generation. Failures are logged only.
+     *
+     * @param int $courseid The course ID.
+     * @param int|null $userid User enabling sync; defaults to current user.
+     * @return void
+     */
+    public function enable_and_queue_sync_after_module_creation(int $courseid, ?int $userid = null): void {
+        global $USER;
+
+        try {
+            $userid = $userid ?? (int) ($USER->id ?? 0);
+            if ($userid <= 0) {
+                return;
+            }
+
+            $this->enable_sync($courseid, $userid);
+            $this->queue_sync($courseid);
+        } catch (\Throwable $e) {
+            debugging(
+                'Failed to enable file sync after module creation: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
+        }
+    }
+
+    /**
      * Disable file sync for a course.
      *
      * Optionally removes all files from Dixeo.
