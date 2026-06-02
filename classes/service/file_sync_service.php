@@ -30,6 +30,15 @@ class file_sync_service {
     /** @var array Supported file extensions for sync. */
     private const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'txt', 'pptx'];
 
+    /**
+     * File extensions indexed for tutor and AI content generation (RAG).
+     *
+     * @return string[] Lowercase extensions without leading dot.
+     */
+    public static function get_rag_indexed_extensions(): array {
+        return self::SUPPORTED_EXTENSIONS;
+    }
+
     /** @var array Module types that contain syncable files. */
     private const FILE_MODULE_TYPES = ['resource', 'folder'];
 

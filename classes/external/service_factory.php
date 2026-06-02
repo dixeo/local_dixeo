@@ -20,6 +20,7 @@ use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
 use local_dixeo\service\module_types_service;
 use local_dixeo\service\file_sync_service;
+use local_dixeo\service\manual_upload_service;
 use local_dixeo\service\tutor_service;
 
 /**
@@ -50,6 +51,9 @@ class service_factory {
 
     /** @var file_sync_service|null Mock file sync service for unit testing. */
     private static ?file_sync_service $testfilesyncservice = null;
+
+    /** @var manual_upload_service|null Mock manual upload service for unit testing. */
+    private static ?manual_upload_service $testmanualuploadservice = null;
 
     /** @var client|null Mock client instance for unit testing. */
     private static ?client $testclient = null;
@@ -158,6 +162,19 @@ class service_factory {
     }
 
     /**
+     * Get a manual_upload_service instance.
+     *
+     * @return manual_upload_service The service instance.
+     */
+    public static function get_manual_upload_service(): manual_upload_service {
+        if (self::$testmanualuploadservice !== null) {
+            return self::$testmanualuploadservice;
+        }
+
+        return new manual_upload_service();
+    }
+
+    /**
      * Get a client instance.
      *
      * Returns a fresh instance unless a test instance has been set.
@@ -249,6 +266,15 @@ class service_factory {
     }
 
     /**
+     * Set a test manual upload service instance.
+     *
+     * @param manual_upload_service|null $service The test service, or null to clear.
+     */
+    public static function set_test_manual_upload_service(?manual_upload_service $service): void {
+        self::$testmanualuploadservice = $service;
+    }
+
+    /**
      * Set a test client instance.
      *
      * Use this in unit tests to inject mock clients.
@@ -272,6 +298,7 @@ class service_factory {
         self::$testcoursetemplateservice = null;
         self::$testmoduletypesservice = null;
         self::$testfilesyncservice = null;
+        self::$testmanualuploadservice = null;
         self::$testclient = null;
     }
 }
