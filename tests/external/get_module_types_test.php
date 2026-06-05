@@ -50,12 +50,20 @@ final class get_module_types_test extends \advanced_testcase {
         parent::tearDown();
     }
 
+    /**
+     * Create a course and return its id for capability-checked external calls.
+     */
+    private function create_test_course(): int {
+        $course = $this->getDataGenerator()->create_course();
+        return (int) $course->id;
+    }
+
     public function test_classic_type_label_is_replaced_by_moodle_modulename_string(): void {
         $this->mock_catalogue([
             ['type' => 'page', 'label' => 'Page (API)', 'description' => '', 'category' => 'content', 'component' => 'mod_page'],
         ]);
 
-        $response = get_module_types::execute(0);
+        $response = get_module_types::execute($this->create_test_course());
         $page = $this->find_type($response['types'], 'page');
 
         $this->assertSame(get_string('modulename', 'mod_page'), $page['label']);
@@ -68,12 +76,31 @@ final class get_module_types_test extends \advanced_testcase {
             ['type' => 'h5p_crossword', 'label' => 'Crossword', 'description' => '', 'category' => 'interactive', 'component' => 'mod_h5pactivity'],
         ]);
 
-        $response = get_module_types::execute(0);
+        $response = get_module_types::execute($this->create_test_course());
         $labels = array_column($response['types'], 'label', 'type');
 
         $this->assertSame('Quiz', $labels['h5p_quiz']);
         $this->assertSame('Flashcards', $labels['h5p_flashcards']);
         $this->assertSame('Crossword', $labels['h5p_crossword']);
+    }
+
+    public function test_courseid_zero_uses_designer_capability_when_block_installed(): void {
+        $this->mock_catalogue([
+            ['type' => 'page', 'label' => 'Page (API)', 'description' => '', 'category' => 'content', 'component' => 'mod_page'],
+        ]);
+
+        $response = get_module_types::execute(0);
+
+        $this->assertTrue($response['success']);
+        $this->find_type($response['types'], 'page');
+    }
+
+    public function test_courseid_zero_rejects_user_without_designer_capability(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $this->expectException(\required_capability_exception::class);
+        get_module_types::execute(0);
     }
 
     /**

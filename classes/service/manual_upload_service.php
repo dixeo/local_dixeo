@@ -126,13 +126,14 @@ class manual_upload_service {
     }
 
     /**
-     * Validate course login and manageactivities capability.
+     * Validate course login, generate and manageactivities capabilities.
      *
      * @param int $courseid Course ID.
      */
     private function validate_course_access(int $courseid): void {
         require_course_login($courseid);
         $context = context_course::instance($courseid);
+        require_capability('local/dixeo:generate', $context);
         require_capability('moodle/course:manageactivities', $context);
     }
 

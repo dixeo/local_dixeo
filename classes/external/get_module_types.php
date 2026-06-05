@@ -17,6 +17,7 @@ use core_external\external_multiple_structure;
 use core_external\external_value;
 use local_dixeo\external\traits\capability_check;
 use local_dixeo\api\exception\api_exception;
+use local_dixeo\service\plugin_installation_service;
 
 /**
  * External function to get available module types.
@@ -31,8 +32,54 @@ class get_module_types extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'courseid' => new external_value(PARAM_INT, 'Course id for language/context (0 = system context only)', VALUE_DEFAULT, 0),
+            'courseid' => new external_value(
+                PARAM_INT,
+                'Course id for capability/language (0 = course designer system context)',
+                VALUE_DEFAULT,
+                0
+            ),
         ]);
+    }
+
+    /**
+     * Validate access for module type listing.
+     *
+     * @param int $courseid Course id, or 0 for course designer (system context).
+     */
+    private static function validate_access_for_module_types(int $courseid): void {
+        if ($courseid < 0) {
+            throw new \invalid_parameter_exception('Invalid course id');
+        }
+
+        if ($courseid > 0) {
+            self::validate_course_for_module_types($courseid);
+            return;
+        }
+
+        self::validate_designer_system_access();
+    }
+
+    /**
+     * Require course designer access at system context (courseid = 0 callers only).
+     *
+     * Rejects the request when the designer block is unavailable or the capability
+     * is not defined, so local_dixeo does not throw on missing block capabilities.
+     */
+    private static function validate_designer_system_access(): void {
+        global $PAGE;
+
+        if (!plugin_installation_service::is_component_installed('block_dixeo_designer')) {
+            throw new \invalid_parameter_exception('Invalid course id');
+        }
+
+        if (!get_capability_info('block/dixeo_designer:create')) {
+            throw new \invalid_parameter_exception('Invalid course id');
+        }
+
+        $context = \context_system::instance();
+        self::validate_context($context);
+        require_capability('block/dixeo_designer:create', $context);
+        $PAGE->set_context($context);
     }
 
     /**
@@ -43,45 +90,46 @@ class get_module_types extends external_api {
     private static function validate_course_for_module_types(int $courseid): void {
         global $PAGE;
         require_course_login($courseid);
-        $context = \context_course::instance($courseid);
-        $PAGE->set_context($context);
-        require_capability('local/dixeo:generate', $context);
-        require_capability('moodle/course:manageactivities', $context);
+        self::validate_course_capability($courseid, true);
+        $PAGE->set_context(\context_course::instance($courseid));
     }
 
     /**
      * Get available module types.
      *
-     * @param int $courseid Course id for UI language alignment with queue (0 = legacy system context).
+     * @param int $courseid Course id for UI language alignment and capability check (0 = designer).
      * @return array The list of available module types.
      */
     public static function execute(int $courseid = 0): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'courseid' => $courseid,
         ]);
-        $courseid = (int) $params['courseid'];
 
-        if ($courseid > 0) {
-            self::validate_course_for_module_types($courseid);
-        } else {
-            self::validate_system_capability();
-        }
+        self::validate_access_for_module_types((int) $params['courseid']);
 
         try {
-            $types = service_factory::get_module_types_service()->get_module_types_resolved();
-
-            // Non-admins only see installed module types (no lock icon / "plugin required" options).
-            if (!is_siteadmin()) {
-                $types = array_values(array_filter($types, function($t) {
-                    return !empty($t['installed']);
-                }));
-            }
-
-            return response_factory::success(['types' => $types]);
-
+            return self::resolve_module_types_response();
         } catch (api_exception $e) {
             return response_factory::from_api_exception($e, ['types' => []]);
         }
+    }
+
+    /**
+     * Build the module types success payload.
+     *
+     * @return array
+     */
+    private static function resolve_module_types_response(): array {
+        $types = service_factory::get_module_types_service()->get_module_types_resolved();
+
+        // Non-admins only see installed module types (no lock icon / "plugin required" options).
+        if (!is_siteadmin()) {
+            $types = array_values(array_filter($types, function($t) {
+                return !empty($t['installed']);
+            }));
+        }
+
+        return response_factory::success(['types' => $types]);
     }
 
     /**

@@ -31,6 +31,7 @@ class cancel_job extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'jobid' => new external_value(PARAM_RAW, 'The job UUID to cancel'),
+            'courseid' => new external_value(PARAM_INT, 'Course ID the job belongs to'),
         ]);
     }
 
@@ -38,14 +39,16 @@ class cancel_job extends external_api {
      * Cancel a running job.
      *
      * @param string $jobid The job UUID.
+     * @param int $courseid Course ID the job belongs to.
      * @return array The cancellation result.
      */
-    public static function execute(string $jobid): array {
+    public static function execute(string $jobid, int $courseid): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'jobid' => $jobid,
+            'courseid' => $courseid,
         ]);
 
-        self::validate_system_capability();
+        self::validate_course_capability($params['courseid']);
 
         try {
             $service = service_factory::get_job_service();
