@@ -39,6 +39,34 @@ class file_sync_service {
         return self::SUPPORTED_EXTENSIONS;
     }
 
+    /**
+     * Whether a filename uses a RAG-indexed extension.
+     *
+     * @param string $filename Original upload filename.
+     * @return bool
+     */
+    public static function is_rag_indexed_filename(string $filename): bool {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if ($extension === '') {
+            return false;
+        }
+        return in_array($extension, self::get_rag_indexed_extensions(), true);
+    }
+
+    /**
+     * Human-readable RAG extension list for UI and error messages.
+     *
+     * @return string e.g. "PDF, DOCX, TXT, and PPTX"
+     */
+    public static function format_rag_indexed_extensions_label(): string {
+        $labels = array_map('strtoupper', self::get_rag_indexed_extensions());
+        if (count($labels) <= 1) {
+            return implode('', $labels);
+        }
+        $last = array_pop($labels);
+        return implode(', ', $labels) . ', and ' . $last;
+    }
+
     /** @var array Module types that contain syncable files. */
     private const FILE_MODULE_TYPES = ['resource', 'folder'];
 
@@ -120,6 +148,35 @@ class file_sync_service {
         } catch (\Throwable $e) {
             debugging(
                 'Failed to enable file sync after module creation: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
+        }
+    }
+
+    /**
+     * Enable file sync for a course and run sync immediately after module creation.
+     *
+     * Used after manual uploads so new resources/SCORM are indexed without debounce delay.
+     * Failures are logged only.
+     *
+     * @param int $courseid The course ID.
+     * @param int|null $userid User enabling sync; defaults to current user.
+     * @return void
+     */
+    public function enable_and_trigger_sync_after_module_creation(int $courseid, ?int $userid = null): void {
+        global $USER;
+
+        try {
+            $userid = $userid ?? (int) ($USER->id ?? 0);
+            if ($userid <= 0) {
+                return;
+            }
+
+            $this->enable_sync($courseid, $userid);
+            $this->trigger_sync($courseid);
+        } catch (\Throwable $e) {
+            debugging(
+                'Failed to trigger file sync after module creation: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
             );
         }

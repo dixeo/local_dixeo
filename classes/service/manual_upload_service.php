@@ -50,16 +50,22 @@ class manual_upload_service {
     /** @var resource_upload_service */
     private resource_upload_service $resourceservice;
 
+    /** @var scorm_vector_extract_service */
+    private scorm_vector_extract_service $scormextractservice;
+
     /**
      * @param scorm_creation_service|null $scormservice Optional SCORM service.
      * @param resource_upload_service|null $resourceservice Optional resource service.
+     * @param scorm_vector_extract_service|null $scormextractservice Optional SCORM extract service.
      */
     public function __construct(
         ?scorm_creation_service $scormservice = null,
-        ?resource_upload_service $resourceservice = null
+        ?resource_upload_service $resourceservice = null,
+        ?scorm_vector_extract_service $scormextractservice = null
     ) {
         $this->scormservice = $scormservice ?? new scorm_creation_service();
         $this->resourceservice = $resourceservice ?? new resource_upload_service();
+        $this->scormextractservice = $scormextractservice ?? new scorm_vector_extract_service();
     }
 
     /**
@@ -69,9 +75,8 @@ class manual_upload_service {
      * @param int $courseid Course ID.
      * @param int $sectionnum Section number.
      * @param int|null $beforemod Optional cmid to insert before.
-     * @param string $name Activity name.
      * @param array $uploadedfile $_FILES entry shape.
-     * @return array{cmid: int, id: int}
+     * @return array{cmid: int, id: int, name: string}
      * @throws coding_exception|moodle_exception
      */
     public function create_from_upload(
@@ -79,19 +84,15 @@ class manual_upload_service {
         int $courseid,
         int $sectionnum,
         ?int $beforemod,
-        string $name,
         array $uploadedfile
     ): array {
         if (!in_array($modtype, self::SUPPORTED_MODTYPES, true)) {
             throw new coding_exception('Unsupported manual upload modtype: ' . $modtype);
         }
 
-        $name = trim($name);
-        if ($name === '') {
-            throw new moodle_exception('manual_upload_error_missing', 'block_dixeo_modulegen');
-        }
-
         $this->validate_course_access($courseid);
+        $this->validate_uploaded_file($modtype, $uploadedfile);
+        $name = $this->derive_activity_name($modtype, $uploadedfile);
         $draftitemid = $this->stage_upload_to_draft($courseid, $uploadedfile);
 
         $context = interpreter::build_context($courseid, $sectionnum, $modtype, $beforemod ?: null);
@@ -120,9 +121,93 @@ class manual_upload_service {
         }
 
         service_factory::get_file_sync_service()
-            ->enable_and_queue_sync_after_module_creation($courseid);
+            ->enable_and_trigger_sync_after_module_creation($courseid);
+
+        $result['name'] = $name;
 
         return $result;
+    }
+
+    /**
+     * Derive the Moodle activity name from the uploaded file.
+     *
+     * SCORM: manifest title with filename fallback. Resource: filename without extension.
+     *
+     * @param string $modtype Module type: scorm or resource.
+     * @param array $uploadedfile $_FILES entry shape.
+     * @return string
+     * @throws moodle_exception
+     */
+    private function derive_activity_name(string $modtype, array $uploadedfile): string {
+        $filename = clean_param($uploadedfile['name'] ?? '', PARAM_FILE);
+        if ($filename === '') {
+            throw new moodle_exception('manual_upload_error_missing', 'block_dixeo_modulegen');
+        }
+
+        if ($modtype === 'scorm') {
+            $name = $this->scormextractservice->get_package_title_from_zip_path(
+                $uploadedfile['tmp_name'],
+                $filename
+            );
+        } else {
+            $name = $this->activity_name_from_filename($filename);
+        }
+
+        $name = trim($name);
+        if ($name === '') {
+            throw new moodle_exception('manual_upload_error_missing', 'block_dixeo_modulegen');
+        }
+
+        return $name;
+    }
+
+    /**
+     * @param string $filename Original upload filename.
+     * @return string Basename without extension.
+     */
+    private function activity_name_from_filename(string $filename): string {
+        $filename = clean_param($filename, PARAM_FILE);
+        $base = pathinfo($filename, PATHINFO_FILENAME);
+        return ($base !== '') ? $base : $filename;
+    }
+
+    /**
+     * Validate uploaded file type before staging to draft.
+     *
+     * @param string $modtype Module type: scorm or resource.
+     * @param array $uploadedfile $_FILES entry shape.
+     * @throws moodle_exception
+     */
+    private function validate_uploaded_file(string $modtype, array $uploadedfile): void {
+        if (empty($uploadedfile['tmp_name']) || !is_uploaded_file($uploadedfile['tmp_name'])) {
+            throw new moodle_exception('manual_upload_error_missing', 'block_dixeo_modulegen');
+        }
+
+        $filename = clean_param($uploadedfile['name'] ?? '', PARAM_FILE);
+        if ($filename === '') {
+            throw new moodle_exception('manual_upload_error_missing', 'block_dixeo_modulegen');
+        }
+
+        if ($modtype === 'scorm') {
+            if (strtolower(pathinfo($filename, PATHINFO_EXTENSION)) !== 'zip') {
+                throw new moodle_exception('manual_upload_error_invalid_scorm', 'block_dixeo_modulegen');
+            }
+            if (!$this->scormextractservice->is_storyline_extractable($uploadedfile['tmp_name'])) {
+                throw new moodle_exception('manual_upload_error_invalid_scorm', 'block_dixeo_modulegen');
+            }
+            return;
+        }
+
+        if ($modtype === 'resource') {
+            if (!file_sync_service::is_rag_indexed_filename($filename)) {
+                throw new moodle_exception(
+                    'manual_upload_error_invalid_resource',
+                    'block_dixeo_modulegen',
+                    '',
+                    (object) ['ragformats' => file_sync_service::format_rag_indexed_extensions_label()]
+                );
+            }
+        }
     }
 
     /**
