@@ -44,6 +44,11 @@ class manual_upload_service {
     /** @var string[] Supported modtype values. */
     private const SUPPORTED_MODTYPES = ['scorm', 'resource'];
 
+    /**
+     * Maximum resource file size (20 MB), matching block_dixeo_designer submission uploads.
+     */
+    public const MAX_RESOURCE_FILE_SIZE = 20971520;
+
     /** @var scorm_creation_service */
     private scorm_creation_service $scormservice;
 
@@ -199,6 +204,15 @@ class manual_upload_service {
         }
 
         if ($modtype === 'resource') {
+            $filesize = (int) ($uploadedfile['size'] ?? 0);
+            if ($filesize > self::MAX_RESOURCE_FILE_SIZE) {
+                throw new moodle_exception(
+                    'manual_upload_error_file_too_large',
+                    'block_dixeo_modulegen',
+                    '',
+                    (object) ['maxsize' => display_size(self::MAX_RESOURCE_FILE_SIZE)]
+                );
+            }
             if (!file_sync_service::is_rag_indexed_filename($filename)) {
                 throw new moodle_exception(
                     'manual_upload_error_invalid_resource',
