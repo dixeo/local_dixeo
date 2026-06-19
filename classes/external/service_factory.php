@@ -35,6 +35,7 @@ use local_dixeo\service\job_service;
 use local_dixeo\service\module_generation_service;
 use local_dixeo\service\module_types_service;
 use local_dixeo\service\file_sync_service;
+use local_dixeo\service\image_generation_service;
 use local_dixeo\service\manual_upload_service;
 use local_dixeo\service\practice_quiz_service;
 use local_dixeo\service\teach_lesson_service;
@@ -76,6 +77,9 @@ class service_factory {
 
     /** @var teach_lesson_service|null Mock teach lesson service for unit testing. */
     private static ?teach_lesson_service $testteachlessonservice = null;
+
+    /** @var image_generation_service|null Mock image generation service for unit testing. */
+    private static ?image_generation_service $testimagegenerationservice = null;
 
     /** @var client|null Mock client instance for unit testing. */
     private static ?client $testclient = null;
@@ -223,6 +227,19 @@ class service_factory {
     }
 
     /**
+     * Get an image_generation_service instance.
+     *
+     * @return image_generation_service
+     */
+    public static function get_image_generation_service(): image_generation_service {
+        if (self::$testimagegenerationservice !== null) {
+            return self::$testimagegenerationservice;
+        }
+
+        return new image_generation_service(self::get_job_service());
+    }
+
+    /**
      * Get a client instance.
      *
      * Returns a fresh instance unless a test instance has been set.
@@ -341,6 +358,15 @@ class service_factory {
     }
 
     /**
+     * Set a test image generation service instance.
+     *
+     * @param image_generation_service|null $service
+     */
+    public static function set_test_image_generation_service(?image_generation_service $service): void {
+        self::$testimagegenerationservice = $service;
+    }
+
+    /**
      * Set a test client instance.
      *
      * Use this in unit tests to inject mock clients.
@@ -367,6 +393,7 @@ class service_factory {
         self::$testmanualuploadservice = null;
         self::$testpracticequizservice = null;
         self::$testteachlessonservice = null;
+        self::$testimagegenerationservice = null;
         self::$testclient = null;
     }
 }
