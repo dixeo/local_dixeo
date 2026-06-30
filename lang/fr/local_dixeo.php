@@ -33,6 +33,7 @@ $string['pluginname_desc'] = 'Intégration Dixeo AI pour la génération et l\'�
 $string['dixeo:manage'] = 'Gérer les paramètres Dixeo et consulter les rapports';
 $string['dixeo:generate'] = 'Générer de nouveaux modules avec l\'IA (page, étiquette, test, glossaire)';
 $string['dixeo:edit'] = 'Modifier les modules existants avec l\'IA';
+$string['dixeo:create'] = 'Créer des cours avec le Concepteur de Cours Dixeo';
 $string['dixeo:viewusage'] = 'Consulter les rapports d\'utilisation des crédits';
 
 // Settings page.

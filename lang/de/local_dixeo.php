@@ -33,6 +33,7 @@ $string['pluginname_desc'] = 'Dixeo-AI-Integration für intelligente Inhaltserst
 $string['dixeo:manage'] = 'Dixeo-Einstellungen verwalten und Berichte anzeigen';
 $string['dixeo:generate'] = 'Neue Module mit KI erstellen (Seite, Beschriftung, Test, Glossar)';
 $string['dixeo:edit'] = 'Bestehende Module mit KI bearbeiten';
+$string['dixeo:create'] = 'Kurse mit dem Dixeo-Kursdesigner erstellen';
 $string['dixeo:viewusage'] = 'Kreditnutzungsberichte anzeigen';
 
 // Settings page.

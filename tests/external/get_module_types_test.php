@@ -84,7 +84,7 @@ final class get_module_types_test extends \advanced_testcase {
         $this->assertSame('Crossword', $labels['h5p_crossword']);
     }
 
-    public function test_courseid_zero_uses_designer_capability_when_block_installed(): void {
+    public function test_courseid_zero_uses_local_create_capability_when_block_installed(): void {
         $this->mock_catalogue([
             ['type' => 'page', 'label' => 'Page (API)', 'description' => '', 'category' => 'content', 'component' => 'mod_page'],
         ]);
@@ -95,7 +95,7 @@ final class get_module_types_test extends \advanced_testcase {
         $this->find_type($response['types'], 'page');
     }
 
-    public function test_courseid_zero_rejects_user_without_designer_capability(): void {
+    public function test_courseid_zero_rejects_user_without_local_create_capability(): void {
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 

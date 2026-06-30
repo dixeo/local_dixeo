@@ -62,8 +62,7 @@ class get_module_types extends external_api {
     /**
      * Require course designer access at system context (courseid = 0 callers only).
      *
-     * Rejects the request when the designer block is unavailable or the capability
-     * is not defined, so local_dixeo does not throw on missing block capabilities.
+     * Rejects the request when the designer block is unavailable.
      */
     private static function validate_designer_system_access(): void {
         global $PAGE;
@@ -72,13 +71,9 @@ class get_module_types extends external_api {
             throw new \invalid_parameter_exception('Invalid course id');
         }
 
-        if (!get_capability_info('block/dixeo_designer:create')) {
-            throw new \invalid_parameter_exception('Invalid course id');
-        }
-
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('block/dixeo_designer:create', $context);
+        require_capability('local/dixeo:create', $context);
         $PAGE->set_context($context);
     }
 

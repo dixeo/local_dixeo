@@ -44,7 +44,7 @@ $functions = [
         'description' => 'Get available module types',
         'type' => 'read',
         'ajax' => true,
-        'capabilities' => 'local/dixeo:generate',
+        'capabilities' => '',
     ],
 
     // Create a module from a completed job.
