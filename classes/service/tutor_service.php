@@ -17,6 +17,7 @@ use local_dixeo\api\client;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\context\context_builder_factory;
 use local_dixeo\dto\operation_result;
+use local_dixeo\external\service_factory;
 
 /**
  * Service for tutor message operations.
@@ -59,6 +60,8 @@ class tutor_service {
      * @throws api_exception If the API request fails.
      */
     public function submit_message(int $courseid, int $userid, string $message, string $pagecontext = ''): operation_result {
+        service_factory::get_file_sync_service()->ensure_enabled_and_synchronized($courseid, $userid);
+
         $instructions = $this->build_instructions($courseid);
 
         $payload = [

@@ -58,11 +58,9 @@ class course_ai_repository {
         $now = time();
         $record = new \stdClass();
         $record->courseid = $courseid;
-        $record->enabled = 1;
+        $record->enabled = 0;
         $record->syncstatus = 'none';
         $record->errorcount = 0;
-        $record->enabledby = $userid;
-        $record->enabledat = $now;
         $record->timecreated = $now;
         $record->timemodified = $now;
 

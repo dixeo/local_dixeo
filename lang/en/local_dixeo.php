@@ -182,6 +182,8 @@ $string['filesync_files_count'] = '{$a} files synced';
 $string['filesync_progress'] = '{$a}% complete';
 $string['last_sync'] = 'Last sync';
 $string['filesync_error_retry'] = 'Will retry automatically';
+$string['filesync_failed'] = 'File sync failed: {$a}';
+$string['filesync_timeout'] = 'File sync timed out before course files were indexed';
 $string['files'] = 'files';
 
 // Designer structure validation (finalize / course creation).

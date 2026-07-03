@@ -15,6 +15,7 @@ namespace local_dixeo\hook\output;
 
 use core\hook\output\before_standard_top_of_body_html_generation;
 use local_dixeo\external\service_factory;
+use local_dixeo\service\file_sync_policy;
 use local_dixeo\service\file_sync_service;
 
 /**
@@ -44,6 +45,10 @@ class sync_indicator_injector {
         // Check capability.
         $context = \context_course::instance($COURSE->id);
         if (!has_capability('local/dixeo:generate', $context)) {
+            return;
+        }
+
+        if (!file_sync_policy::should_show_sync_indicator($COURSE->id)) {
             return;
         }
 

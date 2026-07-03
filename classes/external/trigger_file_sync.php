@@ -54,17 +54,8 @@ class trigger_file_sync extends external_api {
 
         $service = service_factory::get_file_sync_service();
 
-        // Check if sync is enabled.
-        if (!$service->is_enabled($params['courseid'])) {
-            return [
-                'success' => false,
-                'status' => 'disabled',
-                'error' => 'File sync is disabled for this course',
-            ];
-        }
-
         try {
-            // Trigger immediate sync (not queued).
+            $service->enable_sync($params['courseid'], (int) $USER->id);
             $service->trigger_sync($params['courseid']);
 
             $status = $service->get_status($params['courseid']);
