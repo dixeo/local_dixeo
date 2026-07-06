@@ -40,6 +40,90 @@ class scorm_vector_extract_service {
     /** @var string[] Bundled JS files to skip (not per-slide data). */
     private const ARTICULATE_JS_EXCLUDES = ['data.js', 'frame.js', 'paths.js'];
 
+    /**
+     * Whether a zip file on disk is an Articulate Storyline HTML5 SCORM package.
+     *
+     * @param string $zippath Absolute path to a local zip file.
+     * @return bool
+     */
+    public function is_articulate_storyline_package(string $zippath): bool {
+        if ($zippath === '' || !is_readable($zippath)) {
+            return false;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zippath) !== true) {
+            return false;
+        }
+
+        try {
+            return $this->is_articulate_storyline_zip($zip);
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /**
+     * Whether a Storyline zip contains extractable slide text (marker + non-empty body).
+     *
+     * Stricter than {@see is_articulate_storyline_package()} for upload validation.
+     *
+     * @param string $zippath Absolute path to a local zip file.
+     * @return bool
+     */
+    public function is_storyline_extractable(string $zippath): bool {
+        if ($zippath === '' || !is_readable($zippath)) {
+            return false;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zippath) !== true) {
+            return false;
+        }
+
+        try {
+            if (!$this->is_articulate_storyline_zip($zip)) {
+                return false;
+            }
+
+            $slides = $this->extract_articulate_storyline_slides($zip);
+            return $slides !== '' && trim($slides) !== '';
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /**
+     * Resolve the SCORM package title from imsmanifest.xml, with filename fallback.
+     *
+     * @param string $zippath Absolute path to a local zip file.
+     * @param string $fallbackfilename Original upload filename (used if manifest has no title).
+     * @return string Activity name, max 255 chars.
+     */
+    public function get_package_title_from_zip_path(string $zippath, string $fallbackfilename): string {
+        if ($zippath !== '' && is_readable($zippath)) {
+            $zip = new \ZipArchive();
+            if ($zip->open($zippath) === true) {
+                try {
+                    $manifestpath = $this->locate_manifest_in_zip($zip);
+                    if ($manifestpath !== null) {
+                        $raw = $zip->getFromName($manifestpath);
+                        if ($raw !== false && $raw !== '') {
+                            $title = $this->parse_package_title_from_manifest_xml($raw);
+                            if ($title !== null && $title !== '') {
+                                return \core_text::substr($title, 0, 255);
+                            }
+                        }
+                    }
+                } finally {
+                    $zip->close();
+                }
+            }
+        }
+
+        return $this->activity_name_from_filename($fallbackfilename);
+    }
+
     /** @var html_helper */
     private html_helper $htmlhelper;
 
@@ -602,6 +686,103 @@ class scorm_vector_extract_service {
         }
 
         return true;
+    }
+
+    /**
+     * Derive a Moodle activity name from an upload filename (basename without extension).
+     *
+     * @param string $filename Original upload filename.
+     * @return string Max 255 chars.
+     */
+    private function activity_name_from_filename(string $filename): string {
+        $filename = clean_param($filename, PARAM_FILE);
+        $base = pathinfo($filename, PATHINFO_FILENAME);
+        $name = ($base !== '') ? $base : $filename;
+        return \core_text::substr(trim($name), 0, 255);
+    }
+
+    /**
+     * Read the course/package title from SCORM manifest XML.
+     *
+     * Prefers the default organization's direct &lt;title&gt; child.
+     *
+     * @param string $xml Manifest content.
+     * @return string|null Trimmed title or null.
+     */
+    private function parse_package_title_from_manifest_xml(string $xml): ?string {
+        $prev = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument();
+        $loaded = $dom->loadXML($xml, LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+
+        if (!$loaded) {
+            return null;
+        }
+
+        foreach ($dom->getElementsByTagNameNS('*', 'organizations') as $orgsel) {
+            if (!($orgsel instanceof \DOMElement)) {
+                continue;
+            }
+
+            $defaultid = $orgsel->getAttribute('default');
+            if ($defaultid !== '') {
+                foreach ($orgsel->getElementsByTagNameNS('*', 'organization') as $org) {
+                    if (!($org instanceof \DOMElement)) {
+                        continue;
+                    }
+                    if ($org->getAttribute('identifier') !== $defaultid) {
+                        continue;
+                    }
+                    $title = $this->first_direct_child_title_text($org);
+                    if ($title !== null) {
+                        return $title;
+                    }
+                }
+            }
+
+            foreach ($orgsel->getElementsByTagNameNS('*', 'organization') as $org) {
+                if (!($org instanceof \DOMElement)) {
+                    continue;
+                }
+                $title = $this->first_direct_child_title_text($org);
+                if ($title !== null) {
+                    return $title;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \DOMElement $parent Organization or item element.
+     * @return string|null
+     */
+    private function first_direct_child_title_text(\DOMElement $parent): ?string {
+        foreach ($parent->childNodes as $child) {
+            if (!($child instanceof \DOMElement)) {
+                continue;
+            }
+            if (($child->localName ?? '') !== 'title') {
+                continue;
+            }
+            $text = $this->normalize_title($child->textContent ?? '');
+            if ($text !== '') {
+                return $text;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $text Raw title text.
+     * @return string
+     */
+    private function normalize_title(string $text): string {
+        $text = strip_tags($text);
+        return trim(preg_replace('/\s+/', ' ', $text) ?? '');
     }
 
     /**

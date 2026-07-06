@@ -33,7 +33,7 @@ class generate_module extends external_api {
             'moduletype' => new external_value(PARAM_ALPHANUMEXT, 'Module type (page, label, quiz, glossary)'),
             'instructions' => new external_value(PARAM_RAW, 'Instructions for the AI'),
             'context' => new external_value(PARAM_RAW, 'Course context in markdown format'),
-            'courseid' => new external_value(PARAM_INT, 'Course ID for RAG file search (optional)', VALUE_OPTIONAL),
+            'courseid' => new external_value(PARAM_INT, 'Course ID for RAG file search and capability check'),
         ]);
     }
 
@@ -45,10 +45,10 @@ class generate_module extends external_api {
      * @param string $moduletype The module type.
      * @param string $instructions Instructions for the AI.
      * @param string $context Course context markdown.
-     * @param int|null $courseid Optional course ID for RAG file search.
+     * @param int $courseid Course ID for RAG file search and capability check.
      * @return array The pending operation result with jobid.
      */
-    public static function execute(string $moduletype, string $instructions, string $context, ?int $courseid = null): array {
+    public static function execute(string $moduletype, string $instructions, string $context, int $courseid): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'moduletype' => $moduletype,
             'instructions' => $instructions,
@@ -56,7 +56,7 @@ class generate_module extends external_api {
             'courseid' => $courseid,
         ]);
 
-        self::validate_system_capability();
+        self::validate_course_capability($params['courseid']);
 
         try {
             $service = service_factory::get_module_generation_service();
@@ -64,7 +64,7 @@ class generate_module extends external_api {
                 $params['moduletype'],
                 $params['instructions'],
                 $params['context'],
-                $params['courseid'] ?? null
+                $params['courseid']
             );
 
             return $result->to_array();

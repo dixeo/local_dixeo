@@ -2,8 +2,7 @@
 /**
  * Trait for shared capability checking in external API classes.
  *
- * Provides common methods for validating system context and checking
- * the dixeo:generate capability that all external API endpoints require.
+ * Validates course context and local/dixeo:generate (CONTEXT_COURSE capability).
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -19,22 +18,6 @@ namespace local_dixeo\external\traits;
 trait capability_check {
 
     /**
-     * Validate system context and check dixeo:generate capability.
-     *
-     * Use this for endpoints that operate at system level (not course-specific).
-     *
-     * @return \context_system The validated system context.
-     * @throws \required_capability_exception If capability check fails.
-     */
-    protected static function validate_system_capability(): \context_system {
-        $systemcontext = \context_system::instance();
-        self::validate_context($systemcontext);
-        require_capability('local/dixeo:generate', $systemcontext);
-
-        return $systemcontext;
-    }
-
-    /**
      * Validate course context and check required capabilities.
      *
      * Use this for endpoints that operate on specific courses.
@@ -42,12 +25,17 @@ trait capability_check {
      * @param int $courseid The course ID.
      * @param bool $requiremanageactivities Whether to also check moodle/course:manageactivities.
      * @return \context_course The validated course context.
+     * @throws \invalid_parameter_exception If course id is invalid.
      * @throws \required_capability_exception If capability check fails.
      */
     protected static function validate_course_capability(
         int $courseid,
         bool $requiremanageactivities = false
     ): \context_course {
+        if ($courseid <= 1) {
+            throw new \invalid_parameter_exception('Invalid course id');
+        }
+
         $coursecontext = \context_course::instance($courseid);
         self::validate_context($coursecontext);
         require_capability('local/dixeo:generate', $coursecontext);

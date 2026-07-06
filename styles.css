@@ -20,7 +20,6 @@
 
 /* Visible when inline with title */
 .dixeo-sync-indicator.dixeo-sync-indicator--inline {
-    display: inline-flex;
     position: relative;
     vertical-align: middle;
     margin-left: 0.75rem;
@@ -29,7 +28,6 @@
 
 /* Fallback if title not found */
 .dixeo-sync-indicator.dixeo-sync-indicator--visible {
-    display: inline-flex;
     position: fixed;
     bottom: 1.25rem;
     right: 1.25rem;
@@ -38,10 +36,25 @@
 
 /* Wrapper inside title */
 .dixeo-sync-title-wrapper {
-    display: inline-flex;
     align-items: center;
     vertical-align: middle;
     overflow: visible !important;
+}
+
+/* Hidden by default unless one Dixeo block is present */
+.dixeo-sync-title-wrapper,
+.dixeo-sync-indicator.dixeo-sync-indicator--visible,
+.dixeo-sync-indicator.dixeo-sync-indicator--inline {
+    display: none;
+}
+
+body:has(.block_dixeo_modulegen) .dixeo-sync-title-wrapper,
+body:has(.block_dixeo_tutor) .dixeo-sync-title-wrapper,
+body:has(.block_dixeo_modulegen) .dixeo-sync-indicator.dixeo-sync-indicator--visible,
+body:has(.block_dixeo_tutor) .dixeo-sync-indicator.dixeo-sync-indicator--visible,
+body:has(.block_dixeo_modulegen) .dixeo-sync-indicator.dixeo-sync-indicator--inline,
+body:has(.block_dixeo_tutor) .dixeo-sync-indicator.dixeo-sync-indicator--inline {
+    display: inline-flex !important;
 }
 
 /* Ensure parent elements don't clip the dropdown */

@@ -169,5 +169,25 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026032100, 'local', 'dixeo');
     }
 
+    if ($oldversion < 2026061200) {
+        update_capabilities('local_dixeo');
+
+        $oldcap = 'block/dixeo_designer:create';
+        $newcap = 'local/dixeo:create';
+        foreach ($DB->get_records('role_capabilities', ['capability' => $oldcap]) as $rc) {
+            if (!$DB->record_exists('role_capabilities', [
+                'roleid' => $rc->roleid,
+                'capability' => $newcap,
+                'contextid' => $rc->contextid,
+            ])) {
+                $rc->capability = $newcap;
+                unset($rc->id);
+                $DB->insert_record('role_capabilities', $rc);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026061200, 'local', 'dixeo');
+    }
+
     return true;
 }

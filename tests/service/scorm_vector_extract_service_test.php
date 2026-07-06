@@ -100,4 +100,82 @@ XML;
 
         $this->assertSame('', $text);
     }
+
+    public function test_get_package_title_from_manifest_organization(): void {
+        global $CFG;
+
+        $manifest = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" identifier="M">
+  <organizations default="O1">
+    <organization identifier="O1">
+      <title>My Storyline Course</title>
+      <item identifier="I1" identifierref="R1"><title>Item</title></item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="R1" type="webcontent" href="index.html"/>
+  </resources>
+</manifest>
+XML;
+
+        $path = $CFG->tempdir . '/dixeo_test_scorm_title_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('imsmanifest.xml', $manifest);
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $title = $service->get_package_title_from_zip_path($path, 'fallback.zip');
+        @unlink($path);
+
+        $this->assertSame('My Storyline Course', $title);
+    }
+
+    public function test_get_package_title_falls_back_to_filename(): void {
+        global $CFG;
+
+        $path = $CFG->tempdir . '/dixeo_test_scorm_fallback_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('readme.txt', 'not a scorm package');
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $title = $service->get_package_title_from_zip_path($path, 'My Upload Package.zip');
+        @unlink($path);
+
+        $this->assertSame('My Upload Package', $title);
+    }
+
+    public function test_is_storyline_extractable_requires_slide_text(): void {
+        global $CFG;
+
+        $slidejs = "window.globalProvideData('slide', '{\"id\":\"abcde12345\",\"title\":\"Intro\",\"text\":\"Hello Storyline\"}');";
+
+        $path = $CFG->tempdir . '/dixeo_test_storyline_ok_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('html5/data/js/data.js', '// marker');
+        $zip->addFromString('html5/data/js/abcde12345.js', $slidejs);
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $this->assertTrue($service->is_storyline_extractable($path));
+        @unlink($path);
+    }
+
+    public function test_is_storyline_extractable_rejects_marker_only_zip(): void {
+        global $CFG;
+
+        $path = $CFG->tempdir . '/dixeo_test_storyline_empty_' . uniqid('', true) . '.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE));
+        $zip->addFromString('html5/data/js/data.js', '// marker only');
+        $zip->close();
+
+        $service = new \local_dixeo\service\scorm_vector_extract_service();
+        $this->assertFalse($service->is_storyline_extractable($path));
+        @unlink($path);
+    }
 }

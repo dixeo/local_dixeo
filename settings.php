@@ -133,7 +133,7 @@ if ($hassiteconfig) {
                 'block_dixeo_designer_designacourse',
                 get_string('designacourse', 'block_dixeo_designer'),
                 new moodle_url('/blocks/dixeo_designer/designer.php'),
-                array('block/dixeo_designer:create')
+                array('local/dixeo:create')
             ),
             'restorecourse'
         );
