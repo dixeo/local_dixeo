@@ -189,7 +189,7 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026061200, 'local', 'dixeo');
     }
 
-    if ($oldversion < 2026063000) {
+    if ($oldversion < 2026070601) {
         $DB->execute('UPDATE {local_dixeo_course_ai} SET enabled = 0 WHERE enabled = 1');
 
         $admin = get_admin();
@@ -198,7 +198,7 @@ function xmldb_local_dixeo_upgrade($oldversion) {
             $filesync->enable_sync((int) $courseid, (int) $admin->id);
         }
 
-        upgrade_plugin_savepoint(true, 2026063000, 'local', 'dixeo');
+        upgrade_plugin_savepoint(true, 2026070601, 'local', 'dixeo');
     }
 
     return true;
