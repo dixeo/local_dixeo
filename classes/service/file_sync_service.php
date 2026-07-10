@@ -112,16 +112,66 @@ class file_sync_service {
      * @return void
      */
     public function enable_sync(int $courseid, int $userid): void {
-        $record = $this->repository->get_by_courseid($courseid);
-
-        if ($record === null) {
+        if ($this->repository->get_by_courseid($courseid) === null) {
             $this->repository->create($courseid, $userid);
+        }
+
+        $this->repository->set_enabled($courseid, true, $userid);
+    }
+
+    /**
+     * Implicit opt-in when a tutor or modulegen block is added to a course.
+     *
+     * Failures are logged only so block creation is never blocked.
+     *
+     * @param int $courseid The course ID.
+     * @param int $userid The user adding the block.
+     * @return void
+     */
+    public function opt_in_on_block_added(int $courseid, int $userid): void {
+        if ($courseid <= SITEID || $userid <= 0) {
             return;
         }
 
-        if (!$record->enabled) {
-            $this->repository->set_enabled($courseid, true, $userid);
+        try {
+            $this->enable_sync($courseid, $userid);
+            $this->queue_sync($courseid);
+        } catch (\Throwable $e) {
+            debugging(
+                'Failed to opt in file sync on block add: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
         }
+    }
+
+    /**
+     * Enable sync, run an immediate upload, and wait until the course is indexed.
+     *
+     * Used before RAG-backed API jobs (tutor messages, module generation).
+     *
+     * @param int $courseid The course ID.
+     * @param int $userid The user initiating the operation.
+     * @param int $timeoutseconds Maximum seconds to wait for synchronization.
+     * @return void
+     * @throws \moodle_exception When sync fails or times out.
+     */
+    public function ensure_enabled_and_synchronized(int $courseid, int $userid, int $timeoutseconds = 120): void {
+        $this->enable_sync($courseid, $userid);
+        $this->trigger_sync($courseid);
+
+        $deadline = time() + $timeoutseconds;
+        while (time() < $deadline) {
+            $status = $this->poll_status($courseid);
+            if ($status->status === 'synchronized' || $status->status === 'none') {
+                return;
+            }
+            if ($status->status === 'error') {
+                throw new \moodle_exception('filesync_failed', 'local_dixeo', '', $status->errormessage ?? '');
+            }
+            sleep(2);
+        }
+
+        throw new \moodle_exception('filesync_timeout', 'local_dixeo');
     }
 
     /**
@@ -213,7 +263,7 @@ class file_sync_service {
     /**
      * Check if file sync is enabled for a course.
      *
-     * Returns true by default if no record exists (enabled by default).
+     * Missing rows are treated as disabled until explicit opt-in.
      *
      * @param int $courseid The course ID.
      * @return bool True if sync is enabled.
@@ -221,9 +271,8 @@ class file_sync_service {
     public function is_enabled(int $courseid): bool {
         $record = $this->repository->get_by_courseid($courseid);
 
-        // Default to enabled if no record exists.
         if ($record === null) {
-            return true;
+            return false;
         }
 
         return (bool) $record->enabled;
@@ -244,7 +293,7 @@ class file_sync_service {
         $status = new \stdClass();
 
         if ($record === null) {
-            $status->enabled = true;
+            $status->enabled = false;
             $status->status = 'none';
             $status->filestotal = null;
             $status->filescompleted = null;

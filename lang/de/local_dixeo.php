@@ -180,6 +180,8 @@ $string['filesync_files_count'] = '{$a} Dateien synchronisiert';
 $string['filesync_progress'] = '{$a}% abgeschlossen';
 $string['last_sync'] = 'Letzte Synchronisation';
 $string['filesync_error_retry'] = 'Wird automatisch erneut versucht';
+$string['filesync_failed'] = 'Dateisynchronisation fehlgeschlagen: {$a}';
+$string['filesync_timeout'] = 'Zeitüberschreitung bei der Dateisynchronisation, bevor Kursdateien indiziert wurden';
 $string['files'] = 'Dateien';
 
 // Designer structure validation (finalize / course creation).

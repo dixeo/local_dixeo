@@ -189,5 +189,17 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026061200, 'local', 'dixeo');
     }
 
+    if ($oldversion < 2026063000) {
+        $DB->execute('UPDATE {local_dixeo_course_ai} SET enabled = 0 WHERE enabled = 1');
+
+        $admin = get_admin();
+        $filesync = \local_dixeo\external\service_factory::get_file_sync_service();
+        foreach (\local_dixeo\service\file_sync_policy::get_courseids_with_sync_blocks() as $courseid) {
+            $filesync->enable_sync((int) $courseid, (int) $admin->id);
+        }
+
+        upgrade_plugin_savepoint(true, 2026063000, 'local', 'dixeo');
+    }
+
     return true;
 }
