@@ -25,6 +25,12 @@ Foundation plugin that powers the Dixeo AI ecosystem for Moodle 4.5+. This plugi
 - PHP 8.1+
 - A Dixeo API key
 
+## Aquiring a Dixeo API key
+
+You will receive a Dixeo API key within 48 hours of payment.
+
+In case of delay or difficulty, please contact support@dixeo.com.
+
 ## Installation
 
 1. Copy `dixeo` to `/local/dixeo/`
