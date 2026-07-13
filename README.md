@@ -7,6 +7,7 @@ Foundation plugin that powers the Dixeo AI ecosystem for Moodle 4.5+. This plugi
 - **[Dixeo Editor](../dixeo_editor)** — AI-powered content editing for pages and labels
 - **[Dixeo Module Generator](../../blocks/dixeo_modulegen)** — Generate new course activities with AI
 - **[Dixeo Tutor](../../blocks/dixeo_tutor)** — AI tutor chatbot for students ("Ask Ed")
+- **[Dixeo Course Designer](../../blocks/dixeo_designer)** — Design a complete course based on source documents and customisable pedagogicial template
 
 ## What it does
 
@@ -45,6 +46,8 @@ Foundation plugin that powers the Dixeo AI ecosystem for Moodle 4.5+. This plugi
 | `local/dixeo:manage` | Manage settings and view admin reports | Manager |
 | `local/dixeo:generate` | Generate new modules with AI | Editing Teacher, Manager |
 | `local/dixeo:edit` | Edit existing modules with AI | Editing Teacher, Manager |
+| `local/dixeo:create` | Create courses using Dixeo Course Designer | Manager, Course Creator |
+| `local/dixeo:talktotutor` | Create courses using Dixeo Course Designer | Manager, Editing Teacher, Non-Editing Teacher, Student |
 | `local/dixeo:viewusage` | View credit usage reports | Manager |
 
 ## License
