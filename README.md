@@ -19,6 +19,27 @@ Foundation plugin that powers the Dixeo AI ecosystem for Moodle 4.5+. This plugi
 - **File sync** — Automatically indexes course documents so AI can reference them during generation and tutoring
 - **Credit management** — Track usage, balance, and transaction history
 
+## File Synchronisation
+
+When at least one of the Dixeo Generator or Tutor blocks are deployed to a course, course documents are automatically synchronised with the Dixeo platform.
+Synchronization to Dixeo allows generated activities to remain grounded in the latest course documentation.
+
+The synchronization "pill" indicator displays:
+
+| Colour | Meaning |
+|---------|----------|
+| Green | All files synchronized |
+| Orange | Synchronization required |
+| Blue | Synchronization in progress |
+| Grey | No files available |
+| Red | Synchronization error |
+
+Teachers can:
+- manually trigger synchronization;
+- pause synchronization;
+- disable synchronization;
+- review the last synchronization date.
+
 ## Requirements
 
 - Moodle 4.5+
