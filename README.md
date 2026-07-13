@@ -77,6 +77,18 @@ In case of delay or difficulty, please contact support@dixeo.com.
 | `local/dixeo:talktotutor` | Interact with the AI Tutor | Manager, Editing Teacher, Non-Editing Teacher, Student |
 | `local/dixeo:viewusage` | View credit usage reports | Manager |
 
-## License
+# Support
 
-GNU GPL v3 or later
+For documentation, licensing or technical support:
+
+**Dixeo**
+
+https://www.dixeo.com
+
+support@dixeo.com
+
+# License
+
+Copyright © Edunao SAS
+
+Licensed under the GNU General Public License v3.0 or later.
