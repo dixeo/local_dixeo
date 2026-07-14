@@ -32,6 +32,8 @@ global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
 
 /**
+ * Unit tests for module content extractor.
+ *
  * @covers \local_dixeo\service\module_content_extractor
  */
 final class module_content_extractor_test extends \advanced_testcase {

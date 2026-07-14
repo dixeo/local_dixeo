@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Context builder for module editing/regeneration operations.
  *
@@ -18,8 +33,6 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 
@@ -30,25 +43,25 @@ class module_edit_context_builder extends abstract_context_builder {
     use module_data_loader;
 
     /** @var string|null Trimmed HTML from tiny_autosave, or null to use DB-only content. */
-    private ?string $autosaveDraftHtml;
+    private ?string $autosavedrafthtml;
 
     /**
      * Constructor.
      *
      * @param int $cmid The course module ID.
-     * @param html_helper|null $htmlHelper Optional HTML helper.
-     * @param module_content_extractor|null $contentExtractor Optional content extractor.
-     * @param string|null $autosaveDraftHtml Optional draft HTML from tiny_autosave.
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
+     * @param string|null $autosavedrafthtml Optional draft HTML from tiny_autosave.
      */
     public function __construct(
         int $cmid,
-        ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null,
-        ?string $autosaveDraftHtml = null
+        ?html_helper $htmlhelper = null,
+        ?module_content_extractor $contentextractor = null,
+        ?string $autosavedrafthtml = null
     ) {
-        parent::__construct($htmlHelper, $contentExtractor);
+        parent::__construct($htmlhelper, $contentextractor);
         $this->cmid = $cmid;
-        $this->autosaveDraftHtml = $autosaveDraftHtml;
+        $this->autosavedrafthtml = $autosavedrafthtml;
     }
 
     /**
@@ -83,7 +96,7 @@ class module_edit_context_builder extends abstract_context_builder {
      *
      * @return array Lines of markdown for surrounding context.
      */
-    private function buildSurroundingContext(): array {
+    private function buildsurroundingcontext(): array {
         $lines = [];
 
         // Course metadata with total sections count.
@@ -92,16 +105,16 @@ class module_edit_context_builder extends abstract_context_builder {
         $lines[] = "- **Category:** {$this->get_course_category_path($this->course)}";
         $lines[] = "- **Format:** {$this->course->format}";
 
-        $totalSections = count($this->modinfo->get_section_info_all());
-        $lines[] = "- **Total Sections:** {$totalSections}";
+        $totalsections = count($this->modinfo->get_section_info_all());
+        $lines[] = "- **Total Sections:** {$totalsections}";
         $lines[] = '';
 
         // Current section info.
-        $sectionName = $this->get_section_name($this->course, $this->section);
-        $lines[] = "### Current Section: {$sectionName} (Section {$this->section->section})";
+        $sectionname = $this->get_section_name($this->course, $this->section);
+        $lines[] = "### Current Section: {$sectionname} (Section {$this->section->section})";
 
         if (!empty($this->section->summary)) {
-            $lines[] = $this->htmlHelper->clean_html($this->section->summary);
+            $lines[] = $this->htmlhelper->clean_html($this->section->summary);
         }
         $lines[] = '';
 
@@ -116,7 +129,7 @@ class module_edit_context_builder extends abstract_context_builder {
      *
      * @return array Lines of markdown for module to edit.
      */
-    private function buildModuleToEditSection(): array {
+    private function buildmoduletoeditsection(): array {
         $lines = [];
 
         $lines[] = '## MODULE_TO_EDIT';
@@ -131,7 +144,7 @@ class module_edit_context_builder extends abstract_context_builder {
         $lines[] = '## CURRENT_CONTENT';
         $lines[] = '>>> MODULE TO EDIT <<<';
 
-        $content = $this->contentExtractor->get_full_content_for_edit($this->cminfo, $this->autosaveDraftHtml);
+        $content = $this->contentextractor->get_full_content_for_edit($this->cminfo, $this->autosavedrafthtml);
 
         if (!empty($content)) {
             $lines[] = $content;
@@ -147,10 +160,10 @@ class module_edit_context_builder extends abstract_context_builder {
      *
      * @return array Lines describing adjacent modules with content excerpts.
      */
-    private function buildAdjacentModulesDetailed(): array {
+    private function buildadjacentmodulesdetailed(): array {
         $lines = [];
-        $sectionModules = $this->get_cms_in_section($this->modinfo, $this->cminfo->sectionnum);
-        $adjacent = $this->find_adjacent_modules($sectionModules, $this->cmid);
+        $sectionmodules = $this->get_cms_in_section($this->modinfo, $this->cminfo->sectionnum);
+        $adjacent = $this->find_adjacent_modules($sectionmodules, $this->cmid);
 
         if ($adjacent['prev'] !== null) {
             $lines = array_merge($lines, $this->buildModuleDetailBlock('Previous Module', $adjacent['prev']));
@@ -170,14 +183,14 @@ class module_edit_context_builder extends abstract_context_builder {
      * @param \cm_info $cm The course module info.
      * @return array Lines for the module block.
      */
-    private function buildModuleDetailBlock(string $label, \cm_info $cm): array {
+    private function buildmoduledetailblock(string $label, \cm_info $cm): array {
         $lines = [];
         $lines[] = "### {$label}";
         $fileannotation = $this->get_file_annotation($cm);
         $lines[] = "- **Type:** {$cm->modname}";
         $lines[] = "- **Name:** {$cm->name}{$fileannotation}";
 
-        $excerpt = $this->contentExtractor->get_excerpt($cm);
+        $excerpt = $this->contentextractor->get_excerpt($cm);
 
         if ($excerpt !== null) {
             $lines[] = "- **Excerpt:** {$excerpt}";

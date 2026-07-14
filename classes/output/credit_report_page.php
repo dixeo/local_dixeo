@@ -205,10 +205,10 @@ class credit_report_page implements renderable, templatable {
      */
     protected function build_weekly_chart_data(array $stats, array $weekdates): array {
         // Map API stats by date for quick lookup.
-        $statsByDate = [];
+        $statsbydate = [];
         foreach ($stats as $stat) {
             $date = $stat['period'] ?? '';
-            $statsByDate[$date] = $stat['creditsUsed'] ?? 0;
+            $statsbydate[$date] = $stat['creditsUsed'] ?? 0;
         }
 
         // Short day names for chart labels.
@@ -241,7 +241,7 @@ class credit_report_page implements renderable, templatable {
         foreach ($weekdates['dates'] as $index => $date) {
             $labels[] = $daynames[$index];
             $fulllabels[] = $fulldaynames[$index];
-            $values[] = $statsByDate[$date] ?? 0;
+            $values[] = $statsbydate[$date] ?? 0;
             $istoday[] = ($date === $weekdates['today']);
         }
 

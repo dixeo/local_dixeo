@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Context builder for full course context.
  *
@@ -14,8 +29,6 @@
  */
 
 namespace local_dixeo\context;
-
-defined('MOODLE_INTERNAL') || die();
 
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
@@ -41,10 +54,10 @@ class course_context_builder extends abstract_context_builder {
     private const CONTENT_LENGTH_PREVIEW = 500;
 
     /** @var int The course ID. */
-    private int $courseId;
+    private int $courseid;
 
     /** @var int|null Target section number for tiered detail (teaching mode). */
-    private ?int $targetSection;
+    private ?int $targetsection;
 
     /** @var string Context mode: MODE_TEACHING or MODE_ASSESSMENT. */
     private string $mode;
@@ -61,22 +74,22 @@ class course_context_builder extends abstract_context_builder {
     /**
      * Constructor.
      *
-     * @param int $courseId The course ID.
-     * @param int|null $targetSection Target section number (used in teaching mode).
+     * @param int $courseid The course ID.
+     * @param int|null $targetsection Target section number (used in teaching mode).
      * @param string $mode Context mode: MODE_TEACHING or MODE_ASSESSMENT.
-     * @param html_helper|null $htmlHelper Optional HTML helper.
-     * @param module_content_extractor|null $contentExtractor Optional content extractor.
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
      */
     public function __construct(
-        int $courseId,
-        ?int $targetSection = null,
+        int $courseid,
+        ?int $targetsection = null,
         string $mode = self::MODE_TEACHING,
-        ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null
+        ?html_helper $htmlhelper = null,
+        ?module_content_extractor $contentextractor = null
     ) {
-        parent::__construct($htmlHelper, $contentExtractor);
-        $this->courseId = $courseId;
-        $this->targetSection = $targetSection;
+        parent::__construct($htmlhelper, $contentextractor);
+        $this->courseid = $courseid;
+        $this->targetsection = $targetsection;
         $this->mode = $mode;
     }
 
@@ -111,7 +124,7 @@ class course_context_builder extends abstract_context_builder {
         $lines[] = '';
 
         if (!empty($this->course->summary)) {
-            $summary = $this->htmlHelper->clean_html($this->course->summary);
+            $summary = $this->htmlhelper->clean_html($this->course->summary);
             $lines[] = '### Course Summary';
             $lines[] = $summary;
             $lines[] = '';
@@ -137,11 +150,11 @@ class course_context_builder extends abstract_context_builder {
      * @return void
      * @throws \dml_exception If course not found.
      */
-    private function loadCourseData(): void {
+    private function loadcoursedata(): void {
         global $DB;
 
         if ($this->course === null) {
-            $this->course = $DB->get_record('course', ['id' => $this->courseId], '*', MUST_EXIST);
+            $this->course = $DB->get_record('course', ['id' => $this->courseid], '*', MUST_EXIST);
             $this->modinfo = get_fast_modinfo($this->course);
         }
     }
@@ -151,7 +164,7 @@ class course_context_builder extends abstract_context_builder {
      *
      * @return array Lines of markdown for all sections.
      */
-    private function buildSectionsContext(): array {
+    private function buildsectionscontext(): array {
         $lines = [];
 
         foreach ($this->modinfo->get_section_info_all() as $section) {
@@ -159,27 +172,27 @@ class course_context_builder extends abstract_context_builder {
                 continue;
             }
 
-            $sectionNum = $section->section;
-            $sectionName = $this->get_section_name($this->course, $section);
-            $detailLevel = $this->getSectionDetailLevel($sectionNum);
+            $sectionnum = $section->section;
+            $sectionname = $this->get_section_name($this->course, $section);
+            $detaillevel = $this->getSectionDetailLevel($sectionnum);
 
             // Mark target section clearly (only in teaching mode).
-            if ($this->mode === self::MODE_TEACHING && $this->targetSection === $sectionNum) {
-                $lines[] = "### {$sectionName} ← TARGET SECTION";
+            if ($this->mode === self::MODE_TEACHING && $this->targetsection === $sectionnum) {
+                $lines[] = "### {$sectionname} ← TARGET SECTION";
             } else {
-                $lines[] = "### {$sectionName}";
+                $lines[] = "### {$sectionname}";
             }
 
             if (!empty($section->summary)) {
-                $summary = $this->htmlHelper->clean_html($section->summary);
+                $summary = $this->htmlhelper->clean_html($section->summary);
                 $lines[] = $summary;
             }
 
-            $modules = $this->get_cms_in_section($this->modinfo, $sectionNum);
+            $modules = $this->get_cms_in_section($this->modinfo, $sectionnum);
 
             if (!empty($modules)) {
                 $lines[] = '';
-                $lines = array_merge($lines, $this->buildModuleList($modules, $detailLevel));
+                $lines = array_merge($lines, $this->buildModuleList($modules, $detaillevel));
             } else {
                 $lines[] = '';
             }
@@ -195,25 +208,25 @@ class course_context_builder extends abstract_context_builder {
      * - Assessment mode: Always full detail
      * - Teaching mode: Tiered by proximity to target section
      *
-     * @param int $sectionNum The section number.
+     * @param int $sectionnum The section number.
      * @return string Detail level: 'full', 'preview', or 'titles'.
      */
-    private function getSectionDetailLevel(int $sectionNum): string {
+    private function getsectiondetaillevel(int $sectionnum): string {
         // Assessment mode: full content everywhere for comprehensive AI knowledge.
         if ($this->mode === self::MODE_ASSESSMENT) {
             return 'full';
         }
 
         // Teaching mode: tiered by proximity to target.
-        if ($this->targetSection === null) {
+        if ($this->targetsection === null) {
             return 'preview';
         }
 
-        if ($sectionNum === $this->targetSection) {
+        if ($sectionnum === $this->targetsection) {
             return 'full';
         }
 
-        if (abs($sectionNum - $this->targetSection) === 1) {
+        if (abs($sectionnum - $this->targetsection) === 1) {
             return 'preview';
         }
 
@@ -224,10 +237,10 @@ class course_context_builder extends abstract_context_builder {
      * Build module list with appropriate detail level.
      *
      * @param array $modules Array of cm_info objects.
-     * @param string $detailLevel Detail level: 'full', 'preview', or 'titles'.
+     * @param string $detaillevel Detail level: 'full', 'preview', or 'titles'.
      * @return array Lines for the module list.
      */
-    private function buildModuleList(array $modules, string $detailLevel): array {
+    private function buildmodulelist(array $modules, string $detaillevel): array {
         $lines = [];
 
         foreach ($modules as $cm) {
@@ -237,7 +250,7 @@ class course_context_builder extends abstract_context_builder {
 
             $fileannotation = $this->get_file_annotation($cm);
 
-            if ($detailLevel === 'titles') {
+            if ($detaillevel === 'titles') {
                 $lines[] = "- [{$cm->modname}] {$cm->name}{$fileannotation}";
                 continue;
             }
@@ -248,9 +261,9 @@ class course_context_builder extends abstract_context_builder {
             // Full level: untruncated content so the tutor and assessment generators
             // see the entire module. Preview level: short excerpt for adjacent sections
             // in teaching mode.
-            $content = ($detailLevel === 'full')
-                ? $this->contentExtractor->get_full_content($cm)
-                : $this->contentExtractor->get_preview($cm, self::CONTENT_LENGTH_PREVIEW);
+            $content = ($detaillevel === 'full')
+                ? $this->contentextractor->get_full_content($cm)
+                : $this->contentextractor->get_preview($cm, self::CONTENT_LENGTH_PREVIEW);
 
             if (!empty($content)) {
                 $lines[] = $content;
@@ -276,7 +289,7 @@ class course_context_builder extends abstract_context_builder {
      *
      * @return array Lines of markdown representing the planned structure.
      */
-    private function buildPlanContext(): array {
+    private function buildplancontext(): array {
         $lines = [];
         $lines[] = '## Planned Course Structure';
         $lines[] = '_The following is the complete intended structure. Modules already generated appear as [COMPLETED]._';

@@ -16,8 +16,6 @@
 
 namespace local_dixeo\service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Reads HTML draft text from core tiny_autosave (TinyMCE autosave plugin).
  *

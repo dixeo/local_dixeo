@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for file sync opt-in defaults and pre-RAG synchronization.
@@ -31,9 +31,9 @@ use local_dixeo\external\trigger_file_sync;
 use local_dixeo\repository\course_ai_repository;
 use local_dixeo\service\file_sync_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for file sync service opt in.
+ *
  * @covers \local_dixeo\service\file_sync_service
  * @covers \local_dixeo\external\trigger_file_sync
  */

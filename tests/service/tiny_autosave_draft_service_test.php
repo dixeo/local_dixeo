@@ -34,6 +34,8 @@ global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
 
 /**
+ * Unit tests for tiny autosave draft service.
+ *
  * @covers \local_dixeo\service\tiny_autosave_draft_service
  */
 final class tiny_autosave_draft_service_test extends \advanced_testcase {

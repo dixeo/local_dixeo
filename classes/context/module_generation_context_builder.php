@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Context builder for module generation operations.
  *
@@ -18,8 +33,6 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 
@@ -33,15 +46,15 @@ class module_generation_context_builder extends abstract_context_builder {
      * Constructor.
      *
      * @param int $cmid The course module ID.
-     * @param html_helper|null $htmlHelper Optional HTML helper.
-     * @param module_content_extractor|null $contentExtractor Optional content extractor.
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
      */
     public function __construct(
         int $cmid,
-        ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null
+        ?html_helper $htmlhelper = null,
+        ?module_content_extractor $contentextractor = null
     ) {
-        parent::__construct($htmlHelper, $contentExtractor);
+        parent::__construct($htmlhelper, $contentextractor);
         $this->cmid = $cmid;
     }
 
@@ -59,12 +72,12 @@ class module_generation_context_builder extends abstract_context_builder {
         $lines[] = "## Course: {$this->course->fullname}";
         $lines[] = '';
 
-        $sectionName = $this->get_section_name($this->course, $this->section);
-        $lines[] = "## Section: {$sectionName}";
+        $sectionname = $this->get_section_name($this->course, $this->section);
+        $lines[] = "## Section: {$sectionname}";
         $lines[] = '';
 
         if (!empty($this->section->summary)) {
-            $lines[] = $this->htmlHelper->clean_html($this->section->summary);
+            $lines[] = $this->htmlhelper->clean_html($this->section->summary);
             $lines[] = '';
         }
 
@@ -72,7 +85,7 @@ class module_generation_context_builder extends abstract_context_builder {
         $lines[] = "Type: {$this->cminfo->modname}";
         $lines[] = '';
 
-        $content = $this->contentExtractor->get_full_content($this->cminfo);
+        $content = $this->contentextractor->get_full_content($this->cminfo);
 
         if (!empty($content)) {
             $lines[] = '### Current Content';
@@ -92,10 +105,10 @@ class module_generation_context_builder extends abstract_context_builder {
      *
      * @return array Lines describing adjacent modules.
      */
-    private function buildAdjacentModulesSimple(): array {
+    private function buildadjacentmodulessimple(): array {
         $lines = [];
-        $sectionModules = $this->get_cms_in_section($this->modinfo, $this->cminfo->sectionnum);
-        $adjacent = $this->find_adjacent_modules($sectionModules, $this->cmid);
+        $sectionmodules = $this->get_cms_in_section($this->modinfo, $this->cminfo->sectionnum);
+        $adjacent = $this->find_adjacent_modules($sectionmodules, $this->cmid);
 
         if ($adjacent['prev'] !== null) {
             $prev = $adjacent['prev'];

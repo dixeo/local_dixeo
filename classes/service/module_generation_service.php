@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Service for AI-powered module generation and fill operations.
  *
@@ -45,7 +60,7 @@ class module_generation_service {
     private const ASSESSMENT_MODULES = ['quiz', 'glossary'];
 
     /** @var job_service Job management service. */
-    private job_service $jobService;
+    private job_service $jobservice;
 
     /** @var string|null The namespace for API requests. */
     private ?string $namespace;
@@ -53,14 +68,14 @@ class module_generation_service {
     /**
      * Constructor.
      *
-     * @param job_service|null $jobService Optional job service.
+     * @param job_service|null $jobservice Optional job service.
      * @param string|null $namespace Optional namespace override.
      */
     public function __construct(
-        ?job_service $jobService = null,
+        ?job_service $jobservice = null,
         ?string $namespace = null
     ) {
-        $this->jobService = $jobService ?? new job_service();
+        $this->jobservice = $jobservice ?? new job_service();
         $this->namespace = $namespace ?? $this->get_configured_namespace();
     }
 
@@ -85,7 +100,7 @@ class module_generation_service {
         ?int $sectionnumber = null
     ): operation_result {
         $mode = $this->get_context_mode($moduletype);
-        $context = context_builder_factory::buildCourseContext($courseid, $sectionnumber, $mode);
+        $context = context_builder_factory::buildcoursecontext($courseid, $sectionnumber, $mode);
 
         return $this->submit_generate_job($moduletype, $instructions, $context, $courseid);
     }
@@ -103,10 +118,15 @@ class module_generation_service {
      * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
-    public function submit_generate_job(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function submit_generate_job(
+        string $moduletype,
+        string $instructions,
+        string $context,
+        ?int $courseid = null
+    ): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
-        return $this->jobService->submit_job(self::GENERATE_ENDPOINT, $payload);
+        return $this->jobservice->submit_job(self::GENERATE_ENDPOINT, $payload);
     }
 
     /**
@@ -134,7 +154,7 @@ class module_generation_service {
         string $summary
     ): operation_result {
         $mode = $this->get_context_mode($moduletype);
-        $context = context_builder_factory::buildModuleFillContext(
+        $context = context_builder_factory::buildmodulefillcontext(
             $courseid,
             $sectionnumber,
             $mode,
@@ -157,10 +177,15 @@ class module_generation_service {
      * @return operation_result Pending operation result with jobid.
      * @throws api_exception If the API request fails.
      */
-    public function submit_fill_job(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function submit_fill_job(
+        string $moduletype,
+        string $instructions,
+        string $context,
+        ?int $courseid = null
+    ): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
-        return $this->jobService->submit_job(self::FILL_ENDPOINT, $payload);
+        return $this->jobservice->submit_job(self::FILL_ENDPOINT, $payload);
     }
 
     /**
@@ -175,10 +200,15 @@ class module_generation_service {
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function generate_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function generate_module(
+        string $moduletype,
+        string $instructions,
+        string $context,
+        ?int $courseid = null
+    ): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
-        return $this->jobService->submit_and_wait(
+        return $this->jobservice->submit_and_wait(
             self::GENERATE_ENDPOINT,
             $payload,
             self::JOB_TYPE_GENERATE
@@ -198,10 +228,15 @@ class module_generation_service {
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function fill_module(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function fill_module(
+        string $moduletype,
+        string $instructions,
+        string $context,
+        ?int $courseid = null
+    ): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
-        return $this->jobService->submit_and_wait(
+        return $this->jobservice->submit_and_wait(
             self::FILL_ENDPOINT,
             $payload,
             self::JOB_TYPE_FILL
@@ -223,7 +258,7 @@ class module_generation_service {
             $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
             $moduletype = $cm->modname;
             $courseid = (int) $cm->course;
-            $context = context_builder_factory::buildModuleEditContext($cmid);
+            $context = context_builder_factory::buildmoduleeditcontext($cmid);
 
             return $this->fill_module($moduletype, $instructions, $context, $courseid);
 
@@ -255,10 +290,15 @@ class module_generation_service {
      * @return operation_result The operation result (completed or pending).
      * @throws api_exception If an API error occurs.
      */
-    public function edit_module_content(string $moduletype, string $instructions, string $context, ?int $courseid = null): operation_result {
+    public function edit_module_content(
+        string $moduletype,
+        string $instructions,
+        string $context,
+        ?int $courseid = null
+    ): operation_result {
         $payload = $this->build_payload($moduletype, $instructions, $context, $courseid);
 
-        return $this->jobService->submit_and_wait(
+        return $this->jobservice->submit_and_wait(
             self::EDIT_ENDPOINT,
             $payload,
             self::JOB_TYPE_EDIT
@@ -335,7 +375,7 @@ class module_generation_service {
      * @return job_service The job service.
      */
     public function get_job_service(): job_service {
-        return $this->jobService;
+        return $this->jobservice;
     }
 
     /**

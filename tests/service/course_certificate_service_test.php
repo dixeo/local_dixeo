@@ -27,9 +27,9 @@ namespace local_dixeo;
 
 use local_dixeo\service\course_certificate_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for course certificate service.
+ *
  * @covers \local_dixeo\service\course_certificate_service
  */
 final class course_certificate_service_test extends \advanced_testcase {

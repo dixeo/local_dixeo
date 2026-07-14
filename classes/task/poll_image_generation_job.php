@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\task;
-
-defined('MOODLE_INTERNAL') || die();
 
 use local_dixeo\external\service_factory;
 use local_dixeo\service\course_image_writer;
@@ -37,10 +35,20 @@ class poll_image_generation_job extends \core\task\adhoc_task {
     /** @var int Seconds between remote status checks. */
     private const POLL_INTERVAL_SECONDS = 4;
 
+    /**
+     * Return the component name for this task.
+     *
+     * @return string
+     */
     public function get_component(): string {
         return 'local_dixeo';
     }
 
+    /**
+     * Poll a remote image job and apply the result when complete.
+     *
+     * @return void
+     */
     public function execute(): void {
         $data = $this->get_custom_data();
         if (!is_object($data)) {
@@ -106,6 +114,11 @@ class poll_image_generation_job extends \core\task\adhoc_task {
         image_poll_manager::queue_poll_task($courseid, $imagejobid, $userid, $chainseq + 1, $scope, $objectid);
     }
 
+    /**
+     * Return the human-readable task name.
+     *
+     * @return string
+     */
     public function get_name(): string {
         return get_string('task_poll_image_generation', 'local_dixeo');
     }

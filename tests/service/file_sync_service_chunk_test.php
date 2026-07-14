@@ -29,9 +29,9 @@ namespace local_dixeo;
 use local_dixeo\dto\file_upload_part;
 use local_dixeo\service\file_sync_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for file sync service chunk.
+ *
  * @covers \local_dixeo\service\file_sync_service::build_chunks
  * @covers \local_dixeo\service\file_sync_service::compute_expected_files
  */
@@ -145,11 +145,25 @@ final class file_sync_service_chunk_test extends \advanced_testcase {
         );
     }
 
+    /**
+     * Build a file_upload_part backed by a temp file of the given size.
+     *
+     * @param string $filename
+     * @param int $size
+     * @return file_upload_part
+     */
     private function make_part(string $filename, int $size): file_upload_part {
         $path = $this->write_temp($filename, str_repeat('x', $size));
         return new file_upload_part($path, $filename);
     }
 
+    /**
+     * Write content to a uniquely named temp file tracked for cleanup.
+     *
+     * @param string $filename
+     * @param string $content
+     * @return string Absolute path to the temp file.
+     */
     private function write_temp(string $filename, string $content): string {
         $base = tempnam(sys_get_temp_dir(), 'dixeo_chunktest_');
         if ($base === false) {

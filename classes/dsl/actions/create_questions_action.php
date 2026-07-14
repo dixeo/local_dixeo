@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * DSL action for creating quiz questions.
  *
@@ -1004,13 +1019,14 @@ class create_questions_action {
                 ];
 
                 if ($option === $answer) {
-                    $correctposition = $choiceindex + 1; // 1-indexed for [[n]].
+                    // Moodle gapselect uses 1-based placeholder indexes in the question text.
+                    $correctposition = $choiceindex + 1;
                 }
 
                 $choiceindex++;
             }
 
-            // Replace the next {{...}} placeholder with [[n]] where n is the correct choice position.
+            // Replace the next curly-brace placeholder with the correct choice index token.
             // Uses positional replacement (first gap = first placeholder) instead of string
             // matching, which is more robust when answers contain special characters.
             if ($correctposition !== null) {

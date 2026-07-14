@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Web service to create a module from a completed job.
  *
@@ -81,8 +96,8 @@ class create_module_from_job extends external_api {
         self::validate_course_capability($params['courseid'], true);
 
         try {
-            $jobService = service_factory::get_job_service();
-            $status = $jobService->get_job_status($params['jobid']);
+            $jobservice = service_factory::get_job_service();
+            $status = $jobservice->get_job_status($params['jobid']);
 
             if (!$status->is_completed()) {
                 return response_factory::module_creation_result(

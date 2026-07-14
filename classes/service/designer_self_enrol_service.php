@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Configures enrol_self for designer-finalized courses.
@@ -78,6 +76,8 @@ class designer_self_enrol_service {
     }
 
     /**
+     * Resolve the enrolment key for a new self-enrol instance.
+     *
      * @param \enrol_plugin $plugin enrol_self plugin instance
      * @param bool $generateenrolmentkey
      * @return string Enrolment key (plain), max 50 chars for enrol_self.

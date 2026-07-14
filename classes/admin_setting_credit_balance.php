@@ -16,8 +16,6 @@
 
 namespace local_dixeo;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Custom admin setting to display credit balance.
  *

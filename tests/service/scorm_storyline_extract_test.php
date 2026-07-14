@@ -26,9 +26,9 @@
 
 namespace local_dixeo;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for scorm storyline extract.
+ *
  * @covers \local_dixeo\service\scorm_vector_extract_service
  */
 final class scorm_storyline_extract_test extends \advanced_testcase {

@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for course_image_writer (course overview + Dixeo section images, cache).
@@ -37,17 +37,27 @@ require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/course/format/dixeo/lib.php');
 
 /**
+ * Unit tests for course image writer.
+ *
  * @covers \local_dixeo\service\course_image_writer
  */
 final class course_image_writer_test extends \advanced_testcase {
 
-    /** Core filestorage fixture: PNG overview / first generation. */
+    /**
+     * Core filestorage fixture: PNG overview / first generation.
+     *
+     * @return string
+     */
     private static function fixture_png_bytes(): string {
         global $CFG;
         return (string) file_get_contents($CFG->dirroot . '/lib/filestorage/tests/fixtures/testimage.png');
     }
 
-    /** Core filestorage fixture: JPEG — different bytes and extension from the PNG. */
+    /**
+     * Core filestorage fixture: JPEG with different bytes and extension from the PNG.
+     *
+     * @return string
+     */
     private static function fixture_jpeg_bytes(): string {
         global $CFG;
         return (string) file_get_contents($CFG->dirroot . '/lib/filestorage/tests/fixtures/testimage.jpg');
@@ -244,6 +254,8 @@ final class course_image_writer_test extends \advanced_testcase {
     }
 
     /**
+     * Fetch course section 1 for the given course.
+     *
      * @param int $courseid
      * @return \stdClass course_sections row
      */

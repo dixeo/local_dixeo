@@ -44,7 +44,9 @@ class credit_balance {
      * @param string $state Account state (active, frozen, suspended).
      */
     public function __construct(
+        /** @var int Current credit balance. */
         public readonly int $credits,
+        /** @var string Account state (active, frozen, suspended). */
         public readonly string $state
     ) {
     }

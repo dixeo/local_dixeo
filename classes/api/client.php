@@ -150,8 +150,8 @@ class client {
             }
             $response = $curl->delete($url);
         } else {
-            $jsonPayload = json_encode($data);
-            if ($jsonPayload === false) {
+            $jsonpayload = json_encode($data);
+            if ($jsonpayload === false) {
                 throw new api_exception(
                     'invalid_payload',
                     'Failed to encode request payload as JSON: ' . json_last_error_msg(),
@@ -162,7 +162,7 @@ class client {
             if ($method === 'PUT') {
                 $curl->setopt(['CURLOPT_CUSTOMREQUEST' => 'PUT']);
             }
-            $response = $curl->post($url, $jsonPayload);
+            $response = $curl->post($url, $jsonpayload);
         }
 
         // Check for curl errors.
@@ -304,8 +304,8 @@ class client {
      * @param bool $finalchunk When false, the server treats this upload as an intermediate chunk
      *     of a multi-part sync and only appends the supplied files without pruning anything that
      *     is no longer part of the course. Defaults to true (single-call behaviour).
-     * @param list<array{hash: string, filename: string}>|null $expectedfiles When $finalchunk is true and the sync
-     *     was split across several chunks, this should be the full manifest of expected files for the course.
+     * @param array|null $expectedfiles When $finalchunk is true and the sync was split across several chunks,
+     *     this should be the full manifest of expected files for the course (each row: hash, filename).
      *     Supplied to the server so it knows which older files to drop and which prior chunk uploads to index.
      *     Ignored when $finalchunk is false, and unnecessary on a single-call sync.
      * @param int|null $expectedfilescount Total number of files expected after this sync. Sent on every chunk.

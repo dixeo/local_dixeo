@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Abstract base class for context builders with shared helper methods.
  *
@@ -17,8 +32,6 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 
@@ -28,23 +41,23 @@ use local_dixeo\service\module_content_extractor;
 abstract class abstract_context_builder implements context_builder_interface {
 
     /** @var html_helper HTML processing helper. */
-    protected html_helper $htmlHelper;
+    protected html_helper $htmlhelper;
 
     /** @var module_content_extractor Module content extractor. */
-    protected module_content_extractor $contentExtractor;
+    protected module_content_extractor $contentextractor;
 
     /**
      * Constructor with optional dependency injection.
      *
-     * @param html_helper|null $htmlHelper Optional HTML helper.
-     * @param module_content_extractor|null $contentExtractor Optional content extractor.
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
      */
     public function __construct(
-        ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null
+        ?html_helper $htmlhelper = null,
+        ?module_content_extractor $contentextractor = null
     ) {
-        $this->htmlHelper = $htmlHelper ?? new html_helper();
-        $this->contentExtractor = $contentExtractor ?? new module_content_extractor($this->htmlHelper);
+        $this->htmlhelper = $htmlhelper ?? new html_helper();
+        $this->contentextractor = $contentextractor ?? new module_content_extractor($this->htmlhelper);
     }
 
     /**
@@ -135,37 +148,37 @@ abstract class abstract_context_builder implements context_builder_interface {
      * @return array ['prev' => cm_info|null, 'next' => cm_info|null]
      */
     protected function find_adjacent_modules(array $modules, int $cmid): array {
-        $accessibleModules = $this->get_accessible_modules($modules);
-        $moduleIds = array_keys($accessibleModules);
-        $currentIndex = array_search($cmid, $moduleIds);
+        $accessiblemodules = $this->get_accessible_modules($modules);
+        $moduleids = array_keys($accessiblemodules);
+        $currentindex = array_search($cmid, $moduleids);
 
-        if ($currentIndex === false) {
+        if ($currentindex === false) {
             return ['prev' => null, 'next' => null];
         }
 
-        $prevModule = null;
-        $nextModule = null;
+        $prevmodule = null;
+        $nextmodule = null;
 
-        if ($currentIndex > 0) {
-            $prevModule = $accessibleModules[$moduleIds[$currentIndex - 1]];
+        if ($currentindex > 0) {
+            $prevmodule = $accessiblemodules[$moduleids[$currentindex - 1]];
         }
 
-        if ($currentIndex < count($moduleIds) - 1) {
-            $nextModule = $accessibleModules[$moduleIds[$currentIndex + 1]];
+        if ($currentindex < count($moduleids) - 1) {
+            $nextmodule = $accessiblemodules[$moduleids[$currentindex + 1]];
         }
 
-        return ['prev' => $prevModule, 'next' => $nextModule];
+        return ['prev' => $prevmodule, 'next' => $nextmodule];
     }
 
     /**
      * Build course metadata lines for markdown output.
      *
      * @param object $course The course object.
-     * @param int $headingLevel Markdown heading level (default 2 for ##).
+     * @param int $headinglevel Markdown heading level (default 2 for ##).
      * @return array Lines of markdown for course metadata.
      */
-    protected function build_course_metadata_lines(object $course, int $headingLevel = 2): array {
-        $heading = str_repeat('#', $headingLevel);
+    protected function build_course_metadata_lines(object $course, int $headinglevel = 2): array {
+        $heading = str_repeat('#', $headinglevel);
         $lines = [];
 
         $lines[] = "{$heading} Course";
@@ -221,17 +234,17 @@ abstract class abstract_context_builder implements context_builder_interface {
     protected function build_adjacent_sections(\course_modinfo $modinfo, object $course, int $sectionnum): array {
         $lines = [];
 
-        $prevSection = $sectionnum > 0 ? $modinfo->get_section_info($sectionnum - 1) : null;
-        $nextSection = $modinfo->get_section_info($sectionnum + 1);
+        $prevsection = $sectionnum > 0 ? $modinfo->get_section_info($sectionnum - 1) : null;
+        $nextsection = $modinfo->get_section_info($sectionnum + 1);
 
-        if ($prevSection && $prevSection->visible) {
-            $prevName = $this->get_section_name($course, $prevSection);
-            $lines[] = "- Previous: {$prevName}";
+        if ($prevsection && $prevsection->visible) {
+            $prevname = $this->get_section_name($course, $prevsection);
+            $lines[] = "- Previous: {$prevname}";
         }
 
-        if ($nextSection && $nextSection->visible) {
-            $nextName = $this->get_section_name($course, $nextSection);
-            $lines[] = "- Next: {$nextName}";
+        if ($nextsection && $nextsection->visible) {
+            $nextname = $this->get_section_name($course, $nextsection);
+            $lines[] = "- Next: {$nextname}";
         }
 
         return $lines;
@@ -246,16 +259,16 @@ abstract class abstract_context_builder implements context_builder_interface {
      * @return string Position string (e.g., "3/7 in section").
      */
     protected function get_module_position(int $cmid, \course_modinfo $modinfo, int $sectionnum): string {
-        $sectionModules = $this->get_cms_in_section($modinfo, $sectionnum);
-        $accessibleModules = $this->get_accessible_modules($sectionModules);
-        $moduleIds = array_keys($accessibleModules);
-        $position = array_search($cmid, $moduleIds);
+        $sectionmodules = $this->get_cms_in_section($modinfo, $sectionnum);
+        $accessiblemodules = $this->get_accessible_modules($sectionmodules);
+        $moduleids = array_keys($accessiblemodules);
+        $position = array_search($cmid, $moduleids);
 
         if ($position === false) {
             return 'unknown';
         }
 
-        return ($position + 1) . '/' . count($accessibleModules) . ' in section';
+        return ($position + 1) . '/' . count($accessiblemodules) . ' in section';
     }
 
     /**
@@ -265,6 +278,6 @@ abstract class abstract_context_builder implements context_builder_interface {
      * @return string Truncated markdown context.
      */
     protected function finalize_context(array $lines): string {
-        return $this->htmlHelper->truncate_context(implode("\n", $lines));
+        return $this->htmlhelper->truncate_context(implode("\n", $lines));
     }
 }

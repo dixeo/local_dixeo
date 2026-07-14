@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for course template list normalisation and caching.
@@ -30,9 +30,9 @@ use local_dixeo\api\client;
 use local_dixeo\service\course_template_service;
 use ReflectionMethod;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for course template service.
+ *
  * @covers \local_dixeo\service\course_template_service
  */
 final class course_template_service_test extends \advanced_testcase {

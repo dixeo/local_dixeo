@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 use core_plugin_manager;
@@ -41,7 +39,8 @@ final class course_image_writer {
     /**
      * Apply a remote job result to storage for the given scope.
      *
-     * @param string $scope One of {@see image_poll_manager::SCOPE_COURSE_OVERVIEW} or {@see image_poll_manager::SCOPE_FORMAT_SECTION}.
+     * @param string $scope One of {@see image_poll_manager::SCOPE_COURSE_OVERVIEW}
+     *     or {@see image_poll_manager::SCOPE_FORMAT_SECTION}.
      * @param int $objectid Course id (overview) or course_sections.id (format section).
      * @param array $result Raw job result (same shapes as image API).
      * @param int $userid User id stored on the file record.
@@ -133,6 +132,8 @@ final class course_image_writer {
     }
 
     /**
+     * Store a chapter cover image for a format_dixeo course section.
+     *
      * @param int $sectionid course_sections.id
      * @param string $binary Raw image bytes.
      * @param int $userid
@@ -172,6 +173,8 @@ final class course_image_writer {
     }
 
     /**
+     * Resolve an allowed image extension and MIME type from binary bytes.
+     *
      * @param string $binary
      * @return array{0:string,1:string}
      */

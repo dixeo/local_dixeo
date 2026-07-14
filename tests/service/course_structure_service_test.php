@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for the course structure service module-type filtering.
@@ -33,9 +33,9 @@ use local_dixeo\service\job_service;
 use local_dixeo\service\module_types_service;
 use ReflectionMethod;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for course structure service.
+ *
  * @covers \local_dixeo\service\course_structure_service
  */
 final class course_structure_service_test extends \advanced_testcase {
@@ -139,6 +139,9 @@ final class course_structure_service_test extends \advanced_testcase {
 
     /**
      * Build a service whose module_types_service throws the given exception.
+     *
+     * @param \Throwable $exception Exception to throw from get_module_types_cached().
+     * @return course_structure_service
      */
     private function build_service_throwing(\Throwable $exception): course_structure_service {
         $stub = $this->createMock(module_types_service::class);
@@ -152,6 +155,9 @@ final class course_structure_service_test extends \advanced_testcase {
     }
 
     /**
+     * Invoke the private get_installed_module_types helper via reflection.
+     *
+     * @param course_structure_service $service Service under test.
      * @return string[]
      */
     private function invoke_get_installed_module_types(course_structure_service $service): array {

@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests that {@see \local_dixeo\service\image_generation_service} submits remote jobs only when
@@ -32,9 +32,9 @@ use local_dixeo\service\image_generation_policy;
 use local_dixeo\service\image_generation_service;
 use local_dixeo\service\job_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for image generation service policy.
+ *
  * @covers \local_dixeo\service\image_generation_service
  */
 final class image_generation_service_policy_test extends \advanced_testcase {
@@ -48,7 +48,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     /**
-     * @param int|string|bool $global
+     * Apply image generation policy settings for a test case.
+     *
+     * @param int|string|bool $global Global image_generation_enabled config value.
+     * @param string $coursemode Course-level image generation mode.
+     * @param string $sectionmode Section-level image generation mode.
      */
     private function apply_image_generation_settings($global, string $coursemode, string $sectionmode): void {
         set_config('image_generation_enabled', $global, 'local_dixeo');
@@ -56,16 +60,32 @@ final class image_generation_service_policy_test extends \advanced_testcase {
         set_config('image_generation_section_mode', $sectionmode, 'local_dixeo');
     }
 
+    /**
+     * Build an image_generation_service with a mocked job service.
+     *
+     * @param \PHPUnit\Framework\MockObject\MockObject $jobmock
+     * @return image_generation_service
+     */
     private function make_service_with_mock_jobs(\PHPUnit\Framework\MockObject\MockObject $jobmock): image_generation_service {
         return new image_generation_service($jobmock, new html_helper(), self::TEST_NAMESPACE);
     }
 
+    /**
+     * Build a pending operation_result for assertions.
+     *
+     * @param string $jobid
+     * @return operation_result
+     */
     private function pending_result(string $jobid = 'remote-job-1'): operation_result {
         return operation_result::pending($jobid, 'pending', 0);
     }
 
     public function test_submit_course_image_job_rejected_when_globally_disabled_and_does_not_call_api(): void {
-        $this->apply_image_generation_settings(0, image_generation_policy::MODE_GENERATE_EDIT, image_generation_policy::MODE_GENERATE_EDIT);
+        $this->apply_image_generation_settings(
+            0,
+            image_generation_policy::MODE_GENERATE_EDIT,
+            image_generation_policy::MODE_GENERATE_EDIT
+        );
 
         $jobmock = $this->createMock(job_service::class);
         $jobmock->expects($this->never())->method('submit_job');
@@ -77,7 +97,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_course_image_job_rejected_when_course_mode_disabled(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_DISABLED, image_generation_policy::MODE_GENERATE_EDIT);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_DISABLED,
+            image_generation_policy::MODE_GENERATE_EDIT
+        );
 
         $jobmock = $this->createMock(job_service::class);
         $jobmock->expects($this->never())->method('submit_job');
@@ -89,7 +113,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_course_image_job_calls_api_when_allowed(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_GENERATE_EDIT, image_generation_policy::MODE_DISABLED);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_GENERATE_EDIT,
+            image_generation_policy::MODE_DISABLED
+        );
 
         $course = $this->getDataGenerator()->create_course(['fullname' => 'Policy course']);
 
@@ -107,7 +135,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_course_image_edit_job_rejected_when_course_generate_only(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_GENERATE, image_generation_policy::MODE_GENERATE_EDIT);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_GENERATE,
+            image_generation_policy::MODE_GENERATE_EDIT
+        );
 
         $jobmock = $this->createMock(job_service::class);
         $jobmock->expects($this->never())->method('submit_job');
@@ -123,7 +155,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_course_image_edit_job_calls_api_when_allowed(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_GENERATE_EDIT, image_generation_policy::MODE_DISABLED);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_GENERATE_EDIT,
+            image_generation_policy::MODE_DISABLED
+        );
 
         $course = $this->getDataGenerator()->create_course(['fullname' => 'Policy course']);
 
@@ -147,7 +183,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_section_image_job_rejected_when_section_mode_disabled(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_GENERATE_EDIT, image_generation_policy::MODE_DISABLED);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_GENERATE_EDIT,
+            image_generation_policy::MODE_DISABLED
+        );
 
         global $DB;
         $course = $this->getDataGenerator()->create_course();
@@ -161,7 +201,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_section_image_job_calls_api_when_allowed(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_DISABLED, image_generation_policy::MODE_GENERATE);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_DISABLED,
+            image_generation_policy::MODE_GENERATE
+        );
 
         global $DB;
         $course = $this->getDataGenerator()->create_course();
@@ -180,7 +224,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_section_image_edit_job_rejected_when_section_generate_only(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_GENERATE_EDIT, image_generation_policy::MODE_GENERATE);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_GENERATE_EDIT,
+            image_generation_policy::MODE_GENERATE
+        );
 
         global $DB;
         $course = $this->getDataGenerator()->create_course();
@@ -198,7 +246,11 @@ final class image_generation_service_policy_test extends \advanced_testcase {
     }
 
     public function test_submit_section_image_edit_job_calls_api_when_allowed(): void {
-        $this->apply_image_generation_settings(1, image_generation_policy::MODE_DISABLED, image_generation_policy::MODE_GENERATE_EDIT);
+        $this->apply_image_generation_settings(
+            1,
+            image_generation_policy::MODE_DISABLED,
+            image_generation_policy::MODE_GENERATE_EDIT
+        );
 
         global $DB;
         $course = $this->getDataGenerator()->create_course();

@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 use core_text;
 use local_dixeo\api\exception\api_exception;
@@ -54,6 +52,8 @@ class designer_structure_finalize_validation_service {
     private $moduletypesservice;
 
     /**
+     * Constructor.
+     *
      * @param module_types_service|null $moduletypesservice Injected for tests.
      */
     public function __construct(?module_types_service $moduletypesservice = null) {
@@ -172,8 +172,10 @@ class designer_structure_finalize_validation_service {
     }
 
     /**
+     * Validate course-level title and summary constraints.
+     *
      * @param array $data Unwrapped course_structure array.
-     * @param array<int, array{path: string, message: string}> $issues
+     * @param array $issues Accumulator of path/message issue rows (passed by reference).
      */
     private function validate_course_level(array $data, array &$issues): void {
         $title = isset($data['title']) ? trim((string) $data['title']) : '';
@@ -196,9 +198,11 @@ class designer_structure_finalize_validation_service {
     }
 
     /**
-     * @param array $sectiondata
-     * @param int $sidx0 Zero-based section index
-     * @param array<int, array{path: string, message: string}> $issues
+     * Validate one section and its nested modules.
+     *
+     * @param array $sectiondata Section data from the course structure.
+     * @param int $sidx0 Zero-based section index.
+     * @param array $issues Accumulator of path/message issue rows (passed by reference).
      */
     private function validate_section(array $sectiondata, int $sidx0, array &$issues): void {
         $p = 'sections[' . $sidx0 . ']';
@@ -238,7 +242,7 @@ class designer_structure_finalize_validation_service {
     /**
      * Prefix a field message with section/activity context for flat error lists (e.g. API exceptions).
      *
-     * @param array{path: string, message: string} $row
+     * @param array $row Issue row with keys path and message.
      * @return string
      */
     private function format_message_for_aggregate_list(array $row): string {
@@ -279,11 +283,13 @@ class designer_structure_finalize_validation_service {
     }
 
     /**
-     * @param array $module
-     * @param int $sidx0 Zero-based section index
-     * @param int $midx0 Zero-based module index
-     * @param array<string, array> $bytype type id => catalogue row
-     * @param array<int, array{path: string, message: string}> $issues
+     * Validate one module entry against catalogue and field constraints.
+     *
+     * @param array $module Module data from the course structure.
+     * @param int $sidx0 Zero-based section index.
+     * @param int $midx0 Zero-based module index.
+     * @param array $bytype Map of API type string to catalogue row.
+     * @param array $issues Accumulator of path/message issue rows (passed by reference).
      */
     private function validate_module(
         array $module,
@@ -356,6 +362,10 @@ class designer_structure_finalize_validation_service {
 
     /**
      * True when $value equals the current-language block_dixeo_designer placeholder string.
+     *
+     * @param string $stringkey Lang string id in block_dixeo_designer.
+     * @param string $value Value to compare against the placeholder.
+     * @return bool
      */
     private function string_matches_block_placeholder(string $stringkey, string $value): bool {
         $sm = get_string_manager();
@@ -368,6 +378,8 @@ class designer_structure_finalize_validation_service {
     }
 
     /**
+     * Load a type-keyed index of usable module catalogue rows.
+     *
      * @return array<string, array> Map of API type string to catalogue row.
      */
     private function load_module_type_index(): array {
@@ -394,8 +406,9 @@ class designer_structure_finalize_validation_service {
     /**
      * Whether the type can be submitted for a fill job on this site (plugin + catalogue requirements when known).
      *
-     * @param string $type
-     * @param array<string, array> $bytype
+     * @param string $type API module type string.
+     * @param array $bytype Map of API type string to catalogue row.
+     * @return bool
      */
     private function is_module_type_usable(string $type, array $bytype): bool {
         if (isset($bytype[$type])) {

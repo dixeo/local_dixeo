@@ -59,18 +59,31 @@ class job_status {
      * @param string|null $namespace The namespace for the job.
      */
     public function __construct(
+        /** @var string The job UUID. */
         public readonly string $jobid,
+        /** @var string The job type (e.g., 'generate_module', 'fill_module'). */
         public readonly string $type,
+        /** @var string Current status. */
         public readonly string $status,
+        /** @var int Progress percentage (0-100). */
         public readonly int $progress,
+        /** @var int Unix timestamp when the job was created. */
         public readonly int $createdat,
+        /** @var int|null Unix timestamp when the job was last updated. */
         public readonly ?int $updatedat = null,
+        /** @var int|null Unix timestamp when the job completed. */
         public readonly ?int $completedat = null,
+        /** @var array|null The result data (only for completed jobs). */
         public readonly ?array $result = null,
+        /** @var int|null Credits consumed (only for completed/failed jobs). */
         public readonly ?int $creditsused = null,
+        /** @var string|null Error code (only for failed jobs). */
         public readonly ?string $errorcode = null,
+        /** @var string|null Error message (only for failed jobs). */
         public readonly ?string $errormessage = null,
+        /** @var float|null Actual processing time. */
         public readonly ?float $processingtimeseconds = null,
+        /** @var string|null The namespace for the job. */
         public readonly ?string $namespace = null
     ) {
     }

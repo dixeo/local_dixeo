@@ -26,9 +26,9 @@
 
 namespace local_dixeo;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for scorm vector extract service.
+ *
  * @covers \local_dixeo\service\scorm_vector_extract_service
  */
 final class scorm_vector_extract_service_test extends \advanced_testcase {

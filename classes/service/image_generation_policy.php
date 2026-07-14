@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Resolves image-generation availability from local_dixeo settings.
@@ -28,14 +26,21 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class image_generation_policy {
+    /** @var string Entity key for course-level image generation. */
     public const ENTITY_COURSE = 'course';
+    /** @var string Entity key for section-level image generation. */
     public const ENTITY_SECTION = 'section';
 
+    /** @var string Action key for generating a new image. */
     public const ACTION_GENERATE = 'generate';
+    /** @var string Action key for editing an existing image. */
     public const ACTION_EDIT = 'edit';
 
+    /** @var string Mode: image generation disabled. */
     public const MODE_DISABLED = 'disabled';
+    /** @var string Mode: generate only (no edit). */
     public const MODE_GENERATE = 'generate';
+    /** @var string Mode: generate and edit allowed. */
     public const MODE_GENERATE_EDIT = 'generate_edit';
 
     /**
@@ -88,6 +93,8 @@ final class image_generation_policy {
     }
 
     /**
+     * Resolve the configured mode for a course or section entity.
+     *
      * @param string $entity course|section
      * @return string One of {@see self::MODE_DISABLED}, {@see self::MODE_GENERATE}, {@see self::MODE_GENERATE_EDIT}.
      */

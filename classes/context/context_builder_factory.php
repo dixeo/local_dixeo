@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Factory for creating context builder instances.
  *
@@ -14,8 +29,6 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 
@@ -25,44 +38,44 @@ use local_dixeo\service\module_content_extractor;
 class context_builder_factory {
 
     /** @var html_helper|null Shared HTML helper instance. */
-    private static ?html_helper $sharedHtmlHelper = null;
+    private static ?html_helper $sharedhtmlhelper = null;
 
     /** @var module_content_extractor|null Shared content extractor instance. */
-    private static ?module_content_extractor $sharedContentExtractor = null;
+    private static ?module_content_extractor $sharedcontentextractor = null;
 
     /**
      * Create a course context builder.
      *
-     * @param int $courseId The course ID.
-     * @param int|null $targetSection Target section for tiered detail (teaching mode).
+     * @param int $courseid The course ID.
+     * @param int|null $targetsection Target section for tiered detail (teaching mode).
      * @param string $mode Context mode: 'teaching' or 'assessment'.
      * @return course_context_builder The configured builder.
      */
     public static function course(
-        int $courseId,
-        ?int $targetSection = null,
+        int $courseid,
+        ?int $targetsection = null,
         string $mode = course_context_builder::MODE_TEACHING
     ): course_context_builder {
         return new course_context_builder(
-            $courseId,
-            $targetSection,
+            $courseid,
+            $targetsection,
             $mode,
-            self::getHtmlHelper(),
-            self::getContentExtractor()
+            self::gethtmlhelper(),
+            self::getcontentextractor()
         );
     }
 
     /**
      * Create a section context builder.
      *
-     * @param int $sectionId The section ID (course_sections.id).
+     * @param int $sectionid The section ID (course_sections.id).
      * @return section_context_builder The configured builder.
      */
-    public static function section(int $sectionId): section_context_builder {
+    public static function section(int $sectionid): section_context_builder {
         return new section_context_builder(
-            $sectionId,
-            self::getHtmlHelper(),
-            self::getContentExtractor()
+            $sectionid,
+            self::gethtmlhelper(),
+            self::getcontentextractor()
         );
     }
 
@@ -72,11 +85,11 @@ class context_builder_factory {
      * @param int $cmid The course module ID.
      * @return module_generation_context_builder The configured builder.
      */
-    public static function moduleGeneration(int $cmid): module_generation_context_builder {
+    public static function modulegeneration(int $cmid): module_generation_context_builder {
         return new module_generation_context_builder(
             $cmid,
-            self::getHtmlHelper(),
-            self::getContentExtractor()
+            self::gethtmlhelper(),
+            self::getcontentextractor()
         );
     }
 
@@ -84,15 +97,15 @@ class context_builder_factory {
      * Create a module edit context builder.
      *
      * @param int $cmid The course module ID.
-     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (null = use saved module content only).
+     * @param string|null $autosavedrafthtml Optional HTML from tiny_autosave (null = use saved module content only).
      * @return module_edit_context_builder The configured builder.
      */
-    public static function moduleEdit(int $cmid, ?string $autosaveDraftHtml = null): module_edit_context_builder {
+    public static function moduleedit(int $cmid, ?string $autosavedrafthtml = null): module_edit_context_builder {
         return new module_edit_context_builder(
             $cmid,
-            self::getHtmlHelper(),
-            self::getContentExtractor(),
-            $autosaveDraftHtml
+            self::gethtmlhelper(),
+            self::getcontentextractor(),
+            $autosavedrafthtml
         );
     }
 
@@ -107,35 +120,35 @@ class context_builder_factory {
         return new slide_edit_context_builder(
             $cmid,
             $slideid,
-            self::getHtmlHelper(),
-            self::getContentExtractor()
+            self::gethtmlhelper(),
+            self::getcontentextractor()
         );
     }
 
     /**
      * Build course context directly (convenience method).
      *
-     * @param int $courseId The course ID.
-     * @param int|null $targetSection Target section for tiered detail.
+     * @param int $courseid The course ID.
+     * @param int|null $targetsection Target section for tiered detail.
      * @param string $mode Context mode: 'teaching' or 'assessment'.
      * @return string The built markdown context.
      */
-    public static function buildCourseContext(
-        int $courseId,
-        ?int $targetSection = null,
+    public static function buildcoursecontext(
+        int $courseid,
+        ?int $targetsection = null,
         string $mode = course_context_builder::MODE_TEACHING
     ): string {
-        return self::course($courseId, $targetSection, $mode)->build();
+        return self::course($courseid, $targetsection, $mode)->build();
     }
 
     /**
      * Build section context directly (convenience method).
      *
-     * @param int $sectionId The section ID.
+     * @param int $sectionid The section ID.
      * @return string The built markdown context.
      */
-    public static function buildSectionContext(int $sectionId): string {
-        return self::section($sectionId)->build();
+    public static function buildsectioncontext(int $sectionid): string {
+        return self::section($sectionid)->build();
     }
 
     /**
@@ -144,19 +157,19 @@ class context_builder_factory {
      * @param int $cmid The course module ID.
      * @return string The built markdown context.
      */
-    public static function buildModuleGenerationContext(int $cmid): string {
-        return self::moduleGeneration($cmid)->build();
+    public static function buildmodulegenerationcontext(int $cmid): string {
+        return self::modulegeneration($cmid)->build();
     }
 
     /**
      * Build module edit context directly (convenience method).
      *
      * @param int $cmid The course module ID.
-     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave (null = use saved module content only).
+     * @param string|null $autosavedrafthtml Optional HTML from tiny_autosave (null = use saved module content only).
      * @return string The built markdown context.
      */
-    public static function buildModuleEditContext(int $cmid, ?string $autosaveDraftHtml = null): string {
-        return self::moduleEdit($cmid, $autosaveDraftHtml)->build();
+    public static function buildmoduleeditcontext(int $cmid, ?string $autosavedrafthtml = null): string {
+        return self::moduleedit($cmid, $autosavedrafthtml)->build();
     }
 
     /**
@@ -199,7 +212,7 @@ class context_builder_factory {
             return self::build_slide_edit_context($cmid, $subid);
         }
 
-        return self::buildModuleEditContext($cmid, $autosavedrafthtml);
+        return self::buildmoduleeditcontext($cmid, $autosavedrafthtml);
     }
 
     /**
@@ -210,21 +223,21 @@ class context_builder_factory {
      * Used when creating modules from a course structure where name/intro
      * are already defined and only content needs to be generated.
      *
-     * @param int $courseId The course ID.
-     * @param int|null $targetSection Target section for tiered detail.
+     * @param int $courseid The course ID.
+     * @param int|null $targetsection Target section for tiered detail.
      * @param string $mode Context mode: 'teaching' or 'assessment'.
      * @param string $title The module title from the course structure.
      * @param string $summary The module summary from the course structure.
      * @return string The built markdown context with module metadata prepended.
      */
-    public static function buildModuleFillContext(
-        int $courseId,
-        ?int $targetSection,
+    public static function buildmodulefillcontext(
+        int $courseid,
+        ?int $targetsection,
         string $mode,
         string $title,
         string $summary = ''
     ): string {
-        $coursecontext = self::buildCourseContext($courseId, $targetSection, $mode);
+        $coursecontext = self::buildcoursecontext($courseid, $targetsection, $mode);
 
         $lines = ['## Module to Fill'];
         $lines[] = "- **Title:** {$title}";
@@ -241,12 +254,12 @@ class context_builder_factory {
      *
      * @return html_helper The shared instance.
      */
-    private static function getHtmlHelper(): html_helper {
-        if (self::$sharedHtmlHelper === null) {
-            self::$sharedHtmlHelper = new html_helper();
+    private static function gethtmlhelper(): html_helper {
+        if (self::$sharedhtmlhelper === null) {
+            self::$sharedhtmlhelper = new html_helper();
         }
 
-        return self::$sharedHtmlHelper;
+        return self::$sharedhtmlhelper;
     }
 
     /**
@@ -254,12 +267,12 @@ class context_builder_factory {
      *
      * @return module_content_extractor The shared instance.
      */
-    private static function getContentExtractor(): module_content_extractor {
-        if (self::$sharedContentExtractor === null) {
-            self::$sharedContentExtractor = new module_content_extractor(self::getHtmlHelper());
+    private static function getcontentextractor(): module_content_extractor {
+        if (self::$sharedcontentextractor === null) {
+            self::$sharedcontentextractor = new module_content_extractor(self::gethtmlhelper());
         }
 
-        return self::$sharedContentExtractor;
+        return self::$sharedcontentextractor;
     }
 
     /**
@@ -268,7 +281,7 @@ class context_builder_factory {
      * @return void
      */
     public static function reset(): void {
-        self::$sharedHtmlHelper = null;
-        self::$sharedContentExtractor = null;
+        self::$sharedhtmlhelper = null;
+        self::$sharedcontentextractor = null;
     }
 }

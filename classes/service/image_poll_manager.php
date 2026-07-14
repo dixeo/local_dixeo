@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 use local_dixeo\task\poll_image_generation_job;
 
@@ -53,12 +51,16 @@ final class image_poll_manager {
      * Dedupes per logical job (e.g. one course overview image or one section chapter image), without
      * cancelling polls for other scopes or sections on the same course.
      *
-     * @param int $courseid
+     * @param int $courseid Course id.
      * @param string $scope One of the SCOPE_* constants.
-     * @param int $objectid course_sections.id for {@see self::SCOPE_FORMAT_SECTION}.
+     * @param int|null $objectid course_sections.id for {@see self::SCOPE_FORMAT_SECTION}.
      * @return int Number of deleted rows.
      */
-    public static function delete_queued_poll_tasks(int $courseid, string $scope = self::SCOPE_COURSE_OVERVIEW, ?int $objectid = null): int {
+    public static function delete_queued_poll_tasks(
+        int $courseid,
+        string $scope = self::SCOPE_COURSE_OVERVIEW,
+        ?int $objectid = null
+    ): int {
         global $DB;
 
         $tasks = \core\task\manager::get_adhoc_tasks(self::task_classname(), false, true);
@@ -71,7 +73,7 @@ final class image_poll_manager {
             if ((int) ($data->courseid ?? 0) !== $courseid) {
                 continue;
             }
-            
+
             // Define task scope.
             $taskscope = isset($data->scope) && (string) $data->scope !== ''
                 ? (string) $data->scope
@@ -109,7 +111,9 @@ final class image_poll_manager {
      * @param int $userid User context for capabilities and file ownership.
      * @param int $chainseq Zero-based chain segment (each segment polls up to ~60s).
      * @param string $scope One of the SCOPE_* constants.
-     * @param int|null $objectid Target id: course id for {@see self::SCOPE_COURSE_OVERVIEW}, section id for {@see self::SCOPE_FORMAT_SECTION}. Null defaults to courseid for overview scope.
+     * @param int|null $objectid Target id: course id for {@see self::SCOPE_COURSE_OVERVIEW},
+     *     section id for {@see self::SCOPE_FORMAT_SECTION}.
+     *     Null defaults to courseid for overview scope.
      * @return void
      */
     public static function queue_poll_task(

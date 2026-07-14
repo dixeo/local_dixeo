@@ -27,9 +27,9 @@ namespace local_dixeo;
 
 use local_dixeo\service\module_activity_defaults_registry;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for module activity defaults registry.
+ *
  * @covers \local_dixeo\service\module_activity_defaults_registry
  */
 final class module_activity_defaults_registry_test extends \advanced_testcase {
