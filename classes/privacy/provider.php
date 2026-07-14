@@ -1,0 +1,308 @@
+<?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Privacy API implementation for local_dixeo.
+ *
+ * @package    local_dixeo
+ * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace local_dixeo\privacy;
+
+use core_privacy\local\metadata\collection;
+use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\contextlist;
+use core_privacy\local\request\transform;
+use core_privacy\local\request\userlist;
+use core_privacy\local\request\writer;
+
+/**
+ * Privacy provider for course AI sync records and Dixeo API transfers.
+ *
+ * Local personal data is limited to operational user IDs on sync configuration rows.
+ * Content, messages and files sent to Dixeo are declared as external locations; retention
+ * and deletion of remote copies are controlled by the Dixeo processor, not by this plugin.
+ *
+ * @package    local_dixeo
+ * @copyright  2026 Edunao SAS (contact@edunao.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class provider implements
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\core_userlist_provider {
+
+    /** @var string Course AI sync configuration table. */
+    public const TABLE_COURSE_AI = 'local_dixeo_course_ai';
+
+    /**
+     * Describe metadata stored or transmitted by this plugin.
+     *
+     * @param collection $collection The privacy metadata collection.
+     * @return collection The updated collection.
+     */
+    public static function get_metadata(collection $collection): collection {
+        $collection->add_database_table(
+            self::TABLE_COURSE_AI,
+            [
+                'courseid' => 'privacy:metadata:course_ai:courseid',
+                'enabled' => 'privacy:metadata:course_ai:enabled',
+                'syncstatus' => 'privacy:metadata:course_ai:syncstatus',
+                'errormessage' => 'privacy:metadata:course_ai:errormessage',
+                'enabledby' => 'privacy:metadata:course_ai:enabledby',
+                'enabledat' => 'privacy:metadata:course_ai:enabledat',
+                'disabledby' => 'privacy:metadata:course_ai:disabledby',
+                'disabledat' => 'privacy:metadata:course_ai:disabledat',
+                'timecreated' => 'privacy:metadata:course_ai:timecreated',
+                'timemodified' => 'privacy:metadata:course_ai:timemodified',
+            ],
+            'privacy:metadata:course_ai'
+        );
+
+        $collection->add_external_location_link(
+            'dixeo_api',
+            [
+                'courseId' => 'privacy:metadata:external:courseid',
+                'userId' => 'privacy:metadata:external:userid',
+                'message' => 'privacy:metadata:external:message',
+                'instructions' => 'privacy:metadata:external:instructions',
+                'context' => 'privacy:metadata:external:context',
+                'moduleType' => 'privacy:metadata:external:moduletype',
+                'files' => 'privacy:metadata:external:files',
+                'namespace' => 'privacy:metadata:external:namespace',
+            ],
+            'privacy:metadata:externalpurpose'
+        );
+
+        return $collection;
+    }
+
+    /**
+     * Get course contexts that contain sync records linked to the user.
+     *
+     * @param int $userid The user ID.
+     * @return contextlist
+     */
+    public static function get_contexts_for_userid(int $userid): contextlist {
+        $contextlist = new contextlist();
+
+        $sql = "SELECT ctx.id
+                  FROM {" . self::TABLE_COURSE_AI . "} cai
+                  JOIN {context} ctx ON ctx.instanceid = cai.courseid AND ctx.contextlevel = :contextlevel
+                 WHERE cai.enabledby = :enabledby OR cai.disabledby = :disabledby";
+
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_COURSE,
+            'enabledby' => $userid,
+            'disabledby' => $userid,
+        ]);
+
+        return $contextlist;
+    }
+
+    /**
+     * Export sync configuration rows where the user is recorded as enabling or disabling.
+     *
+     * @param approved_contextlist $contextlist The approved contexts.
+     */
+    public static function export_user_data(approved_contextlist $contextlist): void {
+        global $DB;
+
+        if (empty($contextlist->count())) {
+            return;
+        }
+
+        $userid = (int) $contextlist->get_user()->id;
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel !== CONTEXT_COURSE) {
+                continue;
+            }
+
+            $courseid = (int) $context->instanceid;
+            $record = $DB->get_record(self::TABLE_COURSE_AI, ['courseid' => $courseid]);
+            if ($record === false) {
+                continue;
+            }
+
+            $linked = ((int) ($record->enabledby ?? 0) === $userid)
+                || ((int) ($record->disabledby ?? 0) === $userid);
+            if (!$linked) {
+                continue;
+            }
+
+            $data = (object) [
+                'courseid' => (int) $record->courseid,
+                'enabled' => transform::yesno((bool) $record->enabled),
+                'syncstatus' => (string) $record->syncstatus,
+                'errormessage' => $record->errormessage,
+                'enabledby' => (int) ($record->enabledby ?? 0) === $userid
+                    ? transform::yesno(true)
+                    : transform::yesno(false),
+                'enabledat' => !empty($record->enabledat) ? transform::datetime((int) $record->enabledat) : null,
+                'disabledby' => (int) ($record->disabledby ?? 0) === $userid
+                    ? transform::yesno(true)
+                    : transform::yesno(false),
+                'disabledat' => !empty($record->disabledat) ? transform::datetime((int) $record->disabledat) : null,
+                'timecreated' => transform::datetime((int) $record->timecreated),
+                'timemodified' => transform::datetime((int) $record->timemodified),
+            ];
+
+            writer::with_context($context)->export_data(
+                [get_string('privacy:path:course_ai', 'local_dixeo')],
+                $data
+            );
+        }
+    }
+
+    /**
+     * Delete all plugin data for a course context (the entire sync configuration row).
+     *
+     * @param \context $context The context.
+     */
+    public static function delete_data_for_all_users_in_context(\context $context): void {
+        global $DB;
+
+        if ($context->contextlevel !== CONTEXT_COURSE) {
+            return;
+        }
+
+        $DB->delete_records(self::TABLE_COURSE_AI, ['courseid' => (int) $context->instanceid]);
+    }
+
+    /**
+     * Remove user identifiers from sync rows; keep course operational configuration.
+     *
+     * @param approved_contextlist $contextlist The approved contexts.
+     */
+    public static function delete_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
+
+        if (empty($contextlist->count())) {
+            return;
+        }
+
+        $userid = (int) $contextlist->get_user()->id;
+        $courseids = [];
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel === CONTEXT_COURSE) {
+                $courseids[] = (int) $context->instanceid;
+            }
+        }
+
+        if ($courseids === []) {
+            return;
+        }
+
+        list($insql, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $params['userid'] = $userid;
+
+        $DB->execute(
+            "UPDATE {" . self::TABLE_COURSE_AI . "}
+                SET enabledby = NULL, enabledat = NULL, timemodified = :timemodified
+              WHERE enabledby = :userid AND courseid {$insql}",
+            $params + ['timemodified' => time()]
+        );
+
+        // Re-bind named params for the second statement (course id placeholders reused).
+        list($insql2, $params2) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $params2['userid'] = $userid;
+        $params2['timemodified'] = time();
+
+        $DB->execute(
+            "UPDATE {" . self::TABLE_COURSE_AI . "}
+                SET disabledby = NULL, disabledat = NULL, timemodified = :timemodified
+              WHERE disabledby = :userid AND courseid {$insql2}",
+            $params2
+        );
+    }
+
+    /**
+     * List users with personal identifiers in a course context.
+     *
+     * @param userlist $userlist The userlist for the context.
+     */
+    public static function get_users_in_context(userlist $userlist): void {
+        $context = $userlist->get_context();
+        if ($context->contextlevel !== CONTEXT_COURSE) {
+            return;
+        }
+
+        $params = ['courseid' => (int) $context->instanceid];
+
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT cai.enabledby AS userid
+               FROM {" . self::TABLE_COURSE_AI . "} cai
+              WHERE cai.courseid = :courseid AND cai.enabledby IS NOT NULL AND cai.enabledby > 0",
+            $params
+        );
+
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT cai.disabledby AS userid
+               FROM {" . self::TABLE_COURSE_AI . "} cai
+              WHERE cai.courseid = :courseid AND cai.disabledby IS NOT NULL AND cai.disabledby > 0",
+            $params
+        );
+    }
+
+    /**
+     * Delete personal identifiers for the listed users in a course context.
+     *
+     * @param approved_userlist $userlist The approved user list.
+     */
+    public static function delete_data_for_users(approved_userlist $userlist): void {
+        global $DB;
+
+        $context = $userlist->get_context();
+        if ($context->contextlevel !== CONTEXT_COURSE) {
+            return;
+        }
+
+        $userids = $userlist->get_userids();
+        if ($userids === []) {
+            return;
+        }
+
+        $courseid = (int) $context->instanceid;
+        list($insql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $params['courseid'] = $courseid;
+        $params['timemodified'] = time();
+
+        $DB->execute(
+            "UPDATE {" . self::TABLE_COURSE_AI . "}
+                SET enabledby = NULL, enabledat = NULL, timemodified = :timemodified
+              WHERE courseid = :courseid AND enabledby {$insql}",
+            $params
+        );
+
+        list($insql2, $params2) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $params2['courseid'] = $courseid;
+        $params2['timemodified'] = time();
+
+        $DB->execute(
+            "UPDATE {" . self::TABLE_COURSE_AI . "}
+                SET disabledby = NULL, disabledat = NULL, timemodified = :timemodified
+              WHERE courseid = :courseid AND disabledby {$insql2}",
+            $params2
+        );
+    }
+}
