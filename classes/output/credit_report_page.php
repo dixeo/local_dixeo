@@ -82,7 +82,7 @@ class credit_report_page implements renderable, templatable {
         } catch (\Exception $e) {
             return [
                 'configured' => true,
-                'error' => $e->getMessage(),
+                'error' => get_string('api_error', 'local_dixeo', $e->getMessage()),
             ];
         }
     }
@@ -286,7 +286,7 @@ class credit_report_page implements renderable, templatable {
             'amount' => $amount,
             'amountformatted' => credit_service::format_credits(abs($amount)),
             'amountsign' => $amount >= 0 ? '+' : '-',
-            'description' => $tx['description'] ?? '',
+            'description' => clean_param((string) ($tx['description'] ?? ''), PARAM_TEXT),
             'createdat' => isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
             'createdatformatted' => userdate(
                 isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
