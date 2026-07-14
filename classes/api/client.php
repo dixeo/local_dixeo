@@ -189,11 +189,20 @@ class client {
      * @throws api_exception If the response indicates an error.
      */
     protected function parse_response(string $response, array $info): array {
-        $httpcode = $info['http_code'] ?? 0;
+        $httpcode = (int) ($info['http_code'] ?? 0);
+        $url = (string) ($info['url'] ?? '');
+        $contenttype = (string) ($info['content_type'] ?? '');
+        $responsebytes = strlen($response);
         $data = json_decode($response, true);
 
-        // Debug logging.
-        debugging('Dixeo API Response - HTTP Code: ' . $httpcode . ', Response: ' . substr($response, 0, 1000), DEBUG_DEVELOPER);
+        // Log metadata only — never response bodies (may contain course content or PII).
+        debugging(sprintf(
+            'Dixeo API Response - HTTP %d, bytes=%d, content_type=%s, url=%s',
+            $httpcode,
+            $responsebytes,
+            $contenttype !== '' ? $contenttype : 'n/a',
+            $url !== '' ? $url : 'n/a'
+        ), DEBUG_DEVELOPER);
 
         // Handle 204 No Content (e.g., DELETE responses) — no body to parse.
         if ($httpcode === 204) {
@@ -206,7 +215,11 @@ class client {
                 'invalid_response',
                 'Invalid JSON response from Dixeo API',
                 $httpcode,
-                ['raw_response' => substr($response, 0, 500)]
+                [
+                    'response_bytes' => $responsebytes,
+                    'json_error' => json_last_error_msg(),
+                    'content_type' => $contenttype,
+                ]
             );
         }
 
@@ -216,8 +229,16 @@ class client {
         }
 
         // Error responses follow RFC 7807 (Problem Details).
-        debugging('Dixeo API Error - Code: ' . $httpcode . ', Error data: ' . json_encode($data), DEBUG_DEVELOPER);
-        throw api_exception::from_response($data, $httpcode);
+        $errortype = is_array($data) ? (string) ($data['type'] ?? 'unknown_error') : 'unknown_error';
+        $errortitle = is_array($data) ? (string) ($data['title'] ?? '') : '';
+        debugging(sprintf(
+            'Dixeo API Error - HTTP %d, type=%s, title=%s, url=%s',
+            $httpcode,
+            $errortype,
+            $errortitle !== '' ? $errortitle : 'n/a',
+            $url !== '' ? $url : 'n/a'
+        ), DEBUG_DEVELOPER);
+        throw api_exception::from_response(is_array($data) ? $data : [], $httpcode);
     }
 
     /**

@@ -433,11 +433,10 @@ class file_sync_service {
             $this->repository->update_filehash($courseid, $filehash);
 
         } catch (api_exception $e) {
-            // Include raw response in error message if available (helps debug invalid JSON errors).
-            $errormessage = $e->getMessage();
-            $details = $e->get_details();
-            if (!empty($details['raw_response'])) {
-                $errormessage .= ' | Raw: ' . $details['raw_response'];
+            // Persist a short UI-safe message only — never raw API response bodies.
+            $errormessage = $e->get_error_code() . ': ' . $e->getMessage();
+            if (\core_text::strlen($errormessage) > 500) {
+                $errormessage = \core_text::substr($errormessage, 0, 497) . '...';
             }
             $this->repository->record_error($courseid, $errormessage);
             throw $e;
