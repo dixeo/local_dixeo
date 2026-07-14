@@ -134,7 +134,7 @@ class get_module_types extends external_api {
 
         // Non-admins only see installed module types (no lock icon / "plugin required" options).
         if (!is_siteadmin()) {
-            $types = array_values(array_filter($types, function($t) {
+            $types = array_values(array_filter($types, function ($t) {
                 return !empty($t['installed']);
             }));
         }

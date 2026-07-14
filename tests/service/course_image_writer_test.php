@@ -34,7 +34,10 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
-require_once($CFG->dirroot . '/course/format/dixeo/lib.php');
+$formatdixeolib = $CFG->dirroot . '/course/format/dixeo/lib.php';
+if (is_readable($formatdixeolib)) {
+    require_once($formatdixeolib);
+}
 
 /**
  * Unit tests for course image writer.
@@ -42,7 +45,6 @@ require_once($CFG->dirroot . '/course/format/dixeo/lib.php');
  * @covers \local_dixeo\service\course_image_writer
  */
 final class course_image_writer_test extends \advanced_testcase {
-
     /**
      * Core filestorage fixture: PNG overview / first generation.
      *
@@ -61,6 +63,16 @@ final class course_image_writer_test extends \advanced_testcase {
     private static function fixture_jpeg_bytes(): string {
         global $CFG;
         return (string) file_get_contents($CFG->dirroot . '/lib/filestorage/tests/fixtures/testimage.jpg');
+    }
+
+    /**
+     * Skip when format_dixeo is not available (e.g. standalone local_dixeo CI).
+     */
+    private function require_format_dixeo(): void {
+        global $CFG;
+        if (!is_readable($CFG->dirroot . '/course/format/dixeo/lib.php')) {
+            $this->markTestSkipped('format_dixeo is not installed in this environment.');
+        }
     }
 
     public function setUp(): void {
@@ -92,6 +104,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_apply_section_on_fresh_section_sets_pluginfile_url(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);
@@ -150,6 +163,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_apply_section_clears_stale_course_image_cache(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);
@@ -200,6 +214,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_regenerate_section_replaces_file_content(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);

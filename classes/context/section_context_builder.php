@@ -38,7 +38,6 @@ use local_dixeo\service\module_content_extractor;
  * Builds section-level context markdown for AI processing.
  */
 class section_context_builder extends abstract_context_builder {
-
     /** @var int The section ID (course_sections.id). */
     private int $sectionid;
 

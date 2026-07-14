@@ -29,7 +29,6 @@ use local_dixeo\service\h5p_packaging_service;
  * @covers     \local_dixeo\dsl\actions\create_h5p_module_action
  */
 final class create_h5p_module_action_test extends \advanced_testcase {
-
     public function test_execute_allows_missing_intro_in_ai_data(): void {
         $this->resetAfterTest(false);
 

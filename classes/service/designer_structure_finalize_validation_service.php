@@ -29,7 +29,6 @@ use local_dixeo\api\exception\api_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class designer_structure_finalize_validation_service {
-
     /** @var int Matches {course}.fullname in core install.xml. */
     private const COURSE_FULLNAME_MAX = 254;
 

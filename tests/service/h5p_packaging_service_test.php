@@ -37,7 +37,6 @@ use ZipArchive;
  * @covers \local_dixeo\service\h5p_packaging_service::build_package
  */
 final class h5p_packaging_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

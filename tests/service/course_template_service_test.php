@@ -36,7 +36,6 @@ use ReflectionMethod;
  * @covers \local_dixeo\service\course_template_service
  */
 final class course_template_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

@@ -32,7 +32,6 @@ use core_plugin_manager;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class plugin_installation_service {
-
     /** @var string Application cache area (see db/caches.php). */
     public const CACHE_AREA = 'installedplugintypes';
 

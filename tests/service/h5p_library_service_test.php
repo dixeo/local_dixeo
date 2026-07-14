@@ -34,7 +34,6 @@ use local_dixeo\service\h5p_library_service;
  * @covers \local_dixeo\service\h5p_library_service
  */
 final class h5p_library_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

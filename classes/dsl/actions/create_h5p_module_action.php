@@ -48,7 +48,6 @@ use local_dixeo\service\h5p_packaging_service;
  * Required context: courseid, sectionid, sectionnum.
  */
 class create_h5p_module_action {
-
     /** @var h5p_packaging_service The packaging service used to build and provision activities. */
     protected h5p_packaging_service $packagingservice;
 

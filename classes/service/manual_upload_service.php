@@ -40,7 +40,6 @@ require_once($CFG->libdir . '/filelib.php');
  * Generic manual upload orchestration for SCORM and File activities.
  */
 class manual_upload_service {
-
     /** @var string[] Supported modtype values. */
     private const SUPPORTED_MODTYPES = ['scorm', 'resource'];
 
@@ -269,8 +268,10 @@ class manual_upload_service {
         $course = get_course($courseid);
         $context = context_course::instance($courseid);
         $maxbytes = get_user_max_upload_file_size($context, $CFG->maxbytes, $course->maxbytes);
-        if ($maxbytes != USER_CAN_IGNORE_FILE_SIZE_LIMITS
-                && !empty($uploadedfile['size']) && $uploadedfile['size'] > $maxbytes) {
+        if (
+            $maxbytes != USER_CAN_IGNORE_FILE_SIZE_LIMITS
+                && !empty($uploadedfile['size']) && $uploadedfile['size'] > $maxbytes
+        ) {
             throw new moodle_exception('uploadfilelimitexceeded', 'error');
         }
 

@@ -34,7 +34,7 @@ use local_dixeo\context\context_builder_factory;
 use local_dixeo\context\course_context_builder;
 
 // CLI options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     ['courseid' => 2, 'section' => null, 'mode' => 'teaching', 'help' => false],
     ['c' => 'courseid', 's' => 'section', 'm' => 'mode', 'h' => 'help']
 );

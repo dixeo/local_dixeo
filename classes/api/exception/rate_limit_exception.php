@@ -27,7 +27,6 @@ namespace local_dixeo\api\exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rate_limit_exception extends api_exception {
-
     /** @var int|null Seconds to wait before retrying. */
     protected ?int $retryafter;
 

@@ -32,7 +32,6 @@ namespace local_dixeo\service;
  * Helper class for HTML processing operations.
  */
 class html_helper {
-
     /** @var int Maximum context size in bytes (500KB). */
     public const MAX_CONTEXT_SIZE = 512000;
 

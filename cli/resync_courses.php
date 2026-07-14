@@ -46,7 +46,7 @@ require_once($CFG->libdir . '/clilib.php');
 
 use local_dixeo\service\file_sync_service;
 
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'since'      => '14d',
         'selector'   => 'activity',

@@ -33,7 +33,6 @@ namespace local_dixeo\service;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class h5p_library_service {
-
     /** @var array<string, array{machinename: string, major: int, minor: int}|null> Per-request memo. */
     private static array $cache = [];
 

@@ -41,7 +41,6 @@ use local_dixeo\repository\job_repository;
  * Service for job management operations.
  */
 class job_service {
-
     /** @var client The API client. */
     private client $client;
 

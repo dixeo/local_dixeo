@@ -37,7 +37,6 @@ use local_dixeo\service\job_service;
  * @covers \local_dixeo\service\job_service
  */
 final class job_binding_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();

@@ -30,7 +30,6 @@ use local_dixeo\dto\file_upload_part;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class scorm_vector_extract_service {
-
     /** @var string Prefix for upload filenames (stable per cm id). */
     public const UPLOAD_FILENAME_PREFIX = 'dixeo_scorm_cm';
 

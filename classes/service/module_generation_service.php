@@ -37,7 +37,6 @@ use local_dixeo\dto\operation_result;
  * Service for module generation and fill operations.
  */
 class module_generation_service {
-
     /** @var string API endpoint for module generation (create mode). */
     private const GENERATE_ENDPOINT = '/v1/modules/generate';
 
@@ -261,7 +260,6 @@ class module_generation_service {
             $context = context_builder_factory::buildmoduleeditcontext($cmid);
 
             return $this->fill_module($moduletype, $instructions, $context, $courseid);
-
         } catch (api_exception $e) {
             return operation_result::failed($e->getMessage(), 'api_error');
         } catch (\dml_exception $e) {
@@ -332,7 +330,6 @@ class module_generation_service {
                 $context,
                 (int) $cm->course
             );
-
         } catch (api_exception $e) {
             return operation_result::failed($e->getMessage(), 'api_error');
         } catch (\dml_exception $e) {

@@ -24,7 +24,6 @@ namespace local_dixeo\service;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class designer_self_enrol_service {
-
     /**
      * Ensure the course has an enabled self-enrol instance; optionally set an enrolment key.
      *

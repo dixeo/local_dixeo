@@ -34,7 +34,6 @@ use local_dixeo\dsl\dsl_exception;
  * Trait providing common action field validation.
  */
 trait action_validation {
-
     /**
      * Validate that required fields are present in the action specification.
      *

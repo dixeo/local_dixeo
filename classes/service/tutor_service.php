@@ -38,7 +38,6 @@ use local_dixeo\external\service_factory;
  * Service for tutor message operations.
  */
 class tutor_service {
-
     /** @var job_service The job service for submitting messages. */
     private job_service $jobservice;
 

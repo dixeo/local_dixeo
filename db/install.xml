@@ -40,7 +40,7 @@
         <FIELD NAME="jobid" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="Remote Dixeo job UUID"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle course ID (0 when unknown / pre-course)"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who initiated the job"/>
-        <FIELD NAME="namespace" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Dixeo API namespace"/>
+        <FIELD NAME="namespace" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="default" SEQUENCE="false" COMMENT="Dixeo API namespace"/>
         <FIELD NAME="operation" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="unknown" SEQUENCE="false" COMMENT="Logical operation type"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Unix timestamp when the binding was created"/>
       </FIELDS>

@@ -26,7 +26,6 @@ namespace local_dixeo\service;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class designer_lti_enrol_service {
-
     /**
      * Create one LTI 1.3 enrol instance for the course.
      *
@@ -52,11 +51,13 @@ class designer_lti_enrol_service {
             $membersync = 0;
         }
         $membersyncmode = (int) ($fields['membersyncmode'] ?? \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL);
-        if (!in_array($membersyncmode, [
+        if (
+            !in_array($membersyncmode, [
             \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL,
             \enrol_lti\helper::MEMBER_SYNC_ENROL_NEW,
             \enrol_lti\helper::MEMBER_SYNC_UNENROL_MISSING,
-        ], true)) {
+            ], true)
+        ) {
             $membersyncmode = \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL;
         }
 

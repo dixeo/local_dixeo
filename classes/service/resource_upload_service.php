@@ -39,7 +39,6 @@ require_once($CFG->libdir . '/resourcelib.php');
  * File (mod_resource) manual upload creation.
  */
 class resource_upload_service {
-
     /** @var string Module plugin name. */
     private const MODULE_NAME = 'resource';
 

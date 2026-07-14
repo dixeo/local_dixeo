@@ -32,7 +32,6 @@ namespace local_dixeo\api;
  * Configuration class for job polling parameters.
  */
 class polling_config {
-
     // Fill module timing constants (fast operations, ~2-5 seconds).
     /** @var int Initial delay for fill operations (ms). */
     public const FILL_INITIAL_DELAY_MS = 2000;

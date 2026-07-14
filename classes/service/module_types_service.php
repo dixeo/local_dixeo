@@ -34,7 +34,6 @@ use local_dixeo\api\exception\api_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class module_types_service {
-
     /** @var string Dixeo API endpoint for module type catalogue. */
     private const ENDPOINT = '/v1/modules/types';
 

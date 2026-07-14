@@ -156,7 +156,6 @@ class create_module_from_job extends external_api {
                 ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
 
             return response_factory::module_creation_result(true, $cmid);
-
         } catch (api_exception $e) {
             return response_factory::module_creation_result(
                 false,
@@ -209,5 +208,4 @@ class create_module_from_job extends external_api {
             'errorcode' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
     }
-
 }

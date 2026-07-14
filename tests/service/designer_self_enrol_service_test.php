@@ -33,7 +33,6 @@ use local_dixeo\service\designer_self_enrol_service;
  * @covers \local_dixeo\service\designer_self_enrol_service
  */
 final class designer_self_enrol_service_test extends \advanced_testcase {
-
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

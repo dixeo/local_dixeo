@@ -92,11 +92,16 @@ const relocateToTitle = () => {
 
     // Try to find the course title heading using common selectors across themes.
     const titleSelectors = [
-        '.page-header-headings h1',      // Boost theme
-        '#page-header h1',                // Classic/older themes
-        '.page-context-header h1',        // Some custom themes
-        '#region-main h1:first-of-type',  // Fallback
-        '.course-content-header h1',      // Another pattern
+        // Boost theme.
+        '.page-header-headings h1',
+        // Classic/older themes.
+        '#page-header h1',
+        // Some custom themes.
+        '.page-context-header h1',
+        // Fallback.
+        '#region-main h1:first-of-type',
+        // Another pattern.
+        '.course-content-header h1',
     ];
 
     let titleElement = null;
@@ -338,7 +343,7 @@ const handlePause = async() => {
             updateIndicatorUI();
             schedulePoll();
         }
-        // schedulePoll will no-op here because isEnabled is false.
+        // Calling schedulePoll will no-op here because isEnabled is false.
         schedulePoll();
     } catch (error) {
         // Revert on error.
@@ -375,7 +380,7 @@ const handleDisable = async() => {
             updateIndicatorUI();
             schedulePoll();
         }
-        // schedulePoll will no-op here because isEnabled is false.
+        // Calling schedulePoll will no-op here because isEnabled is false.
         schedulePoll();
     } catch (error) {
         // Revert on error.
@@ -532,6 +537,30 @@ const updateFromStatus = (status) => {
 };
 
 /**
+ * Update progress bar and text from a status payload.
+ *
+ * @param {HTMLElement} container The indicator container.
+ * @param {Object} status The status object.
+ */
+const updateProgressUI = (container, status) => {
+    if (!hasNumber(status.progresspercent)) {
+        return;
+    }
+
+    const progressPercent = toNumber(status.progresspercent);
+    const progressBar = container.querySelector('[data-region="progress-bar"]');
+    if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+        progressBar.setAttribute('aria-valuenow', progressPercent);
+    }
+
+    const progressText = container.querySelector('[data-region="progress-text"]');
+    if (progressText && hasNumber(status.filescompleted) && hasNumber(status.filestotal)) {
+        progressText.textContent = `${toNumber(status.filescompleted)} / ${toNumber(status.filestotal)}`;
+    }
+};
+
+/**
  * Update the indicator UI based on current state.
  *
  * @param {Object|null} status Optional status object with details.
@@ -563,19 +592,8 @@ const updateIndicatorUI = (status = null) => {
     button.className = button.className.replace(/dixeo-sync-btn--\w+/g, '');
     button.classList.add(`dixeo-sync-btn--${statusClass}`);
 
-    // Update progress if available.
-    if (status && hasNumber(status.progresspercent)) {
-        const progressPercent = toNumber(status.progresspercent);
-        const progressBar = container.querySelector('[data-region="progress-bar"]');
-        if (progressBar) {
-            progressBar.style.width = `${progressPercent}%`;
-            progressBar.setAttribute('aria-valuenow', progressPercent);
-        }
-
-        const progressText = container.querySelector('[data-region="progress-text"]');
-        if (progressText && hasNumber(status.filescompleted) && hasNumber(status.filestotal)) {
-            progressText.textContent = `${toNumber(status.filescompleted)} / ${toNumber(status.filestotal)}`;
-        }
+    if (status) {
+        updateProgressUI(container, status);
     }
 
     // Update status message — always, using a minimal fallback when no detailed status is provided.

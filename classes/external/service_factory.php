@@ -45,7 +45,6 @@ use local_dixeo\service\tutor_service;
  * Supports test mock injection for each service type independently.
  */
 class service_factory {
-
     /** @var job_service|null Mock job service instance for unit testing. */
     private static ?job_service $testjobservice = null;
 

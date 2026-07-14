@@ -26,7 +26,6 @@ use local_dixeo\task\poll_image_generation_job;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class image_poll_manager {
-
     /** @var int Stop chaining after this many minute-long poll windows (~1h). */
     public const MAX_CHAIN_SEGMENTS = 60;
 

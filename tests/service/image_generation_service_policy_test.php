@@ -38,7 +38,6 @@ use local_dixeo\service\job_service;
  * @covers \local_dixeo\service\image_generation_service
  */
 final class image_generation_service_policy_test extends \advanced_testcase {
-
     /** @var string Non-null namespace avoids loading Dixeo lib.php in unit context. */
     private const TEST_NAMESPACE = 'phpunit';
 

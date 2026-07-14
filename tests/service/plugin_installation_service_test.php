@@ -35,7 +35,6 @@ use local_dixeo\service\plugin_installation_service;
  * @covers \local_dixeo\service\plugin_installation_service
  */
 final class plugin_installation_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

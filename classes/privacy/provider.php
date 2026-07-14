@@ -45,9 +45,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /** @var string Course AI sync configuration table. */
     public const TABLE_COURSE_AI = 'local_dixeo_course_ai';
 
@@ -255,7 +254,7 @@ class provider implements
             return;
         }
 
-        list($insql, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params['userid'] = $userid;
 
         $DB->execute(
@@ -266,7 +265,7 @@ class provider implements
         );
 
         // Re-bind named params for the second statement (course id placeholders reused).
-        list($insql2, $params2) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        [$insql2, $params2] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params2['userid'] = $userid;
         $params2['timemodified'] = time();
 
@@ -277,7 +276,7 @@ class provider implements
             $params2
         );
 
-        list($insql3, $params3) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        [$insql3, $params3] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params3['userid'] = $userid;
         $DB->delete_records_select(
             self::TABLE_JOBS,
@@ -343,7 +342,7 @@ class provider implements
         }
 
         $courseid = (int) $context->instanceid;
-        list($insql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params['courseid'] = $courseid;
         $params['timemodified'] = time();
 
@@ -354,7 +353,7 @@ class provider implements
             $params
         );
 
-        list($insql2, $params2) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql2, $params2] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params2['courseid'] = $courseid;
         $params2['timemodified'] = time();
 
@@ -365,7 +364,7 @@ class provider implements
             $params2
         );
 
-        list($insql3, $params3) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql3, $params3] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params3['courseid'] = $courseid;
         $DB->delete_records_select(
             self::TABLE_JOBS,

@@ -37,7 +37,6 @@ use local_dixeo\service\file_sync_service;
  * Adhoc task for processing file sync.
  */
 class process_file_sync extends adhoc_task {
-
     /**
      * Get the task name for display.
      *
@@ -86,7 +85,6 @@ class process_file_sync extends adhoc_task {
         try {
             $service->trigger_sync($courseid);
             mtrace("process_file_sync: Successfully synced course {$courseid}");
-
         } catch (api_exception $e) {
             mtrace("process_file_sync: Error syncing course {$courseid}: " . $e->getMessage());
 

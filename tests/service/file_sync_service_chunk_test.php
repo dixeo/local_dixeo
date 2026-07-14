@@ -36,7 +36,6 @@ use local_dixeo\service\file_sync_service;
  * @covers \local_dixeo\service\file_sync_service::compute_expected_files
  */
 final class file_sync_service_chunk_test extends \advanced_testcase {
-
     /** @var string[] Absolute paths of temp files to delete in tearDown. */
     private array $tempfiles = [];
 

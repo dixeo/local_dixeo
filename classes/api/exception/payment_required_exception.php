@@ -27,7 +27,6 @@ namespace local_dixeo\api\exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class payment_required_exception extends api_exception {
-
     /** @var int|null Current credit balance. */
     protected ?int $currentbalance;
 

@@ -33,7 +33,6 @@ use local_dixeo\service\course_certificate_service;
  * @covers \local_dixeo\service\course_certificate_service
  */
 final class course_certificate_service_test extends \advanced_testcase {
-
     public function test_is_course_completed_availability_plugin_enabled_returns_bool(): void {
         $result = course_certificate_service::is_course_completed_availability_plugin_enabled();
         $this->assertIsBool($result);

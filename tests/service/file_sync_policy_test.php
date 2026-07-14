@@ -33,7 +33,6 @@ use local_dixeo\service\file_sync_policy;
  * @covers \local_dixeo\service\file_sync_policy
  */
 final class file_sync_policy_test extends \advanced_testcase {
-
     public function test_course_has_sync_blocks_false_for_site_course(): void {
         $this->resetAfterTest();
 

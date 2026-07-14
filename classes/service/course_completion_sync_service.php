@@ -29,7 +29,6 @@ require_once($CFG->libdir . '/completionlib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_completion_sync_service {
-
     /**
      * Insert missing COMPLETION_CRITERIA_TYPE_ACTIVITY rows for each CM with completion enabled.
      *

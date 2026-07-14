@@ -75,7 +75,6 @@ class cancel_job extends external_api {
                 true,
                 'Job ' . $status . ' successfully'
             );
-
         } catch (api_exception $e) {
             return response_factory::cancellation_result(
                 $params['jobid'],

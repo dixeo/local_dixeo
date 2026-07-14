@@ -33,7 +33,6 @@ use local_dixeo\api\exception\rate_limit_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class client {
-
     /** @var string The API base URL. */
     protected string $baseurl;
 
@@ -437,7 +436,13 @@ class client {
                 'lastpct' => -1.0,
             ];
             $curlextra['CURLOPT_NOPROGRESS'] = false;
-            $curlextra['CURLOPT_XFERINFOFUNCTION'] = static function ($ch, $dltotal, $dlnow, $ultotal, $ulnow) use (
+            $curlextra['CURLOPT_XFERINFOFUNCTION'] = static function (
+                $ch,
+                $dltotal,
+                $dlnow,
+                $ultotal,
+                $ulnow
+            ) use (
                 $uploadprogress,
                 $estimateduploadtotal,
                 $throttle
@@ -493,7 +498,6 @@ class client {
             }
 
             return $parsed;
-
         } finally {
             // Clean up temp files.
             foreach ($tempfiles as $temppath) {

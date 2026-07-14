@@ -128,7 +128,8 @@ if ($hassiteconfig) {
 
     // Conditionally add the Dixeo Course Designer link if the block is installed.
     if (\local_dixeo\service\plugin_installation_service::is_component_installed('block_dixeo_designer')) {
-        $ADMIN->add('courses',
+        $ADMIN->add(
+            'courses',
             new admin_externalpage(
                 'block_dixeo_designer_designacourse',
                 get_string('designacourse', 'block_dixeo_designer'),

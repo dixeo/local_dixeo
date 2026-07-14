@@ -31,7 +31,6 @@ namespace local_dixeo\api\exception;
  * Base exception for Dixeo API errors.
  */
 class api_exception extends \moodle_exception {
-
     /** @var string RFC 7807 error type. */
     protected string $errortype;
 

@@ -37,7 +37,6 @@ use local_dixeo\service\file_sync_service;
  * Callback class for injecting sync indicator.
  */
 class sync_indicator_injector {
-
     /**
      * Inject the sync indicator into the page output.
      *

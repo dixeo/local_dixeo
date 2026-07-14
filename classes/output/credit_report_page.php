@@ -34,7 +34,6 @@ use local_dixeo\dto\credit_balance;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class credit_report_page implements renderable, templatable {
-
     /** @var credit_service The credit service. */
     protected credit_service $creditservice;
 

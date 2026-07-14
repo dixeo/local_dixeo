@@ -28,7 +28,6 @@ namespace local_dixeo;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class admin_setting_credit_balance extends \admin_setting {
-
     /**
      * Constructor.
      *
@@ -135,7 +134,6 @@ class admin_setting_credit_balance extends \admin_setting {
             $html .= \html_writer::end_div();
 
             return $html;
-
         } catch (\Exception $e) {
             // Moodle_exception already formats it.
             $message = $e->getMessage();

@@ -38,7 +38,6 @@ use local_dixeo\service\file_sync_service;
  * @covers \local_dixeo\external\trigger_file_sync
  */
 final class file_sync_service_opt_in_test extends \advanced_testcase {
-
     protected function tearDown(): void {
         service_factory::reset();
         parent::tearDown();

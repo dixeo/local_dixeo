@@ -86,7 +86,6 @@ class set_file_sync_enabled extends external_api {
                 'success' => true,
                 'status' => $status->status,
             ];
-
         } catch (\Throwable $e) {
             return [
                 'success' => false,

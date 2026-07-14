@@ -39,7 +39,6 @@ use local_dixeo\service\module_content_extractor;
  * Abstract base class providing shared context building utilities.
  */
 abstract class abstract_context_builder implements context_builder_interface {
-
     /** @var html_helper HTML processing helper. */
     protected html_helper $htmlhelper;
 

@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_certificate_service {
-
     /**
      * Whether the course-completed availability restriction may be stored on new certificate CMs.
      *
@@ -75,8 +74,10 @@ class course_certificate_service {
         }
 
         $pluginmanager = \core_plugin_manager::instance();
-        if ($pluginmanager->get_plugin_info('mod_coursecertificate') === null
-                || $pluginmanager->get_plugin_info('tool_certificate') === null) {
+        if (
+            $pluginmanager->get_plugin_info('mod_coursecertificate') === null
+                || $pluginmanager->get_plugin_info('tool_certificate') === null
+        ) {
             return false;
         }
 

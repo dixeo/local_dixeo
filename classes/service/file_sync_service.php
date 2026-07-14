@@ -38,7 +38,6 @@ use local_dixeo\repository\course_ai_repository;
  * Service for file synchronization with Dixeo.
  */
 class file_sync_service {
-
     /** @var int Debounce delay in seconds for queued syncs. */
     private const DEBOUNCE_DELAY = 30;
 
@@ -431,7 +430,6 @@ class file_sync_service {
 
             $this->repository->clear_error($courseid);
             $this->repository->update_filehash($courseid, $filehash);
-
         } catch (api_exception $e) {
             // Persist a short UI-safe message only — never raw API response bodies.
             $errormessage = $e->get_error_code() . ': ' . $e->getMessage();
@@ -824,7 +822,6 @@ class file_sync_service {
 
             $status = $apistatus['status'] ?? 'none';
             $this->repository->update_sync_status($courseid, $status, $progress);
-
         } catch (api_exception $e) {
             debugging('Failed to poll sync status: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }

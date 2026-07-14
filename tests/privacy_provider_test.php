@@ -38,7 +38,6 @@ use local_dixeo\privacy\provider;
  * @covers \local_dixeo\privacy\provider
  */
 final class privacy_provider_test extends \core_privacy\tests\provider_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();

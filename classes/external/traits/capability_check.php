@@ -31,7 +31,6 @@ namespace local_dixeo\external\traits;
  * Trait providing capability checking for external API endpoints.
  */
 trait capability_check {
-
     /**
      * Validate course context and check required capabilities.
      *

@@ -27,7 +27,6 @@ namespace local_dixeo\dto;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class credit_balance {
-
     /** @var string Account is active and can process jobs. */
     public const STATE_ACTIVE = 'active';
 

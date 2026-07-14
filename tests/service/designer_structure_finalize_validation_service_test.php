@@ -34,7 +34,6 @@ use local_dixeo\service\module_types_service;
  * @covers \local_dixeo\service\designer_structure_finalize_validation_service
  */
 final class designer_structure_finalize_validation_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

@@ -81,7 +81,6 @@ class trigger_file_sync extends external_api {
                 'filestotal' => $status->filestotal,
                 'filescompleted' => $status->filescompleted,
             ];
-
         } catch (\Throwable $e) {
             return [
                 'success' => false,

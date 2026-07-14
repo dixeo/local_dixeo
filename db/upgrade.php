@@ -188,11 +188,13 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         $oldcap = 'block/dixeo_designer:create';
         $newcap = 'local/dixeo:create';
         foreach ($DB->get_records('role_capabilities', ['capability' => $oldcap]) as $rc) {
-            if (!$DB->record_exists('role_capabilities', [
+            if (
+                !$DB->record_exists('role_capabilities', [
                 'roleid' => $rc->roleid,
                 'capability' => $newcap,
                 'contextid' => $rc->contextid,
-            ])) {
+                ])
+            ) {
                 $rc->capability = $newcap;
                 unset($rc->id);
                 $DB->insert_record('role_capabilities', $rc);
@@ -222,7 +224,7 @@ function xmldb_local_dixeo_upgrade($oldversion) {
         $table->add_field('jobid', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
         $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('namespace', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('namespace', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, 'default');
         $table->add_field('operation', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, 'unknown');
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
 

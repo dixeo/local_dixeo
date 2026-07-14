@@ -9,6 +9,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/* stylelint-disable declaration-no-important --
+   Sync indicator must override theme overflow clipping, Bootstrap dropdown
+   visibility utilities, display:none base state, and print defaults. */
+
 /* ==========================================================================
    Sync Indicator - Inline with course title
    ========================================================================== */
@@ -85,7 +89,7 @@ h2:has(.dixeo-sync-indicator),
     padding: 0.375rem 0.75rem;
     border: 1px solid #e2e8f0;
     border-radius: 1.25rem;
-    background: #ffffff;
+    background: #fff;
     color: #1e293b;
     font-size: 0.8125rem;
     font-weight: 600;
@@ -173,7 +177,8 @@ h2:has(.dixeo-sync-indicator),
    ========================================================================== */
 
 @keyframes dixeo-pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
@@ -190,7 +195,7 @@ h2:has(.dixeo-sync-indicator),
 .dixeo-sync-dropdown {
     min-width: 260px;
     max-width: 300px;
-    background: #ffffff;
+    background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 0.75rem;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);

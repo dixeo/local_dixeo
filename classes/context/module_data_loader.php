@@ -32,7 +32,6 @@ namespace local_dixeo\context;
  * Trait providing shared module data loading for context builders.
  */
 trait module_data_loader {
-
     /** @var int The course module ID. */
     private int $cmid;
 

@@ -33,7 +33,6 @@ namespace local_dixeo\context;
  * Interface for context builders.
  */
 interface context_builder_interface {
-
     /**
      * Build and return the markdown context.
      *

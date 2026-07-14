@@ -37,7 +37,6 @@ use local_dixeo\service\module_types_service;
  * @covers \local_dixeo\external\get_module_types
  */
 final class get_module_types_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
@@ -103,6 +102,7 @@ final class get_module_types_test extends \advanced_testcase {
     }
 
     public function test_courseid_zero_uses_local_create_capability_when_block_installed(): void {
+        $this->require_block_dixeo_designer();
         $this->mock_catalogue([
             ['type' => 'page', 'label' => 'Page (API)', 'description' => '', 'category' => 'content', 'component' => 'mod_page'],
         ]);
@@ -114,11 +114,21 @@ final class get_module_types_test extends \advanced_testcase {
     }
 
     public function test_courseid_zero_rejects_user_without_local_create_capability(): void {
+        $this->require_block_dixeo_designer();
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 
         $this->expectException(\required_capability_exception::class);
         get_module_types::execute(0);
+    }
+
+    /**
+     * Skip when block_dixeo_designer is not available (e.g. standalone local_dixeo CI).
+     */
+    private function require_block_dixeo_designer(): void {
+        if (!\local_dixeo\service\plugin_installation_service::is_component_installed('block_dixeo_designer')) {
+            $this->markTestSkipped('block_dixeo_designer is not installed in this environment.');
+        }
     }
 
     /**

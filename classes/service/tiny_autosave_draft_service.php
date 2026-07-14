@@ -25,7 +25,6 @@ namespace local_dixeo\service;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tiny_autosave_draft_service {
-
     /**
      * Load draft text for the current editing session keys.
      *

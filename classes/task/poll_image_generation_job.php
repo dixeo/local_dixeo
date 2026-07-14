@@ -28,7 +28,6 @@ use local_dixeo\service\image_poll_manager;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class poll_image_generation_job extends \core\task\adhoc_task {
-
     /** @var int Wall-clock seconds to poll inside one task run before chaining. */
     private const POLL_WINDOW_SECONDS = 60;
 
@@ -66,10 +65,12 @@ class poll_image_generation_job extends \core\task\adhoc_task {
             return;
         }
 
-        if ($objectid < 1 || !in_array($scope, [
+        if (
+            $objectid < 1 || !in_array($scope, [
             image_poll_manager::SCOPE_COURSE_OVERVIEW,
             image_poll_manager::SCOPE_FORMAT_SECTION,
-        ], true)) {
+            ], true)
+        ) {
             return;
         }
 
@@ -91,15 +92,19 @@ class poll_image_generation_job extends \core\task\adhoc_task {
                 try {
                     course_image_writer::apply_from_job_result($scope, $objectid, $result, $userid);
                 } catch (\Throwable $e) {
-                    debugging('poll_image_generation_job: apply failed courseid=' . $courseid . ' ' . $e->getMessage(),
-                        DEBUG_DEVELOPER);
+                    debugging(
+                        'poll_image_generation_job: apply failed courseid=' . $courseid . ' ' . $e->getMessage(),
+                        DEBUG_DEVELOPER
+                    );
                 }
                 return;
             }
 
             if ($jobstatus->is_failed()) {
-                debugging('poll_image_generation_job: job failed courseid=' . $courseid . ' job=' . $imagejobid,
-                    DEBUG_DEVELOPER);
+                debugging(
+                    'poll_image_generation_job: job failed courseid=' . $courseid . ' job=' . $imagejobid,
+                    DEBUG_DEVELOPER
+                );
                 return;
             }
 

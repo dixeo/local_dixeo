@@ -34,7 +34,6 @@ use local_dixeo\api\exception\api_exception;
  * Factory class for building standardized API responses.
  */
 class response_factory {
-
     /**
      * Build a success response with optional data payload.
      *

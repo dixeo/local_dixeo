@@ -38,7 +38,7 @@ require_once($CFG->dirroot . '/course/modlib.php');
 require_once($CFG->dirroot . '/mod/resource/lib.php');
 
 // CLI options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'courseid' => null,
         'number' => 10,

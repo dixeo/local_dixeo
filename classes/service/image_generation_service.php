@@ -37,7 +37,6 @@ use local_dixeo\dto\operation_result;
  * Service for course/section image generation and edit operations.
  */
 class image_generation_service {
-
     /** @var string API endpoint for image generation. */
     private const GENERATE_ENDPOINT = '/v1/images/generate';
 

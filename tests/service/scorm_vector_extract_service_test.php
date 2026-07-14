@@ -32,7 +32,6 @@ namespace local_dixeo;
  * @covers \local_dixeo\service\scorm_vector_extract_service
  */
 final class scorm_vector_extract_service_test extends \advanced_testcase {
-
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

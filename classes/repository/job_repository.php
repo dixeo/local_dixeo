@@ -28,7 +28,6 @@ namespace local_dixeo\repository;
  * CRUD helpers for {@see local_dixeo_jobs}.
  */
 class job_repository {
-
     /** @var string Database table name. */
     public const TABLE = 'local_dixeo_jobs';
 
@@ -127,7 +126,7 @@ class job_repository {
             return;
         }
 
-        list($insql, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params['userid'] = $userid;
         $DB->delete_records_select(
             self::TABLE,

@@ -32,7 +32,6 @@ namespace local_dixeo\service;
  * Service for extracting content from Moodle modules.
  */
 class module_content_extractor {
-
     /** @var html_helper HTML processing helper. */
     private html_helper $htmlhelper;
 

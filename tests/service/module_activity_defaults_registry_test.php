@@ -33,7 +33,6 @@ use local_dixeo\service\module_activity_defaults_registry;
  * @covers \local_dixeo\service\module_activity_defaults_registry
  */
 final class module_activity_defaults_registry_test extends \advanced_testcase {
-
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(false);

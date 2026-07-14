@@ -76,7 +76,6 @@ class get_job_status extends external_api {
             }
 
             return $data;
-
         } catch (api_exception $e) {
             return response_factory::job_status_error($params['jobid'], $e);
         }

@@ -38,7 +38,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * SCORM-specific manual upload creation.
  */
 class scorm_creation_service {
-
     /** @var string Module plugin name. */
     private const MODULE_NAME = 'scorm';
 

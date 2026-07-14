@@ -38,7 +38,6 @@ namespace local_dixeo\dsl;
  * supporting AI data paths, variable references, context values, and constants.
  */
 class value_resolver {
-
     /** @var array The AI-generated data from the API response. */
     protected array $aidata;
 

@@ -37,7 +37,6 @@ use local_dixeo\external\service_factory;
  * Observer for file sync related events.
  */
 class file_sync_observer {
-
     /** @var array Module types that contain syncable files or SCORM extracts. */
     private const FILE_MODULE_TYPES = ['resource', 'folder', 'scorm'];
 

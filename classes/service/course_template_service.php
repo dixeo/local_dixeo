@@ -34,7 +34,6 @@ use local_dixeo\api\exception\api_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_template_service {
-
     /** @var string Base API endpoint for course templates. */
     private const ENDPOINT = '/v1/courses/templates';
 

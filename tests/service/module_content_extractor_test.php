@@ -37,7 +37,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * @covers \local_dixeo\service\module_content_extractor
  */
 final class module_content_extractor_test extends \advanced_testcase {
-
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

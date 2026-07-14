@@ -68,7 +68,7 @@ class create_entries_action {
      */
     protected const ENTITY_DEFAULTS = [
         'glossary_entry' => [
-            'timecreated' => null,  // Will be set to current time.
+            'timecreated' => null, // Will be set to current time.
             'timemodified' => null, // Will be set to current time.
             'approved' => 1,
             'usedynalink' => 0,

@@ -48,7 +48,6 @@ use local_dixeo\dsl\actions\create_questions_simplequiz2_action;
  * ```
  */
 class interpreter {
-
     /** @var array Saved variables from action execution (e.g., $module). */
     protected array $variables = [];
 
@@ -145,7 +144,8 @@ class interpreter {
                 $this->variables[$varname] = $result;
 
                 // Track the cmid from the first module creation.
-                if (in_array($action['action'], ['create_module', 'create_h5p_module'], true)
+                if (
+                    in_array($action['action'], ['create_module', 'create_h5p_module'], true)
                     && isset($result['cmid'])
                 ) {
                     $cmid = (int) $result['cmid'];

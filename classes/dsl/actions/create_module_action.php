@@ -60,7 +60,6 @@ require_once($CFG->libdir . '/gradelib.php');
  * - beforemod: Optional course module ID to insert before
  */
 class create_module_action {
-
     /**
      * Module-specific field quirks that cannot be handled by platform defaults.
      *
@@ -190,7 +189,6 @@ class create_module_action {
                 'name' => $moduledata->name ?? '',
                 'modulename' => $modulename,
             ];
-
         } catch (\Exception $e) {
             $transaction->rollback($e);
 

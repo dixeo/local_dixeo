@@ -32,7 +32,6 @@ namespace local_dixeo\repository;
  * Repository class for course AI sync records.
  */
 class course_ai_repository {
-
     /** @var string Database table name. */
     private const TABLE = 'local_dixeo_course_ai';
 

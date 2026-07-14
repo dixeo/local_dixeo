@@ -36,7 +36,6 @@ use local_dixeo\dto\operation_result;
  * Service for course structure generation operations.
  */
 class course_structure_service {
-
     /** @var string API endpoint for course structure generation. */
     private const ENDPOINT = '/v1/courses/structure';
 

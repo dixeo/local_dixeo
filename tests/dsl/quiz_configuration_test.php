@@ -36,7 +36,6 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
  * @covers     \local_dixeo\dsl\actions\create_questions_action
  */
 final class quiz_configuration_test extends \advanced_testcase {
-
     public function test_quiz_review_maxmarks_and_question_marks_sum_to_100(): void {
         global $DB;
 

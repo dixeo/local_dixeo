@@ -31,7 +31,6 @@ namespace local_dixeo\dsl;
  * Provides detailed error information for debugging DSL action execution.
  */
 class dsl_exception extends \moodle_exception {
-
     /** @var string The action type that failed. */
     protected string $actiontype;
 

@@ -36,7 +36,6 @@ use local_dixeo\service\module_content_extractor;
  * Factory for creating context builders.
  */
 class context_builder_factory {
-
     /** @var html_helper|null Shared HTML helper instance. */
     private static ?html_helper $sharedhtmlhelper = null;
 

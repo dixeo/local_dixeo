@@ -83,7 +83,6 @@ class generate_module extends external_api {
             );
 
             return $result->to_array();
-
         } catch (api_exception $e) {
             return response_factory::job_error($e);
         }

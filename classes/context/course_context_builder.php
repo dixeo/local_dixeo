@@ -37,7 +37,6 @@ use local_dixeo\service\module_content_extractor;
  * Builds course-wide context markdown for AI processing.
  */
 class course_context_builder extends abstract_context_builder {
-
     /**
      * Context mode for teaching content (page, label, book).
      * Uses tiered approach: full detail for target, preview for adjacent, titles for rest.
