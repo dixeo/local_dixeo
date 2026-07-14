@@ -51,6 +51,9 @@ class provider implements
     /** @var string Course AI sync configuration table. */
     public const TABLE_COURSE_AI = 'local_dixeo_course_ai';
 
+    /** @var string Local remote-job ownership table. */
+    public const TABLE_JOBS = 'local_dixeo_jobs';
+
     /**
      * Describe metadata stored or transmitted by this plugin.
      *
@@ -75,6 +78,19 @@ class provider implements
             'privacy:metadata:course_ai'
         );
 
+        $collection->add_database_table(
+            self::TABLE_JOBS,
+            [
+                'jobid' => 'privacy:metadata:jobs:jobid',
+                'courseid' => 'privacy:metadata:jobs:courseid',
+                'userid' => 'privacy:metadata:jobs:userid',
+                'namespace' => 'privacy:metadata:jobs:namespace',
+                'operation' => 'privacy:metadata:jobs:operation',
+                'timecreated' => 'privacy:metadata:jobs:timecreated',
+            ],
+            'privacy:metadata:jobs'
+        );
+
         $collection->add_external_location_link(
             'dixeo_api',
             [
@@ -94,7 +110,7 @@ class provider implements
     }
 
     /**
-     * Get course contexts that contain sync records linked to the user.
+     * Get course contexts that contain sync or job records linked to the user.
      *
      * @param int $userid The user ID.
      * @return contextlist
@@ -111,6 +127,16 @@ class provider implements
             'contextlevel' => CONTEXT_COURSE,
             'enabledby' => $userid,
             'disabledby' => $userid,
+        ]);
+
+        $sql = "SELECT ctx.id
+                  FROM {" . self::TABLE_JOBS . "} j
+                  JOIN {context} ctx ON ctx.instanceid = j.courseid AND ctx.contextlevel = :contextlevel
+                 WHERE j.userid = :userid AND j.courseid > 0";
+
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_COURSE,
+            'userid' => $userid,
         ]);
 
         return $contextlist;
@@ -137,37 +163,54 @@ class provider implements
 
             $courseid = (int) $context->instanceid;
             $record = $DB->get_record(self::TABLE_COURSE_AI, ['courseid' => $courseid]);
-            if ($record === false) {
-                continue;
+            if ($record) {
+                $linked = ((int) ($record->enabledby ?? 0) === $userid)
+                    || ((int) ($record->disabledby ?? 0) === $userid);
+                if ($linked) {
+                    $data = (object) [
+                        'courseid' => (int) $record->courseid,
+                        'enabled' => transform::yesno((bool) $record->enabled),
+                        'syncstatus' => (string) $record->syncstatus,
+                        'errormessage' => $record->errormessage,
+                        'enabledby' => (int) ($record->enabledby ?? 0) === $userid
+                            ? transform::yesno(true)
+                            : transform::yesno(false),
+                        'enabledat' => !empty($record->enabledat) ? transform::datetime((int) $record->enabledat) : null,
+                        'disabledby' => (int) ($record->disabledby ?? 0) === $userid
+                            ? transform::yesno(true)
+                            : transform::yesno(false),
+                        'disabledat' => !empty($record->disabledat) ? transform::datetime((int) $record->disabledat) : null,
+                        'timecreated' => transform::datetime((int) $record->timecreated),
+                        'timemodified' => transform::datetime((int) $record->timemodified),
+                    ];
+
+                    writer::with_context($context)->export_data(
+                        [get_string('privacy:path:course_ai', 'local_dixeo')],
+                        $data
+                    );
+                }
             }
 
-            $linked = ((int) ($record->enabledby ?? 0) === $userid)
-                || ((int) ($record->disabledby ?? 0) === $userid);
-            if (!$linked) {
-                continue;
+            $jobs = $DB->get_records(self::TABLE_JOBS, [
+                'courseid' => $courseid,
+                'userid' => $userid,
+            ]);
+            if ($jobs) {
+                $exportedjobs = [];
+                foreach ($jobs as $job) {
+                    $exportedjobs[] = (object) [
+                        'jobid' => (string) $job->jobid,
+                        'courseid' => (int) $job->courseid,
+                        'namespace' => (string) $job->namespace,
+                        'operation' => (string) $job->operation,
+                        'timecreated' => transform::datetime((int) $job->timecreated),
+                    ];
+                }
+                writer::with_context($context)->export_data(
+                    [get_string('privacy:path:jobs', 'local_dixeo')],
+                    (object) ['jobs' => $exportedjobs]
+                );
             }
-
-            $data = (object) [
-                'courseid' => (int) $record->courseid,
-                'enabled' => transform::yesno((bool) $record->enabled),
-                'syncstatus' => (string) $record->syncstatus,
-                'errormessage' => $record->errormessage,
-                'enabledby' => (int) ($record->enabledby ?? 0) === $userid
-                    ? transform::yesno(true)
-                    : transform::yesno(false),
-                'enabledat' => !empty($record->enabledat) ? transform::datetime((int) $record->enabledat) : null,
-                'disabledby' => (int) ($record->disabledby ?? 0) === $userid
-                    ? transform::yesno(true)
-                    : transform::yesno(false),
-                'disabledat' => !empty($record->disabledat) ? transform::datetime((int) $record->disabledat) : null,
-                'timecreated' => transform::datetime((int) $record->timecreated),
-                'timemodified' => transform::datetime((int) $record->timemodified),
-            ];
-
-            writer::with_context($context)->export_data(
-                [get_string('privacy:path:course_ai', 'local_dixeo')],
-                $data
-            );
         }
     }
 
@@ -184,6 +227,7 @@ class provider implements
         }
 
         $DB->delete_records(self::TABLE_COURSE_AI, ['courseid' => (int) $context->instanceid]);
+        $DB->delete_records(self::TABLE_JOBS, ['courseid' => (int) $context->instanceid]);
     }
 
     /**
@@ -232,6 +276,14 @@ class provider implements
               WHERE disabledby = :userid AND courseid {$insql2}",
             $params2
         );
+
+        list($insql3, $params3) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        $params3['userid'] = $userid;
+        $DB->delete_records_select(
+            self::TABLE_JOBS,
+            "userid = :userid AND courseid {$insql3}",
+            $params3
+        );
     }
 
     /**
@@ -260,6 +312,14 @@ class provider implements
             "SELECT cai.disabledby AS userid
                FROM {" . self::TABLE_COURSE_AI . "} cai
               WHERE cai.courseid = :courseid AND cai.disabledby IS NOT NULL AND cai.disabledby > 0",
+            $params
+        );
+
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT j.userid AS userid
+               FROM {" . self::TABLE_JOBS . "} j
+              WHERE j.courseid = :courseid AND j.userid > 0",
             $params
         );
     }
@@ -303,6 +363,14 @@ class provider implements
                 SET disabledby = NULL, disabledat = NULL, timemodified = :timemodified
               WHERE courseid = :courseid AND disabledby {$insql2}",
             $params2
+        );
+
+        list($insql3, $params3) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $params3['courseid'] = $courseid;
+        $DB->delete_records_select(
+            self::TABLE_JOBS,
+            "courseid = :courseid AND userid {$insql3}",
+            $params3
         );
     }
 }

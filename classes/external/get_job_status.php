@@ -67,7 +67,7 @@ class get_job_status extends external_api {
 
         try {
             $service = service_factory::get_job_service();
-            $status = $service->get_job_status($params['jobid']);
+            $status = $service->get_job_status($params['jobid'], $params['courseid']);
 
             $data = $status->to_array();
             // Encode result as JSON since it has dynamic structure.

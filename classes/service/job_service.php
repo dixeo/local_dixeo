@@ -18,7 +18,8 @@
  * Service for managing AI job operations.
  *
  * Handles job submission, status polling, and cancellation for
- * async AI operations via the Dixeo API.
+ * async AI operations via the Dixeo API. Newly created jobs are bound
+ * locally to course/user for subsequent access checks.
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -34,6 +35,7 @@ use local_dixeo\api\polling_config;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\dto\operation_result;
 use local_dixeo\dto\job_status;
+use local_dixeo\repository\job_repository;
 
 /**
  * Service for job management operations.
@@ -46,21 +48,31 @@ class job_service {
     /** @var job_poller The job poller. */
     private job_poller $poller;
 
+    /** @var job_repository Local job ownership store. */
+    private job_repository $jobrepository;
+
     /**
      * Constructor.
      *
      * @param client|null $client Optional API client.
      * @param job_poller|null $poller Optional job poller.
+     * @param job_repository|null $jobrepository Optional job repository.
      */
-    public function __construct(?client $client = null, ?job_poller $poller = null) {
+    public function __construct(
+        ?client $client = null,
+        ?job_poller $poller = null,
+        ?job_repository $jobrepository = null
+    ) {
         $this->client = $client ?? new client();
         $this->poller = $poller ?? new job_poller($this->client);
+        $this->jobrepository = $jobrepository ?? new job_repository();
     }
 
     /**
      * Submit a job to the API without waiting for completion.
      *
      * Returns immediately with jobid. Use get_job_status() to poll.
+     * Registers a local course/user binding for the returned job.
      *
      * @param string $endpoint The API endpoint to submit to.
      * @param array $payload The request payload.
@@ -69,14 +81,17 @@ class job_service {
      */
     public function submit_job(string $endpoint, array $payload): operation_result {
         $response = $this->client->post($endpoint, $payload);
+        $jobid = (string) ($response['id'] ?? '');
+        $this->register_job($jobid, $endpoint, $payload);
 
-        return operation_result::pending($response['id'], 'pending', 0);
+        return operation_result::pending($jobid, 'pending', 0);
     }
 
     /**
      * Submit a job and poll for completion.
      *
      * Blocks until the job completes, fails, or times out.
+     * Registers a local course/user binding for the returned job.
      *
      * @param string $endpoint The API endpoint to submit to.
      * @param array $payload The request payload.
@@ -86,7 +101,8 @@ class job_service {
      */
     public function submit_and_wait(string $endpoint, array $payload, string $jobtype): operation_result {
         $response = $this->client->post($endpoint, $payload);
-        $jobid = $response['id'];
+        $jobid = (string) ($response['id'] ?? '');
+        $this->register_job($jobid, $endpoint, $payload);
         $config = polling_config::for_job_type($jobtype);
 
         return $this->poller->poll($jobid, $config);
@@ -95,22 +111,38 @@ class job_service {
     /**
      * Get the status of a job.
      *
+     * When $courseid is provided, the job must be registered to that course.
+     *
      * @param string $jobid The job UUID.
+     * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
      * @return job_status The current job status.
      * @throws api_exception If an API error occurs.
+     * @throws \moodle_exception If the job is not bound to the given course.
      */
-    public function get_job_status(string $jobid): job_status {
+    public function get_job_status(string $jobid, ?int $courseid = null): job_status {
+        if ($courseid !== null) {
+            $this->require_job_for_course($jobid, $courseid);
+        }
+
         return $this->poller->get_job_status($jobid);
     }
 
     /**
      * Cancel a running job.
      *
+     * When $courseid is provided, the job must be registered to that course.
+     *
      * @param string $jobid The job UUID to cancel.
+     * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
      * @return array The cancellation response from the API.
      * @throws api_exception If an API error occurs.
+     * @throws \moodle_exception If the job is not bound to the given course.
      */
-    public function cancel_job(string $jobid): array {
+    public function cancel_job(string $jobid, ?int $courseid = null): array {
+        if ($courseid !== null) {
+            $this->require_job_for_course($jobid, $courseid);
+        }
+
         return $this->client->post('/v1/jobs/' . $jobid . '/cancel', []);
     }
 
@@ -121,11 +153,32 @@ class job_service {
      *
      * @param string $jobid The job UUID.
      * @param string $jobtype The job type for polling configuration.
+     * @param int|null $courseid Optional course ownership check.
      * @return operation_result The operation result.
      * @throws api_exception If an API error occurs.
+     * @throws \moodle_exception If the job is not bound to the given course.
      */
-    public function wait_for_job(string $jobid, string $jobtype): operation_result {
+    public function wait_for_job(string $jobid, string $jobtype, ?int $courseid = null): operation_result {
+        if ($courseid !== null) {
+            $this->require_job_for_course($jobid, $courseid);
+        }
+
         return $this->poller->poll_for_type($jobid, $jobtype);
+    }
+
+    /**
+     * Ensure the job is registered to the given course.
+     *
+     * Uses a single error string for missing and mismatched jobs to avoid leaking existence.
+     *
+     * @param string $jobid Remote job UUID.
+     * @param int $courseid Expected course ID.
+     * @throws \moodle_exception When the binding is missing or mismatched.
+     */
+    public function require_job_for_course(string $jobid, int $courseid): void {
+        if (!$this->jobrepository->belongs_to_course($jobid, $courseid)) {
+            throw new \moodle_exception('error:job_not_found', 'local_dixeo');
+        }
     }
 
     /**
@@ -144,5 +197,63 @@ class job_service {
      */
     public function get_poller(): job_poller {
         return $this->poller;
+    }
+
+    /**
+     * Get the job repository.
+     *
+     * @return job_repository
+     */
+    public function get_job_repository(): job_repository {
+        return $this->jobrepository;
+    }
+
+    /**
+     * Register a local binding for a remote job using the request payload.
+     *
+     * @param string $jobid Remote job UUID.
+     * @param string $endpoint API endpoint used to create the job.
+     * @param array $payload Request payload.
+     */
+    private function register_job(string $jobid, string $endpoint, array $payload): void {
+        global $USER, $CFG;
+
+        if (trim($jobid) === '') {
+            return;
+        }
+
+        require_once($CFG->dirroot . '/local/dixeo/lib.php');
+
+        $courseid = (int) ($payload['courseId'] ?? $payload['courseid'] ?? 0);
+        $userid = (int) ($payload['userId'] ?? $payload['userid'] ?? 0);
+        if ($userid < 1 && !empty($USER->id)) {
+            $userid = (int) $USER->id;
+        }
+
+        $namespace = (string) ($payload['namespace'] ?? \local_dixeo_get_configured_namespace());
+        $operation = $this->operation_from_endpoint($endpoint);
+
+        $this->jobrepository->register($jobid, $courseid, $userid, $namespace, $operation);
+    }
+
+    /**
+     * Map an API endpoint to a short operation label.
+     *
+     * @param string $endpoint API path.
+     * @return string
+     */
+    private function operation_from_endpoint(string $endpoint): string {
+        $map = [
+            '/v1/modules/generate' => 'module_generate',
+            '/v1/modules/fill' => 'module_fill',
+            '/v1/modules/edit' => 'module_edit',
+            '/v1/tutor/messages' => 'tutor_message',
+            '/v1/images/generate' => 'image_generate',
+            '/v1/images/edit' => 'image_edit',
+            '/v1/courses/structure' => 'course_structure',
+        ];
+
+        $normalized = rtrim($endpoint, '/');
+        return $map[$normalized] ?? 'unknown';
     }
 }

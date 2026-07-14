@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/dixeo/db" VERSION="20250115" COMMENT="XMLDB file for Moodle local/dixeo">
+<XMLDB PATH="local/dixeo/db" VERSION="20260714" COMMENT="XMLDB file for Moodle local/dixeo">
   <TABLES>
     <TABLE NAME="local_dixeo_course_ai" COMMENT="Stores AI file sync configuration and status per course">
       <FIELDS>
@@ -32,6 +32,25 @@
       <INDEXES>
         <INDEX NAME="idx_syncstatus" UNIQUE="false" FIELDS="syncstatus" COMMENT="Index for filtering by sync status"/>
         <INDEX NAME="idx_enabled" UNIQUE="false" FIELDS="enabled" COMMENT="Index for filtering enabled courses"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_dixeo_jobs" COMMENT="Local binding between remote Dixeo job IDs and Moodle course/user">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="jobid" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="Remote Dixeo job UUID"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Moodle course ID (0 when unknown / pre-course)"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who initiated the job"/>
+        <FIELD NAME="namespace" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Dixeo API namespace"/>
+        <FIELD NAME="operation" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="unknown" SEQUENCE="false" COMMENT="Logical operation type"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Unix timestamp when the binding was created"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_jobid" UNIQUE="true" FIELDS="jobid" COMMENT="Unique remote job UUID"/>
+        <INDEX NAME="idx_courseid" UNIQUE="false" FIELDS="courseid" COMMENT="Lookup by course"/>
+        <INDEX NAME="idx_userid" UNIQUE="false" FIELDS="userid" COMMENT="Lookup by user"/>
       </INDEXES>
     </TABLE>
   </TABLES>

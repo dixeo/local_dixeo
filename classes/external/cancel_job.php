@@ -67,7 +67,7 @@ class cancel_job extends external_api {
 
         try {
             $service = service_factory::get_job_service();
-            $result = $service->cancel_job($params['jobid']);
+            $result = $service->cancel_job($params['jobid'], $params['courseid']);
 
             $status = $result['status'] ?? 'cancelled';
             return response_factory::cancellation_result(

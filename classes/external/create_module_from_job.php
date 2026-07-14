@@ -97,7 +97,7 @@ class create_module_from_job extends external_api {
 
         try {
             $jobservice = service_factory::get_job_service();
-            $status = $jobservice->get_job_status($params['jobid']);
+            $status = $jobservice->get_job_status($params['jobid'], $params['courseid']);
 
             if (!$status->is_completed()) {
                 return response_factory::module_creation_result(
@@ -164,11 +164,19 @@ class create_module_from_job extends external_api {
                 $e->getMessage(),
                 $e->get_error_code()
             );
-        } catch (\Exception $e) {
+        } catch (\moodle_exception $e) {
+            if ($e->errorcode === 'error:job_not_found') {
+                return response_factory::module_creation_result(
+                    false,
+                    0,
+                    get_string('error:job_not_found', 'local_dixeo'),
+                    'job_not_found'
+                );
+            }
             // For moodle_exception (including dsl_exception), getMessage() returns the
             // language string key, not the detailed error. Extract debuginfo for details.
             $message = $e->getMessage();
-            if ($e instanceof \moodle_exception && !empty($e->debuginfo)) {
+            if (!empty($e->debuginfo)) {
                 $message = $e->debuginfo;
             }
 
@@ -176,6 +184,13 @@ class create_module_from_job extends external_api {
                 false,
                 0,
                 $message,
+                'dsl_execution_error'
+            );
+        } catch (\Exception $e) {
+            return response_factory::module_creation_result(
+                false,
+                0,
+                $e->getMessage(),
                 'dsl_execution_error'
             );
         }
