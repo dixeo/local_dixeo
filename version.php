@@ -29,4 +29,4 @@ $plugin->version   = 2026071400;        // The current plugin version (Date: YYY
 $plugin->requires  = 2024100700;        // Requires Moodle 4.5+.
 $plugin->component = 'local_dixeo';     // Full name of the plugin.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.1';
+$plugin->release   = '1.7.0';
