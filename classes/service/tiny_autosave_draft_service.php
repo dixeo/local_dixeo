@@ -16,8 +16,6 @@
 
 namespace local_dixeo\service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Reads HTML draft text from core tiny_autosave (TinyMCE autosave plugin).
  *
@@ -27,7 +25,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tiny_autosave_draft_service {
-
     /**
      * Load draft text for the current editing session keys.
      *

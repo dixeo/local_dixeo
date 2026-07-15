@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for designer finalize structure validation.
@@ -28,19 +28,20 @@ namespace local_dixeo;
 use local_dixeo\service\designer_structure_finalize_validation_service;
 use local_dixeo\service\module_types_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for designer structure finalize validation service.
+ *
  * @covers \local_dixeo\service\designer_structure_finalize_validation_service
  */
 final class designer_structure_finalize_validation_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
     }
 
     /**
+     * Build a minimal module-type catalogue containing only page (and quiz).
+     *
      * @return array<int, array<string, mixed>>
      */
     private function catalogue_page_only(): array {

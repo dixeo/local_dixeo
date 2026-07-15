@@ -27,7 +27,6 @@ namespace local_dixeo\dto;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class credit_balance {
-
     /** @var string Account is active and can process jobs. */
     public const STATE_ACTIVE = 'active';
 
@@ -44,7 +43,9 @@ class credit_balance {
      * @param string $state Account state (active, frozen, suspended).
      */
     public function __construct(
+        /** @var int Current credit balance. */
         public readonly int $credits,
+        /** @var string Account state (active, frozen, suspended). */
         public readonly string $state
     ) {
     }

@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Creates mod_scorm instances from a user draft package file.
@@ -38,7 +38,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * SCORM-specific manual upload creation.
  */
 class scorm_creation_service {
-
     /** @var string Module plugin name. */
     private const MODULE_NAME = 'scorm';
 

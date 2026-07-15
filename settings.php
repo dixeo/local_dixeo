@@ -23,8 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
 
+defined('MOODLE_INTERNAL') || die();
 if ($hassiteconfig) {
     // Create settings page.
     $settings = new admin_settingpage('local_dixeo', get_string('pluginname', 'local_dixeo'));
@@ -128,12 +128,13 @@ if ($hassiteconfig) {
 
     // Conditionally add the Dixeo Course Designer link if the block is installed.
     if (\local_dixeo\service\plugin_installation_service::is_component_installed('block_dixeo_designer')) {
-        $ADMIN->add('courses',
+        $ADMIN->add(
+            'courses',
             new admin_externalpage(
                 'block_dixeo_designer_designacourse',
                 get_string('designacourse', 'block_dixeo_designer'),
                 new moodle_url('/blocks/dixeo_designer/designer.php'),
-                array('local/dixeo:create')
+                ['local/dixeo:create']
             ),
             'restorecourse'
         );

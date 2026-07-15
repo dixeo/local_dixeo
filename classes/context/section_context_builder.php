@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Context builder for section-level context.
  *
@@ -16,8 +31,6 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 
@@ -25,9 +38,8 @@ use local_dixeo\service\module_content_extractor;
  * Builds section-level context markdown for AI processing.
  */
 class section_context_builder extends abstract_context_builder {
-
     /** @var int The section ID (course_sections.id). */
-    private int $sectionId;
+    private int $sectionid;
 
     /** @var object|null Cached section record. */
     private ?object $section = null;
@@ -41,17 +53,17 @@ class section_context_builder extends abstract_context_builder {
     /**
      * Constructor.
      *
-     * @param int $sectionId The section ID (course_sections.id).
-     * @param html_helper|null $htmlHelper Optional HTML helper.
-     * @param module_content_extractor|null $contentExtractor Optional content extractor.
+     * @param int $sectionid The section ID (course_sections.id).
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
      */
     public function __construct(
-        int $sectionId,
-        ?html_helper $htmlHelper = null,
-        ?module_content_extractor $contentExtractor = null
+        int $sectionid,
+        ?html_helper $htmlhelper = null,
+        ?module_content_extractor $contentextractor = null
     ) {
-        parent::__construct($htmlHelper, $contentExtractor);
-        $this->sectionId = $sectionId;
+        parent::__construct($htmlhelper, $contentextractor);
+        $this->sectionid = $sectionid;
     }
 
     /**
@@ -68,13 +80,13 @@ class section_context_builder extends abstract_context_builder {
         $lines[] = "## Course: {$this->course->fullname}";
         $lines[] = '';
 
-        $sectionName = $this->get_section_name($this->course, $this->section);
-        $lines[] = "## Section: {$sectionName}";
+        $sectionname = $this->get_section_name($this->course, $this->section);
+        $lines[] = "## Section: {$sectionname}";
         $lines[] = '';
 
         if (!empty($this->section->summary)) {
             $lines[] = '### Section Summary';
-            $lines[] = $this->htmlHelper->clean_html($this->section->summary);
+            $lines[] = $this->htmlhelper->clean_html($this->section->summary);
             $lines[] = '';
         }
 
@@ -97,11 +109,11 @@ class section_context_builder extends abstract_context_builder {
      * @return void
      * @throws \dml_exception If section or course not found.
      */
-    private function loadSectionData(): void {
+    private function loadsectiondata(): void {
         global $DB;
 
         if ($this->section === null) {
-            $this->section = $DB->get_record('course_sections', ['id' => $this->sectionId], '*', MUST_EXIST);
+            $this->section = $DB->get_record('course_sections', ['id' => $this->sectionid], '*', MUST_EXIST);
             $this->course = $DB->get_record('course', ['id' => $this->section->course], '*', MUST_EXIST);
             $this->modinfo = get_fast_modinfo($this->course);
         }
@@ -112,10 +124,10 @@ class section_context_builder extends abstract_context_builder {
      *
      * @return array Lines of markdown for section modules.
      */
-    private function buildSectionModules(): array {
-        $sectionInfo = $this->modinfo->get_section_info($this->section->section);
+    private function buildsectionmodules(): array {
+        $sectioninfo = $this->modinfo->get_section_info($this->section->section);
 
-        if (!$sectionInfo) {
+        if (!$sectioninfo) {
             return [];
         }
 
@@ -137,7 +149,7 @@ class section_context_builder extends abstract_context_builder {
             $fileannotation = $this->get_file_annotation($cm);
             $lines[] = "#### [{$cm->modname}] {$cm->name}{$fileannotation}";
 
-            $content = $this->contentExtractor->get_preview($cm);
+            $content = $this->contentextractor->get_preview($cm);
 
             if (!empty($content)) {
                 $lines[] = $content;

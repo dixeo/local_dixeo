@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * CLI script to bulk add visible "File" resources to a Moodle course.
  *
@@ -23,7 +38,7 @@ require_once($CFG->dirroot . '/course/modlib.php');
 require_once($CFG->dirroot . '/mod/resource/lib.php');
 
 // CLI options.
-list($options, $unrecognized) = cli_get_params(
+[$options, $unrecognized] = cli_get_params(
     [
         'courseid' => null,
         'number' => 10,
@@ -136,7 +151,8 @@ for ($i = 0; $i < $instances; $i++) {
     // Unique content.
     $filename = "test_file_{$num}.txt";
     $uniquekey = 'KEY-' . strtoupper(bin2hex(random_bytes(6)));
-    $content = "Automated test file {$num}\nUnique key: {$uniquekey}\nCourse: {$course->fullname}\nCreated: " . date('Y-m-d H:i:s') . "\n";
+    $content = "Automated test file {$num}\nUnique key: {$uniquekey}\n"
+        . "Course: {$course->fullname}\nCreated: " . date('Y-m-d H:i:s') . "\n";
 
     // Draft file-manager.
     $draftitemid = file_get_unused_draft_itemid();

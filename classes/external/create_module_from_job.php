@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Web service to create a module from a completed job.
  *
@@ -81,8 +96,8 @@ class create_module_from_job extends external_api {
         self::validate_course_capability($params['courseid'], true);
 
         try {
-            $jobService = service_factory::get_job_service();
-            $status = $jobService->get_job_status($params['jobid']);
+            $jobservice = service_factory::get_job_service();
+            $status = $jobservice->get_job_status($params['jobid'], $params['courseid']);
 
             if (!$status->is_completed()) {
                 return response_factory::module_creation_result(
@@ -141,7 +156,6 @@ class create_module_from_job extends external_api {
                 ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
 
             return response_factory::module_creation_result(true, $cmid);
-
         } catch (api_exception $e) {
             return response_factory::module_creation_result(
                 false,
@@ -149,11 +163,19 @@ class create_module_from_job extends external_api {
                 $e->getMessage(),
                 $e->get_error_code()
             );
-        } catch (\Exception $e) {
+        } catch (\moodle_exception $e) {
+            if ($e->errorcode === 'error:job_not_found') {
+                return response_factory::module_creation_result(
+                    false,
+                    0,
+                    get_string('error:job_not_found', 'local_dixeo'),
+                    'job_not_found'
+                );
+            }
             // For moodle_exception (including dsl_exception), getMessage() returns the
             // language string key, not the detailed error. Extract debuginfo for details.
             $message = $e->getMessage();
-            if ($e instanceof \moodle_exception && !empty($e->debuginfo)) {
+            if (!empty($e->debuginfo)) {
                 $message = $e->debuginfo;
             }
 
@@ -161,6 +183,13 @@ class create_module_from_job extends external_api {
                 false,
                 0,
                 $message,
+                'dsl_execution_error'
+            );
+        } catch (\Exception $e) {
+            return response_factory::module_creation_result(
+                false,
+                0,
+                $e->getMessage(),
                 'dsl_execution_error'
             );
         }
@@ -179,5 +208,4 @@ class create_module_from_job extends external_api {
             'errorcode' => new external_value(PARAM_ALPHANUMEXT, 'Error code if failed', VALUE_OPTIONAL),
         ]);
     }
-
 }

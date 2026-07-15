@@ -33,7 +33,6 @@ use local_dixeo\api\exception\rate_limit_exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class client {
-
     /** @var string The API base URL. */
     protected string $baseurl;
 
@@ -150,8 +149,8 @@ class client {
             }
             $response = $curl->delete($url);
         } else {
-            $jsonPayload = json_encode($data);
-            if ($jsonPayload === false) {
+            $jsonpayload = json_encode($data);
+            if ($jsonpayload === false) {
                 throw new api_exception(
                     'invalid_payload',
                     'Failed to encode request payload as JSON: ' . json_last_error_msg(),
@@ -162,7 +161,7 @@ class client {
             if ($method === 'PUT') {
                 $curl->setopt(['CURLOPT_CUSTOMREQUEST' => 'PUT']);
             }
-            $response = $curl->post($url, $jsonPayload);
+            $response = $curl->post($url, $jsonpayload);
         }
 
         // Check for curl errors.
@@ -189,11 +188,20 @@ class client {
      * @throws api_exception If the response indicates an error.
      */
     protected function parse_response(string $response, array $info): array {
-        $httpcode = $info['http_code'] ?? 0;
+        $httpcode = (int) ($info['http_code'] ?? 0);
+        $url = (string) ($info['url'] ?? '');
+        $contenttype = (string) ($info['content_type'] ?? '');
+        $responsebytes = strlen($response);
         $data = json_decode($response, true);
 
-        // Debug logging.
-        debugging('Dixeo API Response - HTTP Code: ' . $httpcode . ', Response: ' . substr($response, 0, 1000), DEBUG_DEVELOPER);
+        // Log metadata only — never response bodies (may contain course content or PII).
+        debugging(sprintf(
+            'Dixeo API Response - HTTP %d, bytes=%d, content_type=%s, url=%s',
+            $httpcode,
+            $responsebytes,
+            $contenttype !== '' ? $contenttype : 'n/a',
+            $url !== '' ? $url : 'n/a'
+        ), DEBUG_DEVELOPER);
 
         // Handle 204 No Content (e.g., DELETE responses) — no body to parse.
         if ($httpcode === 204) {
@@ -206,7 +214,11 @@ class client {
                 'invalid_response',
                 'Invalid JSON response from Dixeo API',
                 $httpcode,
-                ['raw_response' => substr($response, 0, 500)]
+                [
+                    'response_bytes' => $responsebytes,
+                    'json_error' => json_last_error_msg(),
+                    'content_type' => $contenttype,
+                ]
             );
         }
 
@@ -216,8 +228,16 @@ class client {
         }
 
         // Error responses follow RFC 7807 (Problem Details).
-        debugging('Dixeo API Error - Code: ' . $httpcode . ', Error data: ' . json_encode($data), DEBUG_DEVELOPER);
-        throw api_exception::from_response($data, $httpcode);
+        $errortype = is_array($data) ? (string) ($data['type'] ?? 'unknown_error') : 'unknown_error';
+        $errortitle = is_array($data) ? (string) ($data['title'] ?? '') : '';
+        debugging(sprintf(
+            'Dixeo API Error - HTTP %d, type=%s, title=%s, url=%s',
+            $httpcode,
+            $errortype,
+            $errortitle !== '' ? $errortitle : 'n/a',
+            $url !== '' ? $url : 'n/a'
+        ), DEBUG_DEVELOPER);
+        throw api_exception::from_response(is_array($data) ? $data : [], $httpcode);
     }
 
     /**
@@ -304,8 +324,8 @@ class client {
      * @param bool $finalchunk When false, the server treats this upload as an intermediate chunk
      *     of a multi-part sync and only appends the supplied files without pruning anything that
      *     is no longer part of the course. Defaults to true (single-call behaviour).
-     * @param list<array{hash: string, filename: string}>|null $expectedfiles When $finalchunk is true and the sync
-     *     was split across several chunks, this should be the full manifest of expected files for the course.
+     * @param array|null $expectedfiles When $finalchunk is true and the sync was split across several chunks,
+     *     this should be the full manifest of expected files for the course (each row: hash, filename).
      *     Supplied to the server so it knows which older files to drop and which prior chunk uploads to index.
      *     Ignored when $finalchunk is false, and unnecessary on a single-call sync.
      * @param int|null $expectedfilescount Total number of files expected after this sync. Sent on every chunk.
@@ -416,7 +436,13 @@ class client {
                 'lastpct' => -1.0,
             ];
             $curlextra['CURLOPT_NOPROGRESS'] = false;
-            $curlextra['CURLOPT_XFERINFOFUNCTION'] = static function ($ch, $dltotal, $dlnow, $ultotal, $ulnow) use (
+            $curlextra['CURLOPT_XFERINFOFUNCTION'] = static function (
+                $ch,
+                $dltotal,
+                $dlnow,
+                $ultotal,
+                $ulnow
+            ) use (
                 $uploadprogress,
                 $estimateduploadtotal,
                 $throttle
@@ -472,7 +498,6 @@ class client {
             }
 
             return $parsed;
-
         } finally {
             // Clean up temp files.
             foreach ($tempfiles as $temppath) {

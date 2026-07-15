@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for the .h5p package builder.
@@ -31,13 +31,12 @@ use local_dixeo\service\h5p_library_service;
 use local_dixeo\service\h5p_packaging_service;
 use ZipArchive;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for h5p packaging service.
+ *
  * @covers \local_dixeo\service\h5p_packaging_service::build_package
  */
 final class h5p_packaging_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
@@ -64,7 +63,10 @@ final class h5p_packaging_service_test extends \advanced_testcase {
         $this->assertSame('fr', $decoded['language']);
         $this->assertSame('fr', $decoded['defaultLanguage']);
         $this->assertSame('H5P.QuestionSet', $decoded['mainLibrary']);
-        $this->assertSame([['machineName' => 'H5P.QuestionSet', 'majorVersion' => 1, 'minorVersion' => 20]], $decoded['preloadedDependencies']);
+        $this->assertSame(
+            [['machineName' => 'H5P.QuestionSet', 'majorVersion' => 1, 'minorVersion' => 20]],
+            $decoded['preloadedDependencies']
+        );
     }
 
     public function test_build_package_writes_installed_minor_not_pinned_minor(): void {
@@ -121,6 +123,13 @@ final class h5p_packaging_service_test extends \advanced_testcase {
         $service->build_package('H5P.Flashcards 1.7', ['cards' => []]);
     }
 
+    /**
+     * Insert a fake installed H5P library row for packaging tests.
+     *
+     * @param string $machinename
+     * @param int $major
+     * @param int $minor
+     */
     private function seed_library(string $machinename, int $major, int $minor): void {
         global $DB;
 

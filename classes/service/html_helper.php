@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Helper service for HTML processing operations.
  *
@@ -17,7 +32,6 @@ namespace local_dixeo\service;
  * Helper class for HTML processing operations.
  */
 class html_helper {
-
     /** @var int Maximum context size in bytes (500KB). */
     public const MAX_CONTEXT_SIZE = 512000;
 
@@ -68,14 +82,14 @@ class html_helper {
             return $context;
         }
 
-        $truncateAt = $maxsize - self::TRUNCATION_SUFFIX_SPACE;
-        $truncated = $this->utf8_strcut($context, 0, $truncateAt);
+        $truncateat = $maxsize - self::TRUNCATION_SUFFIX_SPACE;
+        $truncated = $this->utf8_strcut($context, 0, $truncateat);
 
         // Try to truncate at a reasonable boundary (newline).
         $lastnewline = $this->utf8_strrpos($truncated, "\n");
-        $boundaryLimit = $maxsize - self::TRUNCATION_BOUNDARY_SEARCH;
+        $boundarylimit = $maxsize - self::TRUNCATION_BOUNDARY_SEARCH;
 
-        if ($lastnewline !== false && $lastnewline > $boundaryLimit) {
+        if ($lastnewline !== false && $lastnewline > $boundarylimit) {
             $truncated = $this->utf8_substr($truncated, 0, $lastnewline);
         }
 
@@ -99,6 +113,12 @@ class html_helper {
         return $this->utf8_substr($text, 0, $maxlength - 3) . '...';
     }
 
+    /**
+     * Return the byte length of a string.
+     *
+     * @param string $text
+     * @return int
+     */
     private function byte_length(string $text): int {
         if (function_exists('mb_strlen')) {
             return mb_strlen($text, '8bit');
@@ -107,6 +127,12 @@ class html_helper {
         return strlen($text);
     }
 
+    /**
+     * Return the UTF-8 character length of a string.
+     *
+     * @param string $text
+     * @return int
+     */
     private function utf8_length(string $text): int {
         if (function_exists('mb_strlen')) {
             return mb_strlen($text, 'UTF-8');
@@ -115,6 +141,14 @@ class html_helper {
         return strlen($text);
     }
 
+    /**
+     * Return a UTF-8 safe substring.
+     *
+     * @param string $text
+     * @param int $start
+     * @param int|null $length
+     * @return string
+     */
     private function utf8_substr(string $text, int $start, ?int $length = null): string {
         if (function_exists('mb_substr')) {
             if ($length === null) {
@@ -131,6 +165,14 @@ class html_helper {
         return substr($text, $start, $length);
     }
 
+    /**
+     * Return a byte-oriented UTF-8 safe cut of a string.
+     *
+     * @param string $text
+     * @param int $start
+     * @param int $length
+     * @return string
+     */
     private function utf8_strcut(string $text, int $start, int $length): string {
         if (function_exists('mb_strcut')) {
             return mb_strcut($text, $start, $length, 'UTF-8');
@@ -139,6 +181,13 @@ class html_helper {
         return substr($text, $start, $length);
     }
 
+    /**
+     * Find the last occurrence of a needle in UTF-8 text.
+     *
+     * @param string $text
+     * @param string $needle
+     * @return int|false
+     */
     private function utf8_strrpos(string $text, string $needle): int|false {
         if (function_exists('mb_strrpos')) {
             return mb_strrpos($text, $needle, 0, 'UTF-8');

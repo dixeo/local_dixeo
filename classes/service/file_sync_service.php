@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Service for managing AI file synchronization with Dixeo.
  *
@@ -23,7 +38,6 @@ use local_dixeo\repository\course_ai_repository;
  * Service for file synchronization with Dixeo.
  */
 class file_sync_service {
-
     /** @var int Debounce delay in seconds for queued syncs. */
     private const DEBOUNCE_DELAY = 30;
 
@@ -416,13 +430,11 @@ class file_sync_service {
 
             $this->repository->clear_error($courseid);
             $this->repository->update_filehash($courseid, $filehash);
-
         } catch (api_exception $e) {
-            // Include raw response in error message if available (helps debug invalid JSON errors).
-            $errormessage = $e->getMessage();
-            $details = $e->get_details();
-            if (!empty($details['raw_response'])) {
-                $errormessage .= ' | Raw: ' . $details['raw_response'];
+            // Persist a short UI-safe message only — never raw API response bodies.
+            $errormessage = $e->get_error_code() . ': ' . $e->getMessage();
+            if (\core_text::strlen($errormessage) > 500) {
+                $errormessage = \core_text::substr($errormessage, 0, 497) . '...';
             }
             $this->repository->record_error($courseid, $errormessage);
             throw $e;
@@ -575,6 +587,8 @@ class file_sync_service {
     }
 
     /**
+     * Extract failed file entries from a chunk upload API response.
+     *
      * @param array $response Decoded API response for a chunk upload.
      * @return array[]
      */
@@ -808,7 +822,6 @@ class file_sync_service {
 
             $status = $apistatus['status'] ?? 'none';
             $this->repository->update_sync_status($courseid, $status, $progress);
-
         } catch (api_exception $e) {
             debugging('Failed to poll sync status: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }

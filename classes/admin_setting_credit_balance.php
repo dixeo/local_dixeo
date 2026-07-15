@@ -16,8 +16,6 @@
 
 namespace local_dixeo;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Custom admin setting to display credit balance.
  *
@@ -30,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class admin_setting_credit_balance extends \admin_setting {
-
     /**
      * Constructor.
      *
@@ -137,7 +134,6 @@ class admin_setting_credit_balance extends \admin_setting {
             $html .= \html_writer::end_div();
 
             return $html;
-
         } catch (\Exception $e) {
             // Moodle_exception already formats it.
             $message = $e->getMessage();

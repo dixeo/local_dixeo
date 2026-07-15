@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\task;
-
-defined('MOODLE_INTERNAL') || die();
 
 use local_dixeo\external\service_factory;
 use local_dixeo\service\course_image_writer;
@@ -30,17 +28,26 @@ use local_dixeo\service\image_poll_manager;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class poll_image_generation_job extends \core\task\adhoc_task {
-
     /** @var int Wall-clock seconds to poll inside one task run before chaining. */
     private const POLL_WINDOW_SECONDS = 60;
 
     /** @var int Seconds between remote status checks. */
     private const POLL_INTERVAL_SECONDS = 4;
 
+    /**
+     * Return the component name for this task.
+     *
+     * @return string
+     */
     public function get_component(): string {
         return 'local_dixeo';
     }
 
+    /**
+     * Poll a remote image job and apply the result when complete.
+     *
+     * @return void
+     */
     public function execute(): void {
         $data = $this->get_custom_data();
         if (!is_object($data)) {
@@ -58,10 +65,12 @@ class poll_image_generation_job extends \core\task\adhoc_task {
             return;
         }
 
-        if ($objectid < 1 || !in_array($scope, [
+        if (
+            $objectid < 1 || !in_array($scope, [
             image_poll_manager::SCOPE_COURSE_OVERVIEW,
             image_poll_manager::SCOPE_FORMAT_SECTION,
-        ], true)) {
+            ], true)
+        ) {
             return;
         }
 
@@ -69,7 +78,7 @@ class poll_image_generation_job extends \core\task\adhoc_task {
 
         $deadline = time() + self::POLL_WINDOW_SECONDS;
         while (time() < $deadline) {
-            $jobstatus = $jobservice->get_job_status($imagejobid);
+            $jobstatus = $jobservice->get_job_status($imagejobid, $courseid);
 
             if ($jobstatus->is_completed()) {
                 $result = $jobstatus->result;
@@ -83,15 +92,19 @@ class poll_image_generation_job extends \core\task\adhoc_task {
                 try {
                     course_image_writer::apply_from_job_result($scope, $objectid, $result, $userid);
                 } catch (\Throwable $e) {
-                    debugging('poll_image_generation_job: apply failed courseid=' . $courseid . ' ' . $e->getMessage(),
-                        DEBUG_DEVELOPER);
+                    debugging(
+                        'poll_image_generation_job: apply failed courseid=' . $courseid . ' ' . $e->getMessage(),
+                        DEBUG_DEVELOPER
+                    );
                 }
                 return;
             }
 
             if ($jobstatus->is_failed()) {
-                debugging('poll_image_generation_job: job failed courseid=' . $courseid . ' job=' . $imagejobid,
-                    DEBUG_DEVELOPER);
+                debugging(
+                    'poll_image_generation_job: job failed courseid=' . $courseid . ' job=' . $imagejobid,
+                    DEBUG_DEVELOPER
+                );
                 return;
             }
 
@@ -106,6 +119,11 @@ class poll_image_generation_job extends \core\task\adhoc_task {
         image_poll_manager::queue_poll_task($courseid, $imagejobid, $userid, $chainseq + 1, $scope, $objectid);
     }
 
+    /**
+     * Return the human-readable task name.
+     *
+     * @return string
+     */
     public function get_name(): string {
         return get_string('task_poll_image_generation', 'local_dixeo');
     }

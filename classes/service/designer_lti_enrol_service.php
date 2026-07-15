@@ -12,11 +12,9 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Adds an enrol_lti tool instance for designer-created courses.
@@ -28,7 +26,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class designer_lti_enrol_service {
-
     /**
      * Create one LTI 1.3 enrol instance for the course.
      *
@@ -54,11 +51,13 @@ class designer_lti_enrol_service {
             $membersync = 0;
         }
         $membersyncmode = (int) ($fields['membersyncmode'] ?? \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL);
-        if (!in_array($membersyncmode, [
+        if (
+            !in_array($membersyncmode, [
             \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL,
             \enrol_lti\helper::MEMBER_SYNC_ENROL_NEW,
             \enrol_lti\helper::MEMBER_SYNC_UNENROL_MISSING,
-        ], true)) {
+            ], true)
+        ) {
             $membersyncmode = \enrol_lti\helper::MEMBER_SYNC_ENROL_AND_UNENROL;
         }
 

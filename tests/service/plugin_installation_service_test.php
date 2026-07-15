@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for the plugin installation lookup helpers.
@@ -29,13 +29,12 @@ namespace local_dixeo;
 use local_dixeo\service\h5p_library_service;
 use local_dixeo\service\plugin_installation_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for plugin installation service.
+ *
  * @covers \local_dixeo\service\plugin_installation_service
  */
 final class plugin_installation_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

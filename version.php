@@ -23,9 +23,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026070601;        // The current plugin version (Date: YYYYMMDDXX).
+defined('MOODLE_INTERNAL') || die();
+$plugin->version   = 2026071400;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024100700;        // Requires Moodle 4.5+.
 $plugin->component = 'local_dixeo';     // Full name of the plugin.
 $plugin->maturity  = MATURITY_STABLE;

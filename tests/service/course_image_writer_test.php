@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for course_image_writer (course overview + Dixeo section images, cache).
@@ -34,23 +34,45 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
-require_once($CFG->dirroot . '/course/format/dixeo/lib.php');
+$formatdixeolib = $CFG->dirroot . '/course/format/dixeo/lib.php';
+if (is_readable($formatdixeolib)) {
+    require_once($formatdixeolib);
+}
 
 /**
+ * Unit tests for course image writer.
+ *
  * @covers \local_dixeo\service\course_image_writer
  */
 final class course_image_writer_test extends \advanced_testcase {
-
-    /** Core filestorage fixture: PNG overview / first generation. */
+    /**
+     * Core filestorage fixture: PNG overview / first generation.
+     *
+     * @return string
+     */
     private static function fixture_png_bytes(): string {
         global $CFG;
         return (string) file_get_contents($CFG->dirroot . '/lib/filestorage/tests/fixtures/testimage.png');
     }
 
-    /** Core filestorage fixture: JPEG — different bytes and extension from the PNG. */
+    /**
+     * Core filestorage fixture: JPEG with different bytes and extension from the PNG.
+     *
+     * @return string
+     */
     private static function fixture_jpeg_bytes(): string {
         global $CFG;
         return (string) file_get_contents($CFG->dirroot . '/lib/filestorage/tests/fixtures/testimage.jpg');
+    }
+
+    /**
+     * Skip when format_dixeo is not available (e.g. standalone local_dixeo CI).
+     */
+    private function require_format_dixeo(): void {
+        global $CFG;
+        if (!is_readable($CFG->dirroot . '/course/format/dixeo/lib.php')) {
+            $this->markTestSkipped('format_dixeo is not installed in this environment.');
+        }
     }
 
     public function setUp(): void {
@@ -82,6 +104,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_apply_section_on_fresh_section_sets_pluginfile_url(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);
@@ -140,6 +163,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_apply_section_clears_stale_course_image_cache(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);
@@ -190,6 +214,7 @@ final class course_image_writer_test extends \advanced_testcase {
     public function test_regenerate_section_replaces_file_content(): void {
         global $USER;
 
+        $this->require_format_dixeo();
         $this->setAdminUser();
         $gen = $this->getDataGenerator();
         $course = $gen->create_course(['format' => 'dixeo', 'numsections' => 2], ['createsections' => true]);
@@ -244,6 +269,8 @@ final class course_image_writer_test extends \advanced_testcase {
     }
 
     /**
+     * Fetch course section 1 for the given course.
+     *
      * @param int $courseid
      * @return \stdClass course_sections row
      */

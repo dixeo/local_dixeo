@@ -28,7 +28,6 @@ namespace local_dixeo\dto;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class operation_result {
-
     /**
      * Constructor.
      *
@@ -42,13 +41,21 @@ class operation_result {
      * @param string|null $errorcode Error code for programmatic handling.
      */
     public function __construct(
+        /** @var bool Whether the operation has completed. */
         public readonly bool $completed,
+        /** @var string The job UUID. */
         public readonly string $jobid,
+        /** @var array|null The result data from the completed job. */
         public readonly ?array $result = null,
+        /** @var int|null Credits consumed by the operation. */
         public readonly ?int $creditsused = null,
+        /** @var string|null The current status ('pending' or 'processing'). */
         public readonly ?string $status = null,
+        /** @var int The progress percentage. */
         public readonly int $progress = 0,
+        /** @var string|null Human-readable error description. */
         public readonly ?string $errormessage = null,
+        /** @var string|null Machine-readable error code for programmatic handling. */
         public readonly ?string $errorcode = null
     ) {
     }

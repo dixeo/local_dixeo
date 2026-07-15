@@ -27,7 +27,6 @@ namespace local_dixeo\api\exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class validation_exception extends api_exception {
-
     /** @var array List of validation violations. */
     protected array $violations;
 

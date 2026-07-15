@@ -27,7 +27,6 @@ namespace local_dixeo\api\exception;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class job_failed_exception extends api_exception {
-
     /** @var string The job ID that failed. */
     protected string $jobid;
 

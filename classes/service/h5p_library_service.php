@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
 
@@ -33,7 +33,6 @@ namespace local_dixeo\service;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class h5p_library_service {
-
     /** @var array<string, array{machinename: string, major: int, minor: int}|null> Per-request memo. */
     private static array $cache = [];
 
@@ -54,7 +53,8 @@ class h5p_library_service {
      * a packaged `.h5p` must use this rather than the API's pinned identifier —
      * Moodle rejects packages referencing a library version it does not have.
      *
-     * @return array{machinename: string, major: int, minor: int}|null
+     * @param string $library Library identifier as emitted by the API (e.g. "H5P.QuestionSet 1.20").
+     * @return array|null Keys machinename (string), major (int), minor (int); or null.
      */
     public static function resolve_installed_version(string $library): ?array {
         global $DB;
@@ -103,7 +103,8 @@ class h5p_library_service {
     /**
      * Split "Machine.Name MAJOR.MINOR" into structured fields.
      *
-     * @return array{machinename: string, major: int, minor: int}|null
+     * @param string $library Library identifier as emitted by the API.
+     * @return array|null Keys machinename (string), major (int), minor (int); or null.
      */
     private static function parse_identifier(string $library): ?array {
         if (!preg_match('/^(\S+)\s+(\d+)\.(\d+)$/', $library, $matches)) {

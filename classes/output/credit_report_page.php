@@ -34,7 +34,6 @@ use local_dixeo\dto\credit_balance;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class credit_report_page implements renderable, templatable {
-
     /** @var credit_service The credit service. */
     protected credit_service $creditservice;
 
@@ -82,7 +81,7 @@ class credit_report_page implements renderable, templatable {
         } catch (\Exception $e) {
             return [
                 'configured' => true,
-                'error' => $e->getMessage(),
+                'error' => get_string('api_error', 'local_dixeo', $e->getMessage()),
             ];
         }
     }
@@ -205,10 +204,10 @@ class credit_report_page implements renderable, templatable {
      */
     protected function build_weekly_chart_data(array $stats, array $weekdates): array {
         // Map API stats by date for quick lookup.
-        $statsByDate = [];
+        $statsbydate = [];
         foreach ($stats as $stat) {
             $date = $stat['period'] ?? '';
-            $statsByDate[$date] = $stat['creditsUsed'] ?? 0;
+            $statsbydate[$date] = $stat['creditsUsed'] ?? 0;
         }
 
         // Short day names for chart labels.
@@ -241,7 +240,7 @@ class credit_report_page implements renderable, templatable {
         foreach ($weekdates['dates'] as $index => $date) {
             $labels[] = $daynames[$index];
             $fulllabels[] = $fulldaynames[$index];
-            $values[] = $statsByDate[$date] ?? 0;
+            $values[] = $statsbydate[$date] ?? 0;
             $istoday[] = ($date === $weekdates['today']);
         }
 
@@ -286,7 +285,7 @@ class credit_report_page implements renderable, templatable {
             'amount' => $amount,
             'amountformatted' => credit_service::format_credits(abs($amount)),
             'amountsign' => $amount >= 0 ? '+' : '-',
-            'description' => $tx['description'] ?? '',
+            'description' => clean_param((string) ($tx['description'] ?? ''), PARAM_TEXT),
             'createdat' => isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,
             'createdatformatted' => userdate(
                 isset($tx['createdAt']) ? strtotime($tx['createdAt']) : 0,

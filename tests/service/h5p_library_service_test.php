@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for H5P library installation lookup.
@@ -28,13 +28,12 @@ namespace local_dixeo;
 
 use local_dixeo\service\h5p_library_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for h5p library service.
+ *
  * @covers \local_dixeo\service\h5p_library_service
  */
 final class h5p_library_service_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
@@ -96,6 +95,13 @@ final class h5p_library_service_test extends \advanced_testcase {
         $this->assertNull(h5p_library_service::resolve_installed_version('H5P.Flashcards 1.7'));
     }
 
+    /**
+     * Insert a fake installed H5P library row for resolution tests.
+     *
+     * @param string $machinename
+     * @param int $major
+     * @param int $minor
+     */
     private function seed_library(string $machinename, int $major, int $minor): void {
         global $DB;
 

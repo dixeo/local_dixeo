@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Service for extracting content from Moodle modules.
  *
@@ -17,17 +32,16 @@ namespace local_dixeo\service;
  * Service for extracting content from Moodle modules.
  */
 class module_content_extractor {
-
     /** @var html_helper HTML processing helper. */
-    private html_helper $htmlHelper;
+    private html_helper $htmlhelper;
 
     /**
      * Constructor.
      *
-     * @param html_helper|null $htmlHelper Optional HTML helper (creates new if not provided).
+     * @param html_helper|null $htmlhelper Optional HTML helper (creates new if not provided).
      */
-    public function __construct(?html_helper $htmlHelper = null) {
-        $this->htmlHelper = $htmlHelper ?? new html_helper();
+    public function __construct(?html_helper $htmlhelper = null) {
+        $this->htmlhelper = $htmlhelper ?? new html_helper();
     }
 
     /**
@@ -67,9 +81,9 @@ class module_content_extractor {
             return null;
         }
 
-        $cleaned = $this->htmlHelper->clean_html($content);
+        $cleaned = $this->htmlhelper->clean_html($content);
 
-        return $this->htmlHelper->truncate_text($cleaned, $maxlength);
+        return $this->htmlhelper->truncate_text($cleaned, $maxlength);
     }
 
     /**
@@ -88,9 +102,9 @@ class module_content_extractor {
             return null;
         }
 
-        $cleaned = $this->htmlHelper->clean_html($content);
+        $cleaned = $this->htmlhelper->clean_html($content);
 
-        return $this->htmlHelper->truncate_text($cleaned, $maxlength);
+        return $this->htmlhelper->truncate_text($cleaned, $maxlength);
     }
 
     /**
@@ -108,22 +122,22 @@ class module_content_extractor {
             return null;
         }
 
-        return $this->htmlHelper->clean_html($content);
+        return $this->htmlhelper->clean_html($content);
     }
 
     /**
      * Get full module content for edit operations.
      *
      * Preserves HTML structure for editing, with special handling for page modules.
-     * When $autosaveDraftHtml is non-empty after trim, it replaces the in-editor body from Tiny autosave;
+     * When $autosavedrafthtml is non-empty after trim, it replaces the in-editor body from Tiny autosave;
      * for page modules the introduction stays loaded from the database and only the main content uses the draft.
      *
      * @param \cm_info $cm The course module info.
-     * @param string|null $autosaveDraftHtml Optional HTML from tiny_autosave.
+     * @param string|null $autosavedrafthtml Optional HTML from tiny_autosave.
      * @return string|null The full content for editing, or null if not available.
      */
-    public function get_full_content_for_edit(\cm_info $cm, ?string $autosaveDraftHtml = null): ?string {
-        $draft = $autosaveDraftHtml !== null ? trim($autosaveDraftHtml) : '';
+    public function get_full_content_for_edit(\cm_info $cm, ?string $autosavedrafthtml = null): ?string {
+        $draft = $autosavedrafthtml !== null ? trim($autosavedrafthtml) : '';
         $usedraft = $draft !== '';
 
         if ($cm->modname === 'page') {

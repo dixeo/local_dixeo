@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * DSL action for creating child records (e.g., glossary entries).
  *
@@ -16,8 +31,6 @@ namespace local_dixeo\dsl\actions;
 
 use local_dixeo\dsl\dsl_exception;
 use local_dixeo\dsl\value_resolver;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Action handler for creating child entity records.
@@ -55,7 +68,7 @@ class create_entries_action {
      */
     protected const ENTITY_DEFAULTS = [
         'glossary_entry' => [
-            'timecreated' => null,  // Will be set to current time.
+            'timecreated' => null, // Will be set to current time.
             'timemodified' => null, // Will be set to current time.
             'approved' => 1,
             'usedynalink' => 0,

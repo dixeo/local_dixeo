@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_dixeo\service;
 
@@ -29,7 +29,6 @@ require_once($CFG->libdir . '/completionlib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_completion_sync_service {
-
     /**
      * Insert missing COMPLETION_CRITERIA_TYPE_ACTIVITY rows for each CM with completion enabled.
      *

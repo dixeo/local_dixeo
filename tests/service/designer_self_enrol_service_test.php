@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for {@see \local_dixeo\service\designer_self_enrol_service}.
@@ -27,19 +27,21 @@ namespace local_dixeo;
 
 use local_dixeo\service\designer_self_enrol_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for designer self enrol service.
+ *
  * @covers \local_dixeo\service\designer_self_enrol_service
  */
 final class designer_self_enrol_service_test extends \advanced_testcase {
-
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
         $this->setAdminUser();
     }
 
+    /**
+     * Skip the test when enrol_self is unavailable.
+     */
     private function require_self_enrol_enabled(): void {
         if (!enrol_is_enabled('self')) {
             $this->markTestSkipped('The enrol_self plugin is disabled.');
@@ -50,6 +52,12 @@ final class designer_self_enrol_service_test extends \advanced_testcase {
         }
     }
 
+    /**
+     * Return the first self-enrol instance for a course, if any.
+     *
+     * @param int $courseid
+     * @return \stdClass|null
+     */
     private function get_self_instance(int $courseid): ?\stdClass {
         foreach (enrol_get_instances($courseid, false) as $instance) {
             if ($instance->enrol === 'self') {

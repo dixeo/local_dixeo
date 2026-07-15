@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Orchestrates manual (non-AI) module uploads from multipart form data.
@@ -40,7 +40,6 @@ require_once($CFG->libdir . '/filelib.php');
  * Generic manual upload orchestration for SCORM and File activities.
  */
 class manual_upload_service {
-
     /** @var string[] Supported modtype values. */
     private const SUPPORTED_MODTYPES = ['scorm', 'resource'];
 
@@ -59,6 +58,8 @@ class manual_upload_service {
     private scorm_vector_extract_service $scormextractservice;
 
     /**
+     * Constructor.
+     *
      * @param scorm_creation_service|null $scormservice Optional SCORM service.
      * @param resource_upload_service|null $resourceservice Optional resource service.
      * @param scorm_vector_extract_service|null $scormextractservice Optional SCORM extract service.
@@ -167,6 +168,8 @@ class manual_upload_service {
     }
 
     /**
+     * Derive an activity name from an uploaded filename.
+     *
      * @param string $filename Original upload filename.
      * @return string Basename without extension.
      */
@@ -265,8 +268,10 @@ class manual_upload_service {
         $course = get_course($courseid);
         $context = context_course::instance($courseid);
         $maxbytes = get_user_max_upload_file_size($context, $CFG->maxbytes, $course->maxbytes);
-        if ($maxbytes != USER_CAN_IGNORE_FILE_SIZE_LIMITS
-                && !empty($uploadedfile['size']) && $uploadedfile['size'] > $maxbytes) {
+        if (
+            $maxbytes != USER_CAN_IGNORE_FILE_SIZE_LIMITS
+                && !empty($uploadedfile['size']) && $uploadedfile['size'] > $maxbytes
+        ) {
             throw new moodle_exception('uploadfilelimitexceeded', 'error');
         }
 

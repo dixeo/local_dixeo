@@ -34,7 +34,6 @@ use local_dixeo\dto\operation_result;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class job_poller {
-
     /** @var client The API client. */
     protected client $client;
 

@@ -30,7 +30,6 @@ use local_dixeo\dto\file_upload_part;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class scorm_vector_extract_service {
-
     /** @var string Prefix for upload filenames (stable per cm id). */
     public const UPLOAD_FILENAME_PREFIX = 'dixeo_scorm_cm';
 
@@ -128,6 +127,8 @@ class scorm_vector_extract_service {
     private html_helper $htmlhelper;
 
     /**
+     * Constructor.
+     *
      * @param html_helper|null $htmlhelper Optional HTML helper.
      */
     public function __construct(?html_helper $htmlhelper = null) {
@@ -632,6 +633,8 @@ class scorm_vector_extract_service {
     }
 
     /**
+     * Recursively collect meaningful Storyline text fragments.
+     *
      * @param mixed $node
      * @param string[] $out
      */
@@ -756,6 +759,8 @@ class scorm_vector_extract_service {
     }
 
     /**
+     * Return the first direct child title text of a manifest element.
+     *
      * @param \DOMElement $parent Organization or item element.
      * @return string|null
      */
@@ -777,6 +782,8 @@ class scorm_vector_extract_service {
     }
 
     /**
+     * Normalize raw title text by stripping tags and collapsing whitespace.
+     *
      * @param string $text Raw title text.
      * @return string
      */
@@ -786,6 +793,8 @@ class scorm_vector_extract_service {
     }
 
     /**
+     * Locate imsmanifest.xml inside an open SCORM zip archive.
+     *
      * @param \ZipArchive $zip Open zip.
      * @return string|null Path inside zip to imsmanifest.xml.
      */

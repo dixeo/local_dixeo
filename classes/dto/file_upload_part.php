@@ -25,17 +25,22 @@ namespace local_dixeo\dto;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class file_upload_part {
-
     /**
+     * Create a file upload part DTO.
+     *
      * @param string $path Absolute path readable by curl (temp file).
      * @param string $filename Logical filename sent to the API (stable per activity).
      * @param string $mimetype MIME type for the part.
      * @param bool $deleteafterupload If true, the API client unlinks $path after POST.
      */
     public function __construct(
+        /** @var string Absolute path readable by curl (temp file). */
         public readonly string $path,
+        /** @var string Logical filename sent to the API (stable per activity). */
         public readonly string $filename,
+        /** @var string MIME type for the part. */
         public readonly string $mimetype = 'text/plain',
+        /** @var bool If true, the API client unlinks $path after POST. */
         public readonly bool $deleteafterupload = true,
     ) {
     }

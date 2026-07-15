@@ -32,7 +32,6 @@ use local_dixeo\dto\credit_balance;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class credit_service {
-
     /** @var client The API client. */
     protected client $client;
 

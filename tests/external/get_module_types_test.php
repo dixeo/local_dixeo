@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Tests for the get_module_types external function, focused on label resolution.
@@ -31,13 +31,12 @@ use local_dixeo\external\service_factory;
 use local_dixeo\service\h5p_library_service;
 use local_dixeo\service\module_types_service;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
+ * Unit tests for get module types.
+ *
  * @covers \local_dixeo\external\get_module_types
  */
 final class get_module_types_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
@@ -71,9 +70,27 @@ final class get_module_types_test extends \advanced_testcase {
 
     public function test_h5p_variants_keep_distinct_api_labels_when_sharing_a_component(): void {
         $this->mock_catalogue([
-            ['type' => 'h5p_quiz', 'label' => 'Quiz', 'description' => '', 'category' => 'interactive', 'component' => 'mod_h5pactivity'],
-            ['type' => 'h5p_flashcards', 'label' => 'Flashcards', 'description' => '', 'category' => 'interactive', 'component' => 'mod_h5pactivity'],
-            ['type' => 'h5p_crossword', 'label' => 'Crossword', 'description' => '', 'category' => 'interactive', 'component' => 'mod_h5pactivity'],
+            [
+                'type' => 'h5p_quiz',
+                'label' => 'Quiz',
+                'description' => '',
+                'category' => 'interactive',
+                'component' => 'mod_h5pactivity',
+            ],
+            [
+                'type' => 'h5p_flashcards',
+                'label' => 'Flashcards',
+                'description' => '',
+                'category' => 'interactive',
+                'component' => 'mod_h5pactivity',
+            ],
+            [
+                'type' => 'h5p_crossword',
+                'label' => 'Crossword',
+                'description' => '',
+                'category' => 'interactive',
+                'component' => 'mod_h5pactivity',
+            ],
         ]);
 
         $response = get_module_types::execute($this->create_test_course());
@@ -85,6 +102,7 @@ final class get_module_types_test extends \advanced_testcase {
     }
 
     public function test_courseid_zero_uses_local_create_capability_when_block_installed(): void {
+        $this->require_block_dixeo_designer();
         $this->mock_catalogue([
             ['type' => 'page', 'label' => 'Page (API)', 'description' => '', 'category' => 'content', 'component' => 'mod_page'],
         ]);
@@ -96,6 +114,7 @@ final class get_module_types_test extends \advanced_testcase {
     }
 
     public function test_courseid_zero_rejects_user_without_local_create_capability(): void {
+        $this->require_block_dixeo_designer();
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
 
@@ -104,9 +123,20 @@ final class get_module_types_test extends \advanced_testcase {
     }
 
     /**
+     * Skip when block_dixeo_designer is not available (e.g. standalone local_dixeo CI).
+     */
+    private function require_block_dixeo_designer(): void {
+        if (!\local_dixeo\service\plugin_installation_service::is_component_installed('block_dixeo_designer')) {
+            $this->markTestSkipped('block_dixeo_designer is not installed in this environment.');
+        }
+    }
+
+    /**
      * Inject a partial-mocked module_types_service: the raw API call is stubbed
      * with the given catalogue rows, but {@see module_types_service::get_module_types_resolved()}
      * runs unmodified so the test covers the real label-resolution logic.
+     *
+     * @param array $catalogue Catalogue rows returned by get_module_types_cached().
      */
     private function mock_catalogue(array $catalogue): void {
         $stub = $this->getMockBuilder(module_types_service::class)
@@ -116,6 +146,13 @@ final class get_module_types_test extends \advanced_testcase {
         service_factory::set_test_module_types_service($stub);
     }
 
+    /**
+     * Find one module type row by type id, or fail the test.
+     *
+     * @param array $types
+     * @param string $typeid
+     * @return array
+     */
     private function find_type(array $types, string $typeid): array {
         foreach ($types as $row) {
             if (($row['type'] ?? null) === $typeid) {

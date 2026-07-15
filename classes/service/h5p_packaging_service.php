@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Service for packaging H5P content into .h5p files and creating mod_h5pactivity instances.
@@ -44,7 +44,6 @@ require_once($CFG->dirroot . '/course/lib.php');
  * Builds .h5p packages and provisions mod_h5pactivity course modules.
  */
 class h5p_packaging_service {
-
     /** @var string Module name for the H5P activity in Moodle's modules table. */
     private const MODULE_NAME = 'h5pactivity';
 
@@ -230,7 +229,7 @@ class h5p_packaging_service {
             'displayoptions' => $displayoptions,
         ]);
 
-        // h5pactivity_add_instance reads these only when set; let it pick its own defaults otherwise.
+        // H5P activity add_instance reads these only when set; let it pick its own defaults otherwise.
         if (!isset($data->enabletracking)) {
             $data->enabletracking = 1;
         }

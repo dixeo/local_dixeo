@@ -60,7 +60,7 @@ if (empty($apikey)) {
         $templatedata['issuspended'] = $balance->is_suspended();
     } catch (Exception $e) {
         $templatedata['error'] = true;
-        $templatedata['errormessage'] = $e->getMessage();
+        $templatedata['errormessage'] = get_string('api_error', 'local_dixeo', $e->getMessage());
     }
 }
 

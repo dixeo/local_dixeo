@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * DSL action for creating mod_h5pactivity course modules from a content payload.
@@ -28,8 +28,6 @@ namespace local_dixeo\dsl\actions;
 use local_dixeo\dsl\dsl_exception;
 use local_dixeo\dsl\value_resolver;
 use local_dixeo\service\h5p_packaging_service;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Action handler that delegates H5P activity creation to the packaging service.
@@ -50,7 +48,6 @@ defined('MOODLE_INTERNAL') || die();
  * Required context: courseid, sectionid, sectionnum.
  */
 class create_h5p_module_action {
-
     /** @var h5p_packaging_service The packaging service used to build and provision activities. */
     protected h5p_packaging_service $packagingservice;
 

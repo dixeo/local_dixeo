@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Creates mod_resource (File) instances from a user draft file.
@@ -39,7 +39,6 @@ require_once($CFG->libdir . '/resourcelib.php');
  * File (mod_resource) manual upload creation.
  */
 class resource_upload_service {
-
     /** @var string Module plugin name. */
     private const MODULE_NAME = 'resource';
 

@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Context builder for editing a single slide in a slideshow module.
  *
@@ -21,13 +36,14 @@
 
 namespace local_dixeo\context;
 
-defined('MOODLE_INTERNAL') || die();
-
 use context_module;
 use local_dixeo\service\html_helper;
 use local_dixeo\service\module_content_extractor;
 use moodle_exception;
 
+/**
+ * Builds markdown edit context for a single slideshow slide.
+ */
 class slide_edit_context_builder extends abstract_context_builder {
     use module_data_loader;
 
@@ -43,6 +59,14 @@ class slide_edit_context_builder extends abstract_context_builder {
     /** @var array<int, object>|null All sibling slides (including the one being edited). */
     private ?array $siblingslides = null;
 
+    /**
+     * Constructor.
+     *
+     * @param int $cmid Course module id of the slideshow.
+     * @param int $slideid slideshow_slide row id being edited.
+     * @param html_helper|null $htmlhelper Optional HTML helper.
+     * @param module_content_extractor|null $contentextractor Optional content extractor.
+     */
     public function __construct(
         int $cmid,
         int $slideid,
@@ -54,6 +78,11 @@ class slide_edit_context_builder extends abstract_context_builder {
         $this->slideid = $slideid;
     }
 
+    /**
+     * Build the markdown context for editing the configured slide.
+     *
+     * @return string
+     */
     public function build(): string {
         // Inherited from module_data_loader trait (camelCase — pre-existing).
         $this->loadModuleData();
@@ -116,14 +145,14 @@ class slide_edit_context_builder extends abstract_context_builder {
         $sectionname = $this->get_section_name($this->course, $this->section);
         $lines[] = "### Current Section: {$sectionname} (Section {$this->section->section})";
         if (!empty($this->section->summary)) {
-            $lines[] = $this->htmlHelper->clean_html($this->section->summary);
+            $lines[] = $this->htmlhelper->clean_html($this->section->summary);
         }
         $lines[] = '';
 
         $lines[] = '### Parent Slideshow';
         $lines[] = "- **Name:** {$this->slideshow->name}";
         if (!empty($this->slideshow->intro)) {
-            $lines[] = '- **Intro:** ' . $this->htmlHelper->clean_html($this->slideshow->intro);
+            $lines[] = '- **Intro:** ' . $this->htmlhelper->clean_html($this->slideshow->intro);
         }
         $lines[] = '';
 
