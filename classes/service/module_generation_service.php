@@ -357,7 +357,7 @@ class module_generation_service {
      * @throws api_exception If an API error occurs.
      */
     public function edit_module_content_with_payload(array $payload): operation_result {
-        return $this->jobService->submit_and_wait(
+        return $this->jobservice->submit_and_wait(
             self::EDIT_ENDPOINT,
             $payload,
             self::JOB_TYPE_EDIT
@@ -374,7 +374,7 @@ class module_generation_service {
      * @throws api_exception If the API request fails.
      */
     public function submit_edit_job(array $payload): operation_result {
-        return $this->jobService->submit_job(self::EDIT_ENDPOINT, $payload);
+        return $this->jobservice->submit_job(self::EDIT_ENDPOINT, $payload);
     }
 
     /**
