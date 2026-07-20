@@ -33,6 +33,9 @@ let currentStatus = 'none';
 /** @type {boolean} Whether sync is enabled. */
 let isEnabled = true;
 
+/** @type {boolean} Whether the user may enable/disable/trigger sync. */
+let canManageSync = false;
+
 /**
  * Check whether a value can be rendered as a number.
  *
@@ -58,11 +61,13 @@ const toNumber = (value, fallback = 0) => hasNumber(value) ? Number(value) : fal
  * @param {boolean} enabled Whether sync is enabled.
  * @param {number} filesTotal Total number of files.
  * @param {number} filesCompleted Files synced so far.
+ * @param {boolean} [canmanagesync=false] Whether the user may manage sync actions.
  */
-const init = async(courseid, status, enabled, filesTotal, filesCompleted) => {
+const init = async(courseid, status, enabled, filesTotal, filesCompleted, canmanagesync) => {
     courseId = courseid;
     currentStatus = status;
     isEnabled = enabled;
+    canManageSync = canmanagesync === true || canmanagesync === 1 || canmanagesync === '1';
 
     // Relocate before async ops to avoid race conditions with other modules.
     relocateToTitle();
@@ -220,6 +225,11 @@ const setupEventListeners = () => {
     container.addEventListener('click', async(e) => {
         const action = e.target.closest('[data-action]');
         if (!action) {
+            return;
+        }
+
+        if (!canManageSync) {
+            e.preventDefault();
             return;
         }
 

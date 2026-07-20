@@ -89,6 +89,7 @@ $string['dixeo:create'] = 'Create courses using Dixeo Course Designer';
 $string['dixeo:edit'] = 'Edit existing modules using AI';
 $string['dixeo:generate'] = 'Generate new modules using AI (page, label, quiz, glossary)';
 $string['dixeo:manage'] = 'Manage Dixeo settings and view reports';
+$string['dixeo:syncfiles'] = 'Enable, disable, or trigger Dixeo course file synchronisation to the external API';
 $string['dixeo:viewusage'] = 'View credit usage reports';
 $string['dixeo_course_image_unsupported_type'] = 'Unsupported generated image type.';
 $string['dixeo_image_generation_disabled'] = 'Image generation is disabled by site settings.';

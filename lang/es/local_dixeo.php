@@ -89,6 +89,7 @@ $string['dixeo:create'] = 'Crear cursos con el Diseñador de Cursos Dixeo';
 $string['dixeo:edit'] = 'Editar módulos existentes con IA';
 $string['dixeo:generate'] = 'Generar nuevos módulos con IA (página, etiqueta, cuestionario, glosario)';
 $string['dixeo:manage'] = 'Gestionar la configuración de Dixeo y ver informes';
+$string['dixeo:syncfiles'] = 'Activar, desactivar o lanzar la sincronización de archivos del curso Dixeo hacia la API externa';
 $string['dixeo:viewusage'] = 'Ver informes de uso de créditos';
 $string['dixeo_course_image_unsupported_type'] = 'Tipo de imagen generada no admitido.';
 $string['dixeo_image_generation_disabled'] = 'La generación de imágenes está desactivada en la configuración del sitio.';

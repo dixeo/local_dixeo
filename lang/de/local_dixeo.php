@@ -89,6 +89,7 @@ $string['dixeo:create'] = 'Kurse mit dem Dixeo-Kursdesigner erstellen';
 $string['dixeo:edit'] = 'Bestehende Module mit KI bearbeiten';
 $string['dixeo:generate'] = 'Neue Module mit KI erstellen (Seite, Beschriftung, Test, Glossar)';
 $string['dixeo:manage'] = 'Dixeo-Einstellungen verwalten und Berichte anzeigen';
+$string['dixeo:syncfiles'] = 'Dixeo-Kursdateisynchronisation mit der externen API aktivieren, deaktivieren oder auslösen';
 $string['dixeo:viewusage'] = 'Kreditnutzungsberichte anzeigen';
 $string['dixeo_course_image_unsupported_type'] = 'Nicht unterstützter Typ des generierten Bildes.';
 $string['dixeo_image_generation_disabled'] = 'Die Bildgenerierung ist in den Website-Einstellungen deaktiviert.';

@@ -56,9 +56,9 @@ class sync_indicator_injector {
             return;
         }
 
-        // Check capability.
+        // Check capability (view indicator with generate; manage actions need syncfiles).
         $context = \context_course::instance($COURSE->id);
-        if (!has_capability('local/dixeo:generate', $context)) {
+        if (!has_capability('local/dixeo:generate', $context) && !has_capability('local/dixeo:syncfiles', $context)) {
             return;
         }
 
@@ -66,12 +66,14 @@ class sync_indicator_injector {
             return;
         }
 
+        $canmanagesync = has_capability('local/dixeo:syncfiles', $context);
+
         // Get sync status.
         $service = service_factory::get_file_sync_service();
         $status = $service->get_status($COURSE->id);
 
         // Prepare template context.
-        $templatecontext = self::prepare_template_context($COURSE->id, $status);
+        $templatecontext = self::prepare_template_context($COURSE->id, $status, $canmanagesync);
 
         // Render the indicator.
         $html = $OUTPUT->render_from_template('local_dixeo/sync_indicator', $templatecontext);
@@ -86,6 +88,7 @@ class sync_indicator_injector {
             $status->enabled,
             $status->filestotal,
             $status->filescompleted,
+            $canmanagesync,
         ]);
     }
 
@@ -94,15 +97,17 @@ class sync_indicator_injector {
      *
      * @param int $courseid The course ID.
      * @param \stdClass $status The status object.
+     * @param bool $canmanagesync Whether the user may enable/disable/trigger sync.
      * @return array The template context.
      */
-    private static function prepare_template_context(int $courseid, \stdClass $status): array {
+    private static function prepare_template_context(int $courseid, \stdClass $status, bool $canmanagesync = false): array {
         $statusclass = $status->enabled ? $status->status : 'disabled';
 
         $context = [
             'courseid' => $courseid,
             'status' => $status->status,
             'enabled' => $status->enabled,
+            'canmanagesync' => $canmanagesync,
             'statusclass' => $statusclass,
             'tooltip' => self::get_tooltip($status),
             'statusmessage' => self::get_status_message($status),

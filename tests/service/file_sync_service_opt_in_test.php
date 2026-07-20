@@ -134,10 +134,16 @@ final class file_sync_service_opt_in_test extends \advanced_testcase {
     }
 
     public function test_trigger_file_sync_enables_paused_course(): void {
+        global $DB;
+
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
         $user = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $context = \context_course::instance($course->id);
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher'], MUST_EXIST);
+        assign_capability('local/dixeo:syncfiles', CAP_ALLOW, $roleid, $context->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
         $this->setUser($user);
 
         $repository = new course_ai_repository();

@@ -17,7 +17,7 @@
 /**
  * Trait for shared capability checking in external API classes.
  *
- * Validates course context and local/dixeo:generate (CONTEXT_COURSE capability).
+ * Validates course context and local/dixeo capabilities (CONTEXT_COURSE).
  *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
@@ -57,6 +57,28 @@ trait capability_check {
         if ($requiremanageactivities) {
             require_capability('moodle/course:manageactivities', $coursecontext);
         }
+
+        return $coursecontext;
+    }
+
+    /**
+     * Validate course context and require local/dixeo:syncfiles.
+     *
+     * Use for enable/disable/trigger of external course file transfer.
+     *
+     * @param int $courseid The course ID.
+     * @return \context_course The validated course context.
+     * @throws \invalid_parameter_exception If course id is invalid.
+     * @throws \required_capability_exception If capability check fails.
+     */
+    protected static function validate_course_sync_capability(int $courseid): \context_course {
+        if ($courseid <= 1) {
+            throw new \invalid_parameter_exception('Invalid course id');
+        }
+
+        $coursecontext = \context_course::instance($courseid);
+        self::validate_context($coursecontext);
+        require_capability('local/dixeo:syncfiles', $coursecontext);
 
         return $coursecontext;
     }

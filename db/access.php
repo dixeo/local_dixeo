@@ -47,6 +47,16 @@ $capabilities = [
         ],
     ],
 
+    // Enable, disable, or trigger external course file synchronisation to Dixeo.
+    'local/dixeo:syncfiles' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // Capability to edit/regenerate existing modules using AI.
     'local/dixeo:edit' => [
         'riskbitmask' => RISK_SPAM,
