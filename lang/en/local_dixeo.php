@@ -108,6 +108,14 @@ $string['error:slidenotinslideshow'] = 'The requested slide does not belong to t
 $string['error:timeout'] = 'The operation timed out. You can check the job status later.';
 $string['error:upstream_ai'] = 'AI service error. Please try again later.';
 $string['error:validation'] = 'Invalid request: {$a}';
+$string['eventfilesyncdisabled'] = 'Dixeo course file sync disabled';
+$string['eventfilesyncdisableddesc'] = 'The user with id \'{$a->userid}\' disabled Dixeo file synchronisation for the course with id \'{$a->courseid}\' (removefiles={$a->removefiles}).';
+$string['eventfilesyncenabled'] = 'Dixeo course file sync enabled';
+$string['eventfilesyncenableddesc'] = 'The user with id \'{$a->userid}\' enabled Dixeo file synchronisation for the course with id \'{$a->courseid}\'.';
+$string['eventfilesynctriggered'] = 'Dixeo course file sync triggered';
+$string['eventfilesynctriggereddesc'] = 'The user with id \'{$a->userid}\' triggered Dixeo file synchronisation for the course with id \'{$a->courseid}\'.';
+$string['eventjobcancelled'] = 'Dixeo job cancelled';
+$string['eventjobcancelleddesc'] = 'The user with id \'{$a->userid}\' cancelled Dixeo job \'{$a->jobid}\' for the course with id \'{$a->courseid}\'.';
 $string['feedback_correct'] = 'Correct!';
 $string['files'] = 'files';
 $string['filesync_disable_remove'] = 'Turn off & clear sync data';

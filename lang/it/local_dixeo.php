@@ -108,6 +108,14 @@ $string['error:slidenotinslideshow'] = 'La diapositiva richiesta non appartiene 
 $string['error:timeout'] = 'Operazione scaduta. Puoi controllare lo stato del lavoro in seguito.';
 $string['error:upstream_ai'] = 'Errore del servizio IA. Riprova più tardi.';
 $string['error:validation'] = 'Richiesta non valida: {$a}';
+$string['eventfilesyncdisabled'] = 'Sincronizzazione file Dixeo del corso disabilitata';
+$string['eventfilesyncdisableddesc'] = 'L\'utente con id \'{$a->userid}\' ha disabilitato la sincronizzazione file Dixeo per il corso con id \'{$a->courseid}\' (removefiles={$a->removefiles}).';
+$string['eventfilesyncenabled'] = 'Sincronizzazione file Dixeo del corso abilitata';
+$string['eventfilesyncenableddesc'] = 'L\'utente con id \'{$a->userid}\' ha abilitato la sincronizzazione file Dixeo per il corso con id \'{$a->courseid}\'.';
+$string['eventfilesynctriggered'] = 'Sincronizzazione file Dixeo del corso avviata';
+$string['eventfilesynctriggereddesc'] = 'L\'utente con id \'{$a->userid}\' ha avviato la sincronizzazione file Dixeo per il corso con id \'{$a->courseid}\'.';
+$string['eventjobcancelled'] = 'Job Dixeo annullato';
+$string['eventjobcancelleddesc'] = 'L\'utente con id \'{$a->userid}\' ha annullato il job Dixeo \'{$a->jobid}\' per il corso con id \'{$a->courseid}\'.';
 $string['feedback_correct'] = 'Corretto!';
 $string['files'] = 'file';
 $string['filesync_disable_remove'] = 'Disattiva e cancella dati di sincronizzazione';

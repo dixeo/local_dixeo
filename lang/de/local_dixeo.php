@@ -108,6 +108,14 @@ $string['error:slidenotinslideshow'] = 'Die angeforderte Folie gehört nicht zu 
 $string['error:timeout'] = 'Zeitüberschreitung. Sie können den Auftragsstatus später prüfen.';
 $string['error:upstream_ai'] = 'KI-Servicefehler. Bitte versuchen Sie es später erneut.';
 $string['error:validation'] = 'Ungültige Anfrage: {$a}';
+$string['eventfilesyncdisabled'] = 'Dixeo-Kursdatei-Synchronisation deaktiviert';
+$string['eventfilesyncdisableddesc'] = 'Der Benutzer mit der ID \'{$a->userid}\' hat die Dixeo-Dateisynchronisation für den Kurs mit der ID \'{$a->courseid}\' deaktiviert (removefiles={$a->removefiles}).';
+$string['eventfilesyncenabled'] = 'Dixeo-Kursdatei-Synchronisation aktiviert';
+$string['eventfilesyncenableddesc'] = 'Der Benutzer mit der ID \'{$a->userid}\' hat die Dixeo-Dateisynchronisation für den Kurs mit der ID \'{$a->courseid}\' aktiviert.';
+$string['eventfilesynctriggered'] = 'Dixeo-Kursdatei-Synchronisation ausgelöst';
+$string['eventfilesynctriggereddesc'] = 'Der Benutzer mit der ID \'{$a->userid}\' hat die Dixeo-Dateisynchronisation für den Kurs mit der ID \'{$a->courseid}\' ausgelöst.';
+$string['eventjobcancelled'] = 'Dixeo-Auftrag abgebrochen';
+$string['eventjobcancelleddesc'] = 'Der Benutzer mit der ID \'{$a->userid}\' hat den Dixeo-Auftrag \'{$a->jobid}\' für den Kurs mit der ID \'{$a->courseid}\' abgebrochen.';
 $string['feedback_correct'] = 'Richtig!';
 $string['files'] = 'Dateien';
 $string['filesync_disable_remove'] = 'Deaktivieren und Sync-Daten löschen';

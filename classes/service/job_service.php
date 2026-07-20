@@ -35,6 +35,7 @@ use local_dixeo\api\polling_config;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\dto\operation_result;
 use local_dixeo\dto\job_status;
+use local_dixeo\event\job_cancelled;
 use local_dixeo\repository\job_repository;
 
 /**
@@ -142,11 +143,26 @@ class job_service {
      * @throws \moodle_exception If the job is not bound to the given course.
      */
     public function cancel_job(string $jobid, ?int $courseid = null): array {
+        global $USER;
+
         if ($courseid !== null) {
             $this->require_job_for_course($jobid, $courseid);
         }
 
-        return $this->client->post('/v1/jobs/' . $jobid . '/cancel', []);
+        $result = $this->client->post('/v1/jobs/' . $jobid . '/cancel', []);
+
+        $boundcourseid = $courseid;
+        if ($boundcourseid === null) {
+            $record = $this->jobrepository->get_by_jobid($jobid);
+            $boundcourseid = $record !== null ? (int) $record->courseid : 0;
+        }
+        job_cancelled::create_for_job(
+            $jobid,
+            (int) $boundcourseid,
+            (int) ($USER->id ?? 0)
+        )->trigger();
+
+        return $result;
     }
 
     /**

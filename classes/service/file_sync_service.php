@@ -32,6 +32,9 @@ namespace local_dixeo\service;
 use local_dixeo\api\client;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\dto\file_upload_part;
+use local_dixeo\event\file_sync_disabled;
+use local_dixeo\event\file_sync_enabled;
+use local_dixeo\event\file_sync_triggered;
 use local_dixeo\repository\course_ai_repository;
 
 /**
@@ -126,11 +129,20 @@ class file_sync_service {
      * @return void
      */
     public function enable_sync(int $courseid, int $userid): void {
+        $wasenabled = $this->is_enabled($courseid);
+
         if ($this->repository->get_by_courseid($courseid) === null) {
             $this->repository->create($courseid, $userid);
         }
 
         $this->repository->set_enabled($courseid, true, $userid);
+
+        if (!$wasenabled) {
+            $record = $this->repository->get_by_courseid($courseid);
+            if ($record !== null) {
+                file_sync_enabled::create_for_course($courseid, $userid, (int) $record->id)->trigger();
+            }
+        }
     }
 
     /**
@@ -257,6 +269,10 @@ class file_sync_service {
      * @return void
      */
     public function disable_sync(int $courseid, int $userid, bool $removefiles = false): void {
+        $wasenabled = $this->is_enabled($courseid);
+        $record = $this->repository->get_by_courseid($courseid);
+        $objectid = $record !== null ? (int) $record->id : 0;
+
         if ($removefiles) {
             // Always reset local state when user wants to clear data.
             $this->repository->reset_sync_state($courseid);
@@ -272,6 +288,10 @@ class file_sync_service {
         }
 
         $this->repository->set_enabled($courseid, false, $userid);
+
+        if ($wasenabled && $objectid > 0) {
+            file_sync_disabled::create_for_course($courseid, $userid, $objectid, $removefiles)->trigger();
+        }
     }
 
     /**
@@ -376,6 +396,7 @@ class file_sync_service {
         // Flip the local sync status; per-chunk progress counters are not
         // tracked locally — poll_status() refreshes them from the server.
         $this->repository->update_sync_status($courseid, 'syncing');
+        file_sync_triggered::create_for_course($courseid, (int) $userid, (int) $record->id)->trigger();
 
         try {
             $filecount = count($uploaditems);
