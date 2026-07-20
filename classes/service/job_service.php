@@ -111,6 +111,9 @@ class job_service {
      * Get the status of a job.
      *
      * When $courseid is provided, the job must be registered to that course.
+     * Course work is shared among users who hold the relevant course capability;
+     * initiating userid is stored for attribution/privacy but is not an access gate.
+     * Personal surfaces (e.g. tutor) enforce user ownership in their own layer.
      *
      * @param string $jobid The job UUID.
      * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
@@ -130,6 +133,7 @@ class job_service {
      * Cancel a running job.
      *
      * When $courseid is provided, the job must be registered to that course.
+     * See get_job_status() for the course-scoped access model.
      *
      * @param string $jobid The job UUID to cancel.
      * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
