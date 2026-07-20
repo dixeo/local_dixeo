@@ -241,9 +241,30 @@ class client {
     }
 
     /**
+     * Whether the URL is an absolute HTTPS URL with a host.
+     *
+     * @param string $url Candidate API base URL.
+     * @return bool
+     */
+    public static function is_https_url(string $url): bool {
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+
+        $parts = parse_url($url);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return false;
+        }
+
+        return strtolower((string) $parts['scheme']) === 'https';
+    }
+
+    /**
      * Validate that the API is properly configured.
      *
      * @throws authentication_exception If the API key is not configured.
+     * @throws api_exception If the base URL is missing or not HTTPS.
      */
     protected function validate_configuration(): void {
         if (empty($this->apikey)) {
@@ -251,6 +272,46 @@ class client {
                 'Dixeo API key is not configured. Please configure it in the plugin settings.'
             );
         }
+
+        if (!self::is_https_url($this->baseurl)) {
+            throw new api_exception(
+                'insecure_transport',
+                get_string('error:api_url_https_required', 'local_dixeo'),
+                0,
+                ['baseurl' => $this->baseurl]
+            );
+        }
+    }
+
+    /**
+     * Default curl options for Dixeo API calls.
+     *
+     * Redirects are disabled so the API key is never followed to another host.
+     *
+     * @param int $timeout Request timeout in seconds.
+     * @return array Options for {@see \curl::setopt()}.
+     */
+    protected function get_default_curl_options(int $timeout): array {
+        return [
+            'CURLOPT_TIMEOUT' => $timeout,
+            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
+            'CURLOPT_RETURNTRANSFER' => true,
+            'CURLOPT_FOLLOWLOCATION' => false,
+            'CURLOPT_SSL_VERIFYPEER' => true,
+            'CURLOPT_SSL_VERIFYHOST' => 2,
+        ];
+    }
+
+    /**
+     * Create a configured curl instance with common options.
+     *
+     * @param int $timeout Request timeout in seconds.
+     * @return \curl The configured curl instance.
+     */
+    private function create_curl(int $timeout): \curl {
+        $curl = new \curl();
+        $curl->setopt($this->get_default_curl_options($timeout));
+        return $curl;
     }
 
     /**
@@ -263,24 +324,6 @@ class client {
         global $CFG;
         require_once($CFG->dirroot . '/local/dixeo/lib.php');
         return $namespace ?? \local_dixeo_get_configured_namespace();
-    }
-
-    /**
-     * Create a configured curl instance with common options.
-     *
-     * @param int $timeout Request timeout in seconds.
-     * @return \curl The configured curl instance.
-     */
-    private function create_curl(int $timeout): \curl {
-        $curl = new \curl();
-        $curl->setopt([
-            'CURLOPT_TIMEOUT' => $timeout,
-            'CURLOPT_CONNECTTIMEOUT' => $this->connecttimeout,
-            'CURLOPT_RETURNTRANSFER' => true,
-            'CURLOPT_FOLLOWLOCATION' => true,
-            'CURLOPT_MAXREDIRS' => 3,
-        ]);
-        return $curl;
     }
 
     /**
