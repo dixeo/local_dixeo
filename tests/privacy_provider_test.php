@@ -88,26 +88,25 @@ final class privacy_provider_test extends \core_privacy\tests\provider_testcase 
         }
         $this->assertNotNull($external);
         $fields = array_keys($external->get_privacy_fields());
-        foreach (
-            [
-                'courseId',
-                'userId',
-                'message',
-                'instructions',
-                'context',
-                'pageContext',
-                'moduleType',
-                'templateId',
-                'name',
-                'description',
-                'templateDefinition',
-                'title',
-                'summary',
-                'images',
-                'files',
-                'namespace',
-            ] as $field
-        ) {
+        $expectedfields = [
+            'courseId',
+            'userId',
+            'message',
+            'instructions',
+            'context',
+            'pageContext',
+            'moduleType',
+            'templateId',
+            'name',
+            'description',
+            'templateDefinition',
+            'title',
+            'summary',
+            'images',
+            'files',
+            'namespace',
+        ];
+        foreach ($expectedfields as $field) {
             $this->assertContains($field, $fields, "External metadata must declare {$field}");
         }
     }

@@ -174,4 +174,62 @@ final class job_binding_test extends \advanced_testcase {
         $result = $service->cancel_job('job-cancel', 20);
         $this->assertEquals('cancelled', $result['status']);
     }
+
+    public function test_repository_belongs_to_user_and_course(): void {
+        $repo = new job_repository();
+        $repo->register('job-owner', 10, 5, 'default', 'module_edit');
+
+        $this->assertTrue($repo->belongs_to_user_and_course('job-owner', 10, 5));
+        $this->assertFalse($repo->belongs_to_user_and_course('job-owner', 10, 99));
+        $this->assertFalse($repo->belongs_to_user_and_course('job-owner', 99, 5));
+        $this->assertFalse($repo->belongs_to_user_and_course('missing', 10, 5));
+    }
+
+    public function test_get_job_status_rejects_same_course_other_user_when_userid_required(): void {
+        $repo = new job_repository();
+        $repo->register('job-edit', 15, 3, 'default', 'module_edit');
+
+        $client = $this->createMock(client::class);
+        $service = new job_service($client, null, $repo);
+
+        $this->expectException(\moodle_exception::class);
+        $service->get_job_status('job-edit', 15, 99);
+    }
+
+    public function test_get_job_status_allows_owner_when_userid_required(): void {
+        $repo = new job_repository();
+        $repo->register('job-edit-ok', 15, 3, 'default', 'module_edit');
+
+        $poller = $this->getMockBuilder(\local_dixeo\api\job_poller::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['get_job_status'])
+            ->getMock();
+        $poller->expects($this->once())
+            ->method('get_job_status')
+            ->with('job-edit-ok')
+            ->willReturn(new job_status(
+                jobid: 'job-edit-ok',
+                type: 'module',
+                status: 'completed',
+                progress: 100,
+                createdat: time()
+            ));
+
+        $service = new job_service(null, $poller, $repo);
+        $status = $service->get_job_status('job-edit-ok', 15, 3);
+        $this->assertEquals('job-edit-ok', $status->jobid);
+        $this->assertTrue($status->is_completed());
+    }
+
+    public function test_cancel_job_rejects_same_course_other_user_when_userid_required(): void {
+        $repo = new job_repository();
+        $repo->register('job-edit-cancel', 20, 8, 'default', 'module_edit');
+
+        $client = $this->createMock(client::class);
+        $client->expects($this->never())->method('post');
+        $service = new job_service($client, null, $repo);
+
+        $this->expectException(\moodle_exception::class);
+        $service->cancel_job('job-edit-cancel', 20, 99);
+    }
 }
