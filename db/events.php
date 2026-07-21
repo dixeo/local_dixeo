@@ -20,6 +20,9 @@
  * Defines event handlers for file sync triggers based on course module events.
  * Sync activation itself is a manual action by an admin or teacher.
  *
+ * This plugin also emits custom events (not observed here) for audit logging:
+ * file_sync_enabled, file_sync_disabled, file_sync_triggered, and job_cancelled.
+ *
  * @package    local_dixeo
  * @copyright  2025 Edunao SAS (contact@edunao.com)
  * @author     Pierre FACQ <pierre.facq@edunao.com>

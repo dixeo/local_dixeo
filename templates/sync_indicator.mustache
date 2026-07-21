@@ -17,6 +17,7 @@
     * filescompleted - Number of synced files
     * lastsync - Formatted last sync date (optional)
     * errormessage - Error message if status is error (optional)
+    * canmanagesync - Whether the user may enable/disable/trigger sync
 
     Example context (json):
     {
@@ -37,7 +38,8 @@
      class="dixeo-sync-indicator dropdown"
      data-courseid="{{courseid}}"
      data-status="{{status}}"
-     data-enabled="{{enabled}}">
+     data-enabled="{{enabled}}"
+     data-canmanagesync="{{#canmanagesync}}1{{/canmanagesync}}{{^canmanagesync}}0{{/canmanagesync}}">
 
     {{! Branded button - Dixeo + status dot }}
     <button type="button"
@@ -97,7 +99,8 @@
             {{errormessage}}
         </div>
 
-        {{! Actions - visibility controlled by CSS via data-enabled attribute }}
+        {{! Actions - only for users with local/dixeo:syncfiles; visibility also via data-enabled }}
+        {{#canmanagesync}}
         <div class="dixeo-sync-dropdown__actions">
             <a class="dixeo-sync-dropdown__action" href="#" data-action="resync">
                 <i class="fa fa-refresh dixeo-sync-dropdown__action-icon" aria-hidden="true"></i>
@@ -116,5 +119,6 @@
                 {{#str}}filesync_enable, local_dixeo{{/str}}
             </a>
         </div>
+        {{/canmanagesync}}
     </div>
 </div>

@@ -35,6 +35,7 @@ use local_dixeo\api\polling_config;
 use local_dixeo\api\exception\api_exception;
 use local_dixeo\dto\operation_result;
 use local_dixeo\dto\job_status;
+use local_dixeo\event\job_cancelled;
 use local_dixeo\repository\job_repository;
 
 /**
@@ -110,18 +111,21 @@ class job_service {
     /**
      * Get the status of a job.
      *
-     * When $courseid is provided, the job must be registered to that course.
+     * When both $courseid and $userid are provided, the job must match that
+     * course and initiator (editor-style non-shared jobs). When only $courseid
+     * is provided, any caller in that course may access the job (shared course
+     * work such as modulegen). Personal surfaces may also enforce ownership
+     * in their own layer.
      *
      * @param string $jobid The job UUID.
      * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
+     * @param int|null $userid Optional initiating user ID for initiator-scoped jobs.
      * @return job_status The current job status.
      * @throws api_exception If an API error occurs.
-     * @throws \moodle_exception If the job is not bound to the given course.
+     * @throws \moodle_exception If the job binding check fails.
      */
-    public function get_job_status(string $jobid, ?int $courseid = null): job_status {
-        if ($courseid !== null) {
-            $this->require_job_for_course($jobid, $courseid);
-        }
+    public function get_job_status(string $jobid, ?int $courseid = null, ?int $userid = null): job_status {
+        $this->require_job_access($jobid, $courseid, $userid);
 
         return $this->poller->get_job_status($jobid);
     }
@@ -129,20 +133,34 @@ class job_service {
     /**
      * Cancel a running job.
      *
-     * When $courseid is provided, the job must be registered to that course.
+     * Access rules match {@see get_job_status()}.
      *
      * @param string $jobid The job UUID to cancel.
      * @param int|null $courseid Course ID to enforce ownership for (required for AJAX paths).
+     * @param int|null $userid Optional initiating user ID for initiator-scoped jobs.
      * @return array The cancellation response from the API.
      * @throws api_exception If an API error occurs.
-     * @throws \moodle_exception If the job is not bound to the given course.
+     * @throws \moodle_exception If the job binding check fails.
      */
-    public function cancel_job(string $jobid, ?int $courseid = null): array {
-        if ($courseid !== null) {
-            $this->require_job_for_course($jobid, $courseid);
-        }
+    public function cancel_job(string $jobid, ?int $courseid = null, ?int $userid = null): array {
+        global $USER;
 
-        return $this->client->post('/v1/jobs/' . $jobid . '/cancel', []);
+        $this->require_job_access($jobid, $courseid, $userid);
+
+        $result = $this->client->post('/v1/jobs/' . $jobid . '/cancel', []);
+
+        $boundcourseid = $courseid;
+        if ($boundcourseid === null) {
+            $record = $this->jobrepository->get_by_jobid($jobid);
+            $boundcourseid = $record !== null ? (int) $record->courseid : 0;
+        }
+        job_cancelled::create_for_job(
+            $jobid,
+            (int) $boundcourseid,
+            (int) ($USER->id ?? 0)
+        )->trigger();
+
+        return $result;
     }
 
     /**
@@ -153,16 +171,39 @@ class job_service {
      * @param string $jobid The job UUID.
      * @param string $jobtype The job type for polling configuration.
      * @param int|null $courseid Optional course ownership check.
+     * @param int|null $userid Optional initiating user ownership check.
      * @return operation_result The operation result.
      * @throws api_exception If an API error occurs.
-     * @throws \moodle_exception If the job is not bound to the given course.
+     * @throws \moodle_exception If the job binding check fails.
      */
-    public function wait_for_job(string $jobid, string $jobtype, ?int $courseid = null): operation_result {
-        if ($courseid !== null) {
-            $this->require_job_for_course($jobid, $courseid);
-        }
+    public function wait_for_job(
+        string $jobid,
+        string $jobtype,
+        ?int $courseid = null,
+        ?int $userid = null
+    ): operation_result {
+        $this->require_job_access($jobid, $courseid, $userid);
 
         return $this->poller->poll_for_type($jobid, $jobtype);
+    }
+
+    /**
+     * Apply course-only or course+user binding checks.
+     *
+     * @param string $jobid Remote job UUID.
+     * @param int|null $courseid Course ID when binding is required.
+     * @param int|null $userid Initiating user when initiator-scoped access is required.
+     * @throws \moodle_exception When the binding is missing or mismatched.
+     */
+    private function require_job_access(string $jobid, ?int $courseid, ?int $userid): void {
+        if ($courseid === null) {
+            return;
+        }
+        if ($userid !== null) {
+            $this->require_job_for_user_and_course($jobid, $courseid, $userid);
+            return;
+        }
+        $this->require_job_for_course($jobid, $courseid);
     }
 
     /**
@@ -176,6 +217,22 @@ class job_service {
      */
     public function require_job_for_course(string $jobid, int $courseid): void {
         if (!$this->jobrepository->belongs_to_course($jobid, $courseid)) {
+            throw new \moodle_exception('error:job_not_found', 'local_dixeo');
+        }
+    }
+
+    /**
+     * Ensure the job is registered to the given course and initiating user.
+     *
+     * Uses the same error string as course-only checks to avoid leaking existence.
+     *
+     * @param string $jobid Remote job UUID.
+     * @param int $courseid Expected course ID.
+     * @param int $userid Expected initiating user ID.
+     * @throws \moodle_exception When the binding is missing or mismatched.
+     */
+    public function require_job_for_user_and_course(string $jobid, int $courseid, int $userid): void {
+        if (!$this->jobrepository->belongs_to_user_and_course($jobid, $courseid, $userid)) {
             throw new \moodle_exception('error:job_not_found', 'local_dixeo');
         }
     }

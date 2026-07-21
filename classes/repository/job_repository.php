@@ -113,6 +113,24 @@ class job_repository {
     }
 
     /**
+     * Whether the job is registered to the given course and user.
+     *
+     * @param string $jobid Remote job UUID.
+     * @param int $courseid Expected course ID.
+     * @param int $userid Expected initiating user ID.
+     * @return bool
+     */
+    public function belongs_to_user_and_course(string $jobid, int $courseid, int $userid): bool {
+        $record = $this->get_by_jobid($jobid);
+        if ($record === null) {
+            return false;
+        }
+
+        return (int) $record->courseid === $courseid
+            && (int) $record->userid === $userid;
+    }
+
+    /**
      * Delete job rows for a user (optionally limited to courses).
      *
      * @param int $userid User ID.

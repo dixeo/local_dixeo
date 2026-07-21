@@ -86,7 +86,7 @@ $functions = [
         'description' => 'Enable or disable AI file sync for a course',
         'type' => 'write',
         'ajax' => true,
-        'capabilities' => 'local/dixeo:generate',
+        'capabilities' => 'local/dixeo:syncfiles',
     ],
 
     // Trigger immediate file sync for a course.
@@ -95,6 +95,6 @@ $functions = [
         'description' => 'Trigger immediate file sync for a course (no debounce)',
         'type' => 'write',
         'ajax' => true,
-        'capabilities' => 'local/dixeo:generate',
+        'capabilities' => 'local/dixeo:syncfiles',
     ],
 ];

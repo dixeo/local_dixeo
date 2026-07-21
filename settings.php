@@ -36,8 +36,8 @@ if ($hassiteconfig) {
         get_string('api_configuration_desc', 'local_dixeo')
     ));
 
-    // API URL setting.
-    $settings->add(new admin_setting_configtext(
+    // API URL setting (HTTPS required).
+    $settings->add(new \local_dixeo\admin_setting_configapiurl(
         'local_dixeo/api_url',
         get_string('api_url', 'local_dixeo'),
         get_string('api_url_desc', 'local_dixeo'),

@@ -78,6 +78,37 @@ final class privacy_provider_test extends \core_privacy\tests\provider_testcase 
         $this->assertContains('local_dixeo_course_ai', $names);
         $this->assertContains('local_dixeo_jobs', $names);
         $this->assertContains('dixeo_api', $names);
+
+        $external = null;
+        foreach ($items as $item) {
+            if ($item->get_name() === 'dixeo_api') {
+                $external = $item;
+                break;
+            }
+        }
+        $this->assertNotNull($external);
+        $fields = array_keys($external->get_privacy_fields());
+        $expectedfields = [
+            'courseId',
+            'userId',
+            'message',
+            'instructions',
+            'context',
+            'pageContext',
+            'moduleType',
+            'templateId',
+            'name',
+            'description',
+            'templateDefinition',
+            'title',
+            'summary',
+            'images',
+            'files',
+            'namespace',
+        ];
+        foreach ($expectedfields as $field) {
+            $this->assertContains($field, $fields, "External metadata must declare {$field}");
+        }
     }
 
     public function test_get_contexts_for_userid_empty_without_data(): void {

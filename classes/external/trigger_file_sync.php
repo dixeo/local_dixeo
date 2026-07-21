@@ -65,7 +65,7 @@ class trigger_file_sync extends external_api {
             'courseid' => $courseid,
         ]);
 
-        self::validate_course_capability($params['courseid']);
+        self::validate_course_sync_capability($params['courseid']);
 
         $service = service_factory::get_file_sync_service();
 
