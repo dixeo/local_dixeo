@@ -49,6 +49,20 @@ final class file_sync_capability_test extends \advanced_testcase {
     }
 
     /**
+     * Deny syncfiles for editingteacher in a course (overrides archetype allow).
+     *
+     * @param \context_course $context Course context.
+     * @return void
+     */
+    private function deny_syncfiles_for_editingteacher(\context_course $context): void {
+        global $DB;
+
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher'], MUST_EXIST);
+        assign_capability('local/dixeo:syncfiles', CAP_PROHIBIT, $roleid, $context->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
+    }
+
+    /**
      * Editing teacher with generate but without syncfiles cannot trigger sync.
      */
     public function test_trigger_denied_without_syncfiles(): void {
@@ -56,9 +70,10 @@ final class file_sync_capability_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $context = \context_course::instance($course->id);
+        $this->deny_syncfiles_for_editingteacher($context);
         $this->setUser($teacher);
 
-        $context = \context_course::instance($course->id);
         $this->assertTrue(has_capability('local/dixeo:generate', $context));
         $this->assertFalse(has_capability('local/dixeo:syncfiles', $context));
 
@@ -74,6 +89,8 @@ final class file_sync_capability_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $context = \context_course::instance($course->id);
+        $this->deny_syncfiles_for_editingteacher($context);
         $this->setUser($teacher);
 
         $this->expectException(\required_capability_exception::class);
