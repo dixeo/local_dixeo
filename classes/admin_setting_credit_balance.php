@@ -134,20 +134,29 @@ class admin_setting_credit_balance extends \admin_setting {
             $html .= \html_writer::end_div();
 
             return $html;
-        } catch (\Exception $e) {
-            // Moodle_exception already formats it.
-            $message = $e->getMessage();
-
-            // For moodle_exception, use the debug message which has the actual error.
-            if ($e instanceof \moodle_exception && !empty($e->debuginfo)) {
-                $message = $e->debuginfo;
-            }
-
-            return \html_writer::tag(
-                'div',
-                $message,
-                ['class' => 'alert alert-danger']
-            );
+        } catch (\Throwable $e) {
+            return $this->format_balance_error_html($e);
         }
+    }
+
+    /**
+     * Render a safe admin-facing error when the balance API call fails.
+     *
+     * Remote problem details and debuginfo are logged for developers only.
+     *
+     * @param \Throwable $e The failure from the credit service or API client.
+     * @return string Escaped HTML alert.
+     */
+    protected function format_balance_error_html(\Throwable $e): string {
+        debugging('Failed to fetch credit balance: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        if ($e instanceof \moodle_exception && $e->debuginfo !== null && $e->debuginfo !== '') {
+            debugging($e->debuginfo, DEBUG_DEVELOPER);
+        }
+
+        return \html_writer::tag(
+            'div',
+            s($e->getMessage()),
+            ['class' => 'alert alert-danger']
+        );
     }
 }
