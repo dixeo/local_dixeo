@@ -53,7 +53,7 @@ class create_module_from_job extends external_api {
             'jobid' => new external_value(PARAM_RAW, 'The completed job UUID'),
             'courseid' => new external_value(PARAM_INT, 'The course ID'),
             'sectionnumber' => new external_value(PARAM_INT, 'The section number', VALUE_DEFAULT, 0),
-            'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, null),
+            'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, 0),
             // Allow callers (e.g. the course structure flow) to override AI-generated name/intro
             // with values from the structure definition rather than re-querying the job.
             'name' => new external_value(PARAM_TEXT, 'Override module name from course structure', VALUE_OPTIONAL),
@@ -71,7 +71,7 @@ class create_module_from_job extends external_api {
      * @param string $jobid The completed job UUID.
      * @param int $courseid The course ID.
      * @param int $sectionnumber The section number.
-     * @param int|null $beforemod Course module ID to insert before.
+     * @param int $beforemod Course module ID to insert before (0 = append).
      * @param string|null $name Override module name.
      * @param string|null $intro Override module intro HTML.
      * @return array Result with cmid on success.
@@ -80,7 +80,7 @@ class create_module_from_job extends external_api {
         string $jobid,
         int $courseid,
         int $sectionnumber = 0,
-        ?int $beforemod = null,
+        int $beforemod = 0,
         ?string $name = null,
         ?string $intro = null
     ): array {
@@ -93,7 +93,7 @@ class create_module_from_job extends external_api {
             'intro' => $intro,
         ]);
 
-        self::validate_course_capability($params['courseid'], true);
+        $coursecontext = self::validate_course_capability($params['courseid'], true);
 
         try {
             $jobservice = service_factory::get_job_service();
@@ -128,7 +128,7 @@ class create_module_from_job extends external_api {
                 $params['courseid'],
                 $params['sectionnumber'],
                 $result['moduleType'] ?? 'page',
-                $params['beforemod']
+                !empty($params['beforemod']) ? (int) $params['beforemod'] : null
             );
 
             // Allow callers to override AI-generated name/intro with structure-defined values.
@@ -151,9 +151,11 @@ class create_module_from_job extends external_api {
             $completionsync = new course_completion_sync_service();
             $completionsync->sync_activity_criteria_from_modules((int) $params['courseid']);
 
-            // Enable file sync on successful AI module creation.
-            service_factory::get_file_sync_service()
-                ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
+            // Enable file sync on successful AI module creation when the actor holds syncfiles.
+            if (has_capability('local/dixeo:syncfiles', $coursecontext)) {
+                service_factory::get_file_sync_service()
+                    ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
+            }
 
             return response_factory::module_creation_result(true, $cmid);
         } catch (api_exception $e) {
