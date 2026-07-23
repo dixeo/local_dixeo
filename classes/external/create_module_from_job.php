@@ -53,7 +53,7 @@ class create_module_from_job extends external_api {
             'jobid' => new external_value(PARAM_RAW, 'The completed job UUID'),
             'courseid' => new external_value(PARAM_INT, 'The course ID'),
             'sectionnumber' => new external_value(PARAM_INT, 'The section number', VALUE_DEFAULT, 0),
-            'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, null),
+            'beforemod' => new external_value(PARAM_INT, 'Course module ID to insert before', VALUE_DEFAULT, 0),
             // Allow callers (e.g. the course structure flow) to override AI-generated name/intro
             // with values from the structure definition rather than re-querying the job.
             'name' => new external_value(PARAM_TEXT, 'Override module name from course structure', VALUE_OPTIONAL),
@@ -71,7 +71,7 @@ class create_module_from_job extends external_api {
      * @param string $jobid The completed job UUID.
      * @param int $courseid The course ID.
      * @param int $sectionnumber The section number.
-     * @param int|null $beforemod Course module ID to insert before.
+     * @param int|null $beforemod Course module ID to insert before (null or 0 = append).
      * @param string|null $name Override module name.
      * @param string|null $intro Override module intro HTML.
      * @return array Result with cmid on success.
@@ -88,12 +88,12 @@ class create_module_from_job extends external_api {
             'jobid' => $jobid,
             'courseid' => $courseid,
             'sectionnumber' => $sectionnumber,
-            'beforemod' => $beforemod,
+            'beforemod' => $beforemod ?? 0,
             'name' => $name,
             'intro' => $intro,
         ]);
 
-        self::validate_course_capability($params['courseid'], true);
+        $coursecontext = self::validate_course_capability($params['courseid'], true);
 
         try {
             $jobservice = service_factory::get_job_service();
@@ -128,7 +128,7 @@ class create_module_from_job extends external_api {
                 $params['courseid'],
                 $params['sectionnumber'],
                 $result['moduleType'] ?? 'page',
-                $params['beforemod']
+                !empty($params['beforemod']) ? (int) $params['beforemod'] : null
             );
 
             // Allow callers to override AI-generated name/intro with structure-defined values.
@@ -137,11 +137,18 @@ class create_module_from_job extends external_api {
             // Skip intro override for labels — intro IS the content, not a description.
             $data = $result['data'] ?? [];
             $moduletype = $result['moduleType'] ?? 'page';
-            if (!empty($params['name'])) {
+            if ($params['name'] !== null && $params['name'] !== '') {
                 $data['name'] = $params['name'];
             }
-            if (!empty($params['intro']) && $moduletype !== 'label') {
+            if ($moduletype !== 'label' && $params['intro'] !== null) {
                 $data['intro'] = $params['intro'];
+            }
+            // Fill jobs return content-only data; creation DSL still references $.name/$.intro.
+            if (!array_key_exists('name', $data)) {
+                $data['name'] = ($params['name'] !== null && $params['name'] !== '') ? $params['name'] : '';
+            }
+            if ($moduletype !== 'label' && !array_key_exists('intro', $data)) {
+                $data['intro'] = $params['intro'] ?? '';
             }
 
             $interpreter = new interpreter();
@@ -151,9 +158,11 @@ class create_module_from_job extends external_api {
             $completionsync = new course_completion_sync_service();
             $completionsync->sync_activity_criteria_from_modules((int) $params['courseid']);
 
-            // Enable file sync on successful AI module creation.
-            service_factory::get_file_sync_service()
-                ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
+            // Enable file sync on successful AI module creation when the actor holds syncfiles.
+            if (has_capability('local/dixeo:syncfiles', $coursecontext)) {
+                service_factory::get_file_sync_service()
+                    ->enable_and_queue_sync_after_module_creation((int) $params['courseid']);
+            }
 
             return response_factory::module_creation_result(true, $cmid);
         } catch (api_exception $e) {

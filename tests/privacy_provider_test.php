@@ -31,6 +31,7 @@ use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use local_dixeo\privacy\provider;
+use local_dixeo\repository\job_repository;
 
 /**
  * Privacy provider tests.
@@ -68,6 +69,18 @@ final class privacy_provider_test extends \core_privacy\tests\provider_testcase 
             'timecreated' => $now,
             'timemodified' => $now,
         ]);
+    }
+
+    /**
+     * Register a local job binding for privacy tests.
+     *
+     * @param string $jobid Remote job id.
+     * @param int $courseid Course id (0 for pre-course jobs).
+     * @param int $userid Initiating user id.
+     * @return void
+     */
+    private function insert_job_record(string $jobid, int $courseid, int $userid): void {
+        (new job_repository())->register($jobid, $courseid, $userid, 'default', 'course_structure');
     }
 
     public function test_get_metadata(): void {
@@ -195,5 +208,89 @@ final class privacy_provider_test extends \core_privacy\tests\provider_testcase 
         provider::delete_data_for_all_users_in_context($coursecontext);
 
         $this->assertFalse($DB->record_exists('local_dixeo_course_ai', ['courseid' => $course->id]));
+    }
+
+    public function test_get_contexts_for_userid_includes_system_for_pre_course_jobs(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $this->insert_job_record('pre-course-job', 0, (int) $user->id);
+
+        $contextlist = provider::get_contexts_for_userid((int) $user->id);
+        $systemcontext = \context_system::instance();
+
+        $this->assertEquals([$systemcontext->id], $contextlist->get_contextids());
+    }
+
+    public function test_export_and_delete_pre_course_job_under_system_context(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        $this->insert_job_record('pre-course-job', 0, (int) $user->id);
+        $this->insert_job_record('other-pre-course-job', 0, (int) $other->id);
+
+        $systemcontext = \context_system::instance();
+        writer::reset();
+
+        $approved = new approved_contextlist($user, 'local_dixeo', [$systemcontext->id]);
+        provider::export_user_data($approved);
+
+        $writer = writer::with_context($systemcontext);
+        $this->assertTrue($writer->has_any_data());
+
+        provider::delete_data_for_user($approved);
+
+        $this->assertFalse($DB->record_exists('local_dixeo_jobs', [
+            'jobid' => 'pre-course-job',
+            'userid' => $user->id,
+            'courseid' => 0,
+        ]));
+        $this->assertTrue($DB->record_exists('local_dixeo_jobs', [
+            'jobid' => 'other-pre-course-job',
+            'userid' => $other->id,
+            'courseid' => 0,
+        ]));
+    }
+
+    public function test_get_users_in_context_and_delete_users_for_pre_course_jobs(): void {
+        global $DB;
+
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $this->insert_job_record('pre-course-1', 0, (int) $user1->id);
+        $this->insert_job_record('pre-course-2', 0, (int) $user2->id);
+
+        $systemcontext = \context_system::instance();
+        $userlist = new userlist($systemcontext, 'local_dixeo');
+        provider::get_users_in_context($userlist);
+        $userids = $userlist->get_userids();
+
+        $this->assertContains((int) $user1->id, $userids);
+        $this->assertContains((int) $user2->id, $userids);
+
+        $approved = new approved_userlist($systemcontext, 'local_dixeo', [$user1->id]);
+        provider::delete_data_for_users($approved);
+
+        $this->assertFalse($DB->record_exists('local_dixeo_jobs', [
+            'jobid' => 'pre-course-1',
+            'userid' => $user1->id,
+        ]));
+        $this->assertTrue($DB->record_exists('local_dixeo_jobs', [
+            'jobid' => 'pre-course-2',
+            'userid' => $user2->id,
+        ]));
+    }
+
+    public function test_delete_data_for_all_users_in_system_context_removes_pre_course_jobs(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $this->insert_job_record('pre-course-job', 0, (int) $user->id);
+        $this->insert_job_record('course-job', (int) $course->id, (int) $user->id);
+
+        provider::delete_data_for_all_users_in_context(\context_system::instance());
+
+        $this->assertFalse($DB->record_exists('local_dixeo_jobs', ['jobid' => 'pre-course-job']));
+        $this->assertTrue($DB->record_exists('local_dixeo_jobs', ['jobid' => 'course-job']));
     }
 }

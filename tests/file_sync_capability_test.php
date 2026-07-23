@@ -38,6 +38,7 @@ use local_dixeo\service\file_sync_service;
  * @covers \local_dixeo\external\trigger_file_sync
  * @covers \local_dixeo\external\set_file_sync_enabled
  * @covers \local_dixeo\external\traits\capability_check
+ * @covers \local_dixeo\service\file_sync_service::enable_and_queue_sync_after_module_creation
  */
 final class file_sync_capability_test extends \advanced_testcase {
     /**
@@ -133,6 +134,50 @@ final class file_sync_capability_test extends \advanced_testcase {
 
         $this->assertTrue($result['success']);
         $record = $repository->get_by_courseid($course->id);
+        $this->assertSame(1, (int) $record->enabled);
+    }
+
+    /**
+     * Post-module-creation sync is skipped when the actor lacks syncfiles.
+     */
+    public function test_enable_and_queue_sync_after_module_creation_skipped_without_syncfiles(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $context = \context_course::instance($course->id);
+        $this->deny_syncfiles_for_editingteacher($context);
+        $this->setUser($teacher);
+
+        $repository = new course_ai_repository();
+        $service = new file_sync_service($repository);
+        $service->enable_and_queue_sync_after_module_creation($course->id);
+
+        $this->assertNull($repository->get_by_courseid($course->id));
+    }
+
+    /**
+     * Post-module-creation sync runs when the actor has syncfiles.
+     */
+    public function test_enable_and_queue_sync_after_module_creation_allowed_with_syncfiles(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $context = \context_course::instance($course->id);
+        $roleid = $DB->get_field('role', 'id', ['shortname' => 'editingteacher'], MUST_EXIST);
+        assign_capability('local/dixeo:syncfiles', CAP_ALLOW, $roleid, $context->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($teacher);
+
+        $repository = new course_ai_repository();
+        $service = new file_sync_service($repository);
+        $service->enable_and_queue_sync_after_module_creation($course->id);
+
+        $record = $repository->get_by_courseid($course->id);
+        $this->assertNotNull($record);
         $this->assertSame(1, (int) $record->enabled);
     }
 }

@@ -215,7 +215,7 @@ class file_sync_service {
 
         try {
             $userid = $userid ?? (int) ($USER->id ?? 0);
-            if ($userid <= 0) {
+            if (!$this->user_can_sync_files_in_course($courseid, $userid)) {
                 return;
             }
 
@@ -244,7 +244,7 @@ class file_sync_service {
 
         try {
             $userid = $userid ?? (int) ($USER->id ?? 0);
-            if ($userid <= 0) {
+            if (!$this->user_can_sync_files_in_course($courseid, $userid)) {
                 return;
             }
 
@@ -848,6 +848,26 @@ class file_sync_service {
         }
 
         return $this->get_status($courseid);
+    }
+
+    /**
+     * Whether the user may enable or trigger outbound file sync in a course.
+     *
+     * @param int $courseid Course id.
+     * @param int $userid User id.
+     * @return bool
+     */
+    private function user_can_sync_files_in_course(int $courseid, int $userid): bool {
+        if ($courseid <= SITEID || $userid <= 0) {
+            return false;
+        }
+
+        try {
+            $context = \context_course::instance($courseid);
+            return has_capability('local/dixeo:syncfiles', $context, $userid);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**

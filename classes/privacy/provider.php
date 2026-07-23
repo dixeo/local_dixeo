@@ -123,7 +123,17 @@ class provider implements
      * @return contextlist
      */
     public static function get_contexts_for_userid(int $userid): contextlist {
+        global $DB;
+
         $contextlist = new contextlist();
+
+        if ($DB->record_exists(self::TABLE_JOBS, ['userid' => $userid, 'courseid' => 0])) {
+            \context_system::instance(0, MUST_EXIST, false);
+            $contextlist->add_from_sql(
+                'SELECT id FROM {context} WHERE contextlevel = :contextlevel AND instanceid = 0',
+                ['contextlevel' => CONTEXT_SYSTEM]
+            );
+        }
 
         $sql = "SELECT ctx.id
                   FROM {" . self::TABLE_COURSE_AI . "} cai
@@ -164,6 +174,11 @@ class provider implements
         $userid = (int) $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel === CONTEXT_SYSTEM) {
+                self::export_user_jobs($context, $userid, 0);
+                continue;
+            }
+
             if ($context->contextlevel !== CONTEXT_COURSE) {
                 continue;
             }
@@ -198,27 +213,43 @@ class provider implements
                 }
             }
 
-            $jobs = $DB->get_records(self::TABLE_JOBS, [
-                'courseid' => $courseid,
-                'userid' => $userid,
-            ]);
-            if ($jobs) {
-                $exportedjobs = [];
-                foreach ($jobs as $job) {
-                    $exportedjobs[] = (object) [
-                        'jobid' => (string) $job->jobid,
-                        'courseid' => (int) $job->courseid,
-                        'namespace' => (string) $job->namespace,
-                        'operation' => (string) $job->operation,
-                        'timecreated' => transform::datetime((int) $job->timecreated),
-                    ];
-                }
-                writer::with_context($context)->export_data(
-                    [get_string('privacy:path:jobs', 'local_dixeo')],
-                    (object) ['jobs' => $exportedjobs]
-                );
-            }
+            self::export_user_jobs($context, $userid, $courseid);
         }
+    }
+
+    /**
+     * Export job ownership rows for a user within a course or pre-course scope.
+     *
+     * @param \context $context Export context (course or system for courseid 0).
+     * @param int $userid User id.
+     * @param int $courseid Course id, or 0 before a draft course exists.
+     */
+    private static function export_user_jobs(\context $context, int $userid, int $courseid): void {
+        global $DB;
+
+        $jobs = $DB->get_records(self::TABLE_JOBS, [
+            'courseid' => $courseid,
+            'userid' => $userid,
+        ]);
+        if (!$jobs) {
+            return;
+        }
+
+        $exportedjobs = [];
+        foreach ($jobs as $job) {
+            $exportedjobs[] = (object) [
+                'jobid' => (string) $job->jobid,
+                'courseid' => (int) $job->courseid,
+                'namespace' => (string) $job->namespace,
+                'operation' => (string) $job->operation,
+                'timecreated' => transform::datetime((int) $job->timecreated),
+            ];
+        }
+
+        writer::with_context($context)->export_data(
+            [get_string('privacy:path:jobs', 'local_dixeo')],
+            (object) ['jobs' => $exportedjobs]
+        );
     }
 
     /**
@@ -228,6 +259,11 @@ class provider implements
      */
     public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
+
+        if ($context->contextlevel === CONTEXT_SYSTEM) {
+            $DB->delete_records(self::TABLE_JOBS, ['courseid' => 0]);
+            return;
+        }
 
         if ($context->contextlevel !== CONTEXT_COURSE) {
             return;
@@ -253,6 +289,13 @@ class provider implements
         $courseids = [];
 
         foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel === CONTEXT_SYSTEM) {
+                $DB->delete_records(self::TABLE_JOBS, [
+                    'userid' => $userid,
+                    'courseid' => 0,
+                ]);
+                continue;
+            }
             if ($context->contextlevel === CONTEXT_COURSE) {
                 $courseids[] = (int) $context->instanceid;
             }
@@ -300,6 +343,18 @@ class provider implements
      */
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
+
+        if ($context->contextlevel === CONTEXT_SYSTEM) {
+            $userlist->add_from_sql(
+                'userid',
+                "SELECT j.userid AS userid
+                   FROM {" . self::TABLE_JOBS . "} j
+                  WHERE j.courseid = 0 AND j.userid > 0",
+                []
+            );
+            return;
+        }
+
         if ($context->contextlevel !== CONTEXT_COURSE) {
             return;
         }
@@ -340,6 +395,22 @@ class provider implements
         global $DB;
 
         $context = $userlist->get_context();
+
+        if ($context->contextlevel === CONTEXT_SYSTEM) {
+            $userids = $userlist->get_userids();
+            if ($userids === []) {
+                return;
+            }
+
+            [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            $DB->delete_records_select(
+                self::TABLE_JOBS,
+                "courseid = 0 AND userid {$insql}",
+                $params
+            );
+            return;
+        }
+
         if ($context->contextlevel !== CONTEXT_COURSE) {
             return;
         }
