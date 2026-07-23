@@ -158,4 +158,70 @@ final class create_module_from_job_sync_test extends \advanced_testcase {
         $this->assertNotNull($record);
         $this->assertSame(1, (int) $record->enabled);
     }
+
+    /**
+     * Fill jobs return content-only data; creation DSL still references $.name and $.intro.
+     */
+    public function test_create_module_from_fill_job_with_content_only_data(): void {
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $this->setUser($teacher);
+
+        $jobid = 'job-fill-' . random_string(8);
+        $repo = new job_repository();
+        $repo->register($jobid, (int) $course->id, (int) $teacher->id, 'default', 'module_fill');
+
+        $result = [
+            'moduleType' => 'page',
+            'creation' => [
+                [
+                    'action' => 'create_module',
+                    'save_as' => 'module',
+                    'fields' => [
+                        'name' => ['source' => '$.name'],
+                        'intro' => ['source' => '$.intro'],
+                        'introformat' => ['value' => 1],
+                        'content' => ['source' => '$.content'],
+                        'contentformat' => ['value' => 1],
+                    ],
+                ],
+            ],
+            'data' => [
+                'content' => '<p>Fill body</p>',
+            ],
+        ];
+
+        $poller = $this->getMockBuilder(\local_dixeo\api\job_poller::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['get_job_status'])
+            ->getMock();
+        $poller->expects($this->once())
+            ->method('get_job_status')
+            ->with($jobid)
+            ->willReturn(new job_status(
+                jobid: $jobid,
+                type: 'fill_module',
+                status: 'completed',
+                progress: 100,
+                createdat: time(),
+                result: $result
+            ));
+
+        service_factory::set_test_job_service(new job_service(null, $poller, $repo));
+
+        $out = create_module_from_job::execute(
+            $jobid,
+            (int) $course->id,
+            1,
+            null,
+            'Structure page title',
+            ''
+        );
+        $this->resetDebugging();
+
+        $this->assertTrue($out['success']);
+        $this->assertGreaterThan(0, (int) $out['cmid']);
+    }
 }

@@ -71,7 +71,7 @@ class create_module_from_job extends external_api {
      * @param string $jobid The completed job UUID.
      * @param int $courseid The course ID.
      * @param int $sectionnumber The section number.
-     * @param int $beforemod Course module ID to insert before (0 = append).
+     * @param int|null $beforemod Course module ID to insert before (null or 0 = append).
      * @param string|null $name Override module name.
      * @param string|null $intro Override module intro HTML.
      * @return array Result with cmid on success.
@@ -80,7 +80,7 @@ class create_module_from_job extends external_api {
         string $jobid,
         int $courseid,
         int $sectionnumber = 0,
-        int $beforemod = 0,
+        ?int $beforemod = null,
         ?string $name = null,
         ?string $intro = null
     ): array {
@@ -88,7 +88,7 @@ class create_module_from_job extends external_api {
             'jobid' => $jobid,
             'courseid' => $courseid,
             'sectionnumber' => $sectionnumber,
-            'beforemod' => $beforemod,
+            'beforemod' => $beforemod ?? 0,
             'name' => $name,
             'intro' => $intro,
         ]);
@@ -137,11 +137,18 @@ class create_module_from_job extends external_api {
             // Skip intro override for labels — intro IS the content, not a description.
             $data = $result['data'] ?? [];
             $moduletype = $result['moduleType'] ?? 'page';
-            if (!empty($params['name'])) {
+            if ($params['name'] !== null && $params['name'] !== '') {
                 $data['name'] = $params['name'];
             }
-            if (!empty($params['intro']) && $moduletype !== 'label') {
+            if ($moduletype !== 'label' && $params['intro'] !== null) {
                 $data['intro'] = $params['intro'];
+            }
+            // Fill jobs return content-only data; creation DSL still references $.name/$.intro.
+            if (!array_key_exists('name', $data)) {
+                $data['name'] = ($params['name'] !== null && $params['name'] !== '') ? $params['name'] : '';
+            }
+            if ($moduletype !== 'label' && !array_key_exists('intro', $data)) {
+                $data['intro'] = $params['intro'] ?? '';
             }
 
             $interpreter = new interpreter();
